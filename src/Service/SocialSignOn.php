@@ -27,10 +27,19 @@ use Nails\Config;
 use Nails\Environment;
 use Nails\Factory;
 
+/**
+ * Class SocialSignOn
+ *
+ * @package Nails\Auth\Service
+ */
 class SocialSignOn
 {
     use ErrorHandling;
     use Caching;
+
+    // --------------------------------------------------------------------------
+
+    const TABLE = NAILS_DB_PREFIX . 'user_social';
 
     // --------------------------------------------------------------------------
 
@@ -392,7 +401,7 @@ class SocialSignOn
         $this->oDb->where('provider', $provider);
         $this->oDb->where('identifier', $identifier);
 
-        $oUser = $this->oDb->get(Config::get('NAILS_DB_PREFIX') . 'user_social')->row();
+        $oUser = $this->oDb->get(static::TABLE)->row();
 
         if (empty($oUser)) {
             return false;
@@ -456,7 +465,7 @@ class SocialSignOn
          */
 
         $this->oDb->where('user_id', $user_id);
-        $aExisting = $this->oDb->get(Config::get('NAILS_DB_PREFIX') . 'user_social')->result();
+        $aExisting = $this->oDb->get(static::TABLE)->result();
         $aExists   = [];
 
         foreach ($aExisting as $existing) {
@@ -483,7 +492,7 @@ class SocialSignOn
 
                 $this->oDb->set($aData);
                 $this->oDb->where('id', $aExists[$sProvider]);
-                $this->oDb->update(Config::get('NAILS_DB_PREFIX') . 'user_social');
+                $this->oDb->update(static::TABLE);
 
             } else {
 
@@ -498,7 +507,7 @@ class SocialSignOn
                 ];
 
                 $this->oDb->set($aData);
-                $this->oDb->insert(Config::get('NAILS_DB_PREFIX') . 'user_social');
+                $this->oDb->insert(static::TABLE);
             }
         }
 
@@ -548,7 +557,7 @@ class SocialSignOn
         // --------------------------------------------------------------------------
 
         $this->oDb->where('user_id', $oUser->id);
-        $aSessions = $this->oDb->get(Config::get('NAILS_DB_PREFIX') . 'user_social')->result();
+        $aSessions = $this->oDb->get(static::TABLE)->result();
         $aRestore  = [];
 
         foreach ($aSessions as $oSession) {

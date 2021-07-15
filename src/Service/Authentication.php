@@ -56,6 +56,10 @@ class Authentication
 
     // --------------------------------------------------------------------------
 
+    const TABLE_TWO_FACTOR_DEVICE_SECRET = NAILS_DB_PREFIX . 'user_auth_two_factor_device_secret';
+    const TABLE_TWO_FACTOR_QUESTION      = NAILS_DB_PREFIX . 'user_auth_two_factor_question';
+    const TABLE_TWO_FACTOR_TOKEN         = NAILS_DB_PREFIX . 'user_auth_two_factor_token';
+
     /**
      * The minimum length of time to wait between attempts, in microseconds
      *
@@ -422,7 +426,7 @@ class Authentication
         $oDb->set('expires', $sExpires);
         $oDb->set('ip', $sIp);
 
-        if ($oDb->insert(\Nails\Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_token')) {
+        if ($oDb->insert(static::TABLE_TWO_FACTOR_TOKEN)) {
             $aToken['id'] = $oDb->insert_id();
             return $aToken;
         } else {
@@ -453,7 +457,7 @@ class Authentication
         $oDb->where('salt', $sSalt);
         $oDb->where('token', $sToken);
 
-        $oToken  = $oDb->get(\Nails\Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_token')->row();
+        $oToken  = $oDb->get(static::TABLE_TWO_FACTOR_TOKEN)->row();
         $bReturn = true;
 
         if (!$oToken) {
@@ -493,7 +497,7 @@ class Authentication
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
         $oDb->where('id', $iTokenId);
-        $oDb->delete(\Nails\Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_token');
+        $oDb->delete(static::TABLE_TWO_FACTOR_TOKEN);
         return (bool) $oDb->affected_rows();
     }
 
@@ -518,7 +522,7 @@ class Authentication
 
         $oDb->where('user_id', $iUserId);
         $oDb->order_by('last_requested', 'DESC');
-        $aQuestions = $oDb->get(\Nails\Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_question')->result();
+        $aQuestions = $oDb->get(static::TABLE_TWO_FACTOR_QUESTION)->result();
 
         if (!$aQuestions) {
             $this->setError('No security questions available for this user.');
@@ -560,7 +564,7 @@ class Authentication
         $oDb->set('last_requested', 'NOW()', false);
         $oDb->set('last_requested_ip', $oInput->ipAddress());
         $oDb->where('id', $oOut->id);
-        $oDb->update(\Nails\Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_question');
+        $oDb->update(static::TABLE_TWO_FACTOR_QUESTION);
 
         return $oOut;
     }
@@ -584,7 +588,7 @@ class Authentication
         $oDb->select('answer, salt');
         $oDb->where('id', $iQuestionId);
         $oDb->where('user_id', $iUserId);
-        $oQuestion = $oDb->get(\Nails\Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_question')->row();
+        $oQuestion = $oDb->get(static::TABLE_TWO_FACTOR_QUESTION)->row();
 
         if (!$oQuestion) {
             return false;
@@ -626,7 +630,7 @@ class Authentication
         //  Delete old questions?
         if ($bClearOld) {
             $oDb->where('user_id', $iUserId);
-            $oDb->delete(\Nails\Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_question');
+            $oDb->delete(static::TABLE_TWO_FACTOR_QUESTION);
         }
 
         /** @var Password $oPasswordModel */
@@ -654,7 +658,7 @@ class Authentication
 
         if ($aQuestionData) {
 
-            $oDb->insert_batch(\Nails\Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_question', $aQuestionData);
+            $oDb->insert_batch(static::TABLE_TWO_FACTOR_QUESTION, $aQuestionData);
 
             if ($oDb->transaction()->status() !== false) {
                 $oDb->transaction()->commit();
@@ -692,7 +696,7 @@ class Authentication
 
         $oDb->where('user_id', $iUserId);
         $oDb->limit(1);
-        $aResult = $oDb->get(\Nails\Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_device_secret')->result();
+        $aResult = $oDb->get(static::TABLE_TWO_FACTOR_DEVICE_SECRET)->result();
 
         if (empty($aResult)) {
             return false;
@@ -785,7 +789,7 @@ class Authentication
             $oDb->set('secret', $oEncrypt->encode($sSecret, \Nails\Config::get('PRIVATE_KEY')));
             $oDb->set('created', 'NOW()', false);
 
-            if ($oDb->insert(\Nails\Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_device_secret')) {
+            if ($oDb->insert(static::TABLE_TWO_FACTOR_DEVICE_SECRET)) {
 
                 $iSecretId = $oDb->insert_id();
                 $oNow      = Factory::factory('DateTime');
