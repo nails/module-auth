@@ -41,4 +41,11 @@ class Email extends Base
      * @var string
      */
     const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
+
+    /**
+     * Disable setting of created_by and modified_by columns
+     *
+     * @var bool
+     */
+    const AUTO_SET_USER = false;
 }
