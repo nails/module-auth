@@ -14,6 +14,7 @@ namespace Nails\Auth\Model;
 
 use Nails\Auth\Constants;
 use Nails\Auth\Events;
+use Nails\Auth\Exception\User\MergeException;
 use Nails\Auth\Factory\Email\NewUser;
 use Nails\Auth\Factory\Email\VerifyEmail;
 use Nails\Auth\Model\User\Email;
@@ -34,6 +35,7 @@ use Nails\Common\Service\ErrorHandler;
 use Nails\Common\Service\Event;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\Session;
+use Nails\Common\Traits\Model\Mergeable;
 use Nails\Components;
 use Nails\Config;
 use Nails\Environment;
@@ -49,6 +51,10 @@ use stdClass;
  */
 class User extends Base
 {
+    use Mergeable;
+
+    // --------------------------------------------------------------------------
+
     /**
      * The table this model represents
      *
@@ -121,6 +127,8 @@ class User extends Base
     const GENDER_FEMALE      = 'FEMALE';
     const GENDER_TRANSGENDER = 'TRANSGENDER';
     const GENDER_OTHER       = 'OTHER';
+
+    const AUTO_SET_USER = false;
 
     // --------------------------------------------------------------------------
 
@@ -2665,177 +2673,194 @@ class User extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Merges users with ID in $mergeIds into $iUserId
+     * Merges items into an original
      *
-     * @param int   $iUserId    The user ID to keep
-     * @param array $aMergeIds  An array of user ID's to merge into $iUserId
-     * @param bool  $bIsPreview Whether we're generating a preview or not
+     * @param int   $iKeepId   The ID of the item to keep
+     * @param int[] $aMergeIds An array of IDs to merge into $iKeepId
      *
-     * @return bool
-     * @throws FactoryException
-     * @throws ModelException
+     * @return $this
+     * @throws \InvalidArgumentException
+     * @throws \Nails\Auth\Exception\User\MergeException
+     * @throws \Nails\Common\Exception\FactoryException
      */
-    public function merge($iUserId, $aMergeIds, $bIsPreview = false)
+    public function merge(int $iKeepId, array $aMergeIds): self
+    {
+        for ($i = 0; $i < count($aMergeIds); $i++) {
+            if (!is_numeric($aMergeIds[$i])) {
+                throw new \InvalidArgumentException(
+                    '"$aMergeIds" must contain only numerical values.'
+                );
+            }
+        }
+
+        if (in_array($iKeepId, $aMergeIds)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Target user "%s" cannot be merged into itself.',
+                $iKeepId
+            ));
+        }
+
+        // --------------------------------------------------------------------------
+
+        /** @var Database $oDb */
+        $oDb = Factory::service('Database');
+
+        try {
+
+            $this->triggerEvent(
+                Events::USER_MERGE_PRE,
+                [$iKeepId, $aMergeIds]
+            );
+
+            $oDb->transaction()->start();
+
+            $this->mergeUpdateColumns(
+                $this->mergeCompileMap(),
+                $iKeepId,
+                $aMergeIds
+            );
+
+            $this->triggerEvent(
+                Events::USER_MERGE_POST,
+                [$iKeepId, $aMergeIds]
+            );
+
+            $this->mergeDeleteMergedUsers($aMergeIds);
+
+            $this->triggerEvent(
+                Events::USER_MERGE_COMPLETE,
+                [$iKeepId, $aMergeIds]
+            );
+
+
+            $oDb->transaction()->commit();
+
+        } catch (\Throwable $e) {
+            $oDb->transaction()->rollback();
+            throw new MergeException(
+                $e->getMessage(),
+                $e->getCode(),
+                $e,
+            );
+        }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Leverage foreign keys to determine which columns should be re-mapped.
+     * Anything pointing to nails_user.id needs updated to point to $iKeepUser.
+     * We'll want to exclude certain tables which contain sensitive data or
+     * personal preferences and shouldn't be merged.
+     *
+     * @return array
+     * @throws \Nails\Common\Exception\FactoryException
+     * @throws \Nails\Common\Exception\ModelException
+     */
+    protected function mergeCompileMap(): array
     {
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
 
-        if (!is_numeric($iUserId)) {
-            $this->setError('"userId" must be numeric.');
-            return false;
-        }
-
-        if (!is_array($aMergeIds)) {
-            $this->setError('"mergeIDs" must be an array.');
-            return false;
-        }
-
-        for ($i = 0; $i < count($aMergeIds); $i++) {
-            if (!is_numeric($aMergeIds[$i])) {
-                $this->setError('"mergeIDs" must contain only numerical values.');
-                return false;
-            }
-            $aMergeIds[$i] = $oDb->escape((int) $aMergeIds[$i]);
-        }
-
-        if (in_array($iUserId, $aMergeIds)) {
-            $this->setError('"userId" cannot be listed as a merge user.');
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Look for tables which contain a user ID column in them.
-        $aUserCols = [
-            'user_id',
-            'created_by',
-            'modified_by',
-            'author_id',
-            'authorId',
-        ];
-
-        $sUserColsStr = "'" . implode("','", $aUserCols) . "'";
-
-        $aIgnoreTables = [
-            $this->getTableName(),
+        $aMap     = [];
+        $aExclude = [
             $this->getMetaTableName(),
-            Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_device_code',
-            Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_device_secret',
-            Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_question',
-            Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_token',
-            Config::get('NAILS_DB_PREFIX') . 'user_social',
+            Factory::model('UserAccessToken', Constants::MODULE_SLUG)->getTableName(),
+            Factory::model('UserEvent', Constants::MODULE_SLUG)->getTableName(),
+            Factory::service('SocialSignOn', Constants::MODULE_SLUG)::TABLE,
+            Factory::service('Authentication', Constants::MODULE_SLUG)::TABLE_TWO_FACTOR_DEVICE_SECRET,
+            Factory::service('Authentication', Constants::MODULE_SLUG)::TABLE_TWO_FACTOR_QUESTION,
+            Factory::service('Authentication', Constants::MODULE_SLUG)::TABLE_TWO_FACTOR_TOKEN,
         ];
 
-        $sIgnoreTablesStr = "'" . implode("','", $aIgnoreTables) . "'";
+        $aResult = $oDb
+            ->select(['TABLE_NAME', 'COLUMN_NAME'])
+            ->from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
+            ->where('REFERENCED_TABLE_SCHEMA', $oDb->getDbDatabase())
+            ->where('REFERENCED_TABLE_NAME', $this->getTableName())
+            ->where('REFERENCED_COLUMN_NAME', $this->getColumnId())
+            ->where_not_in('TABLE_NAME', $aExclude)
+            ->get()
+            ->result();
 
-        $aTables = [];
-        $sQuery  = "SELECT COLUMN_NAME,TABLE_NAME
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE COLUMN_NAME IN (" . $sUserColsStr . ")
-                    AND (TABLE_NAME LIKE '" . Config::get('NAILS_DB_PREFIX') . "%' OR TABLE_NAME LIKE '" . Config::get('APP_DB_PREFIX') . "%')
-                    AND TABLE_NAME NOT IN (" . $sIgnoreTablesStr . ")
-                    AND TABLE_SCHEMA='" . Config::get('DB_DATABASE') . "';";
+        foreach ($aResult as $oRow) {
 
-        /** @var CI_DB_result $result */
-        $result = $oDb->query($sQuery);
-
-        while ($oTable = $result->unbuffered_row()) {
-
-            if (!isset($aTables[$oTable->TABLE_NAME])) {
-                $aTables[$oTable->TABLE_NAME] = (object) [
-                    'name'    => $oTable->TABLE_NAME,
-                    'columns' => [],
-                ];
+            if (!array_key_exists($oRow->TABLE_NAME, $aMap)) {
+                $aMap[$oRow->TABLE_NAME] = [];
             }
 
-            $aTables[$oTable->TABLE_NAME]->columns[] = $oTable->COLUMN_NAME;
+            $aMap[$oRow->TABLE_NAME][] = $oRow->COLUMN_NAME;
         }
 
-        $aTables = array_values($aTables);
+        return $aMap;
+    }
 
-        //  Grab a count of the number of rows which will be affected
-        for ($i = 0; $i < count($aTables); $i++) {
+    // --------------------------------------------------------------------------
 
-            $aColumnConditional = [];
-            foreach ($aTables[$i]->columns as $column) {
-                $aColumnConditional[] = $column . ' IN (' . implode(',', $aMergeIds) . ')';
+    /**
+     * Update merge columns
+     *
+     * @param array $aMap
+     *
+     * @return $this
+     * @throws \Nails\Auth\Exception\User\MergeException
+     * @throws \Nails\Common\Exception\FactoryException
+     * @throws \Nails\Common\Exception\ModelException
+     */
+    protected function mergeUpdateColumns(array $aMap, int $iKeepId, array $aMergeIds): self
+    {
+        /** @var Database $oDb */
+        $oDb = Factory::service('Database');
+
+        foreach ($aMap as $sTable => $aColumns) {
+
+            foreach ($aColumns as $sColumn) {
+                $oDb->set($sColumn, $iKeepId);
             }
 
-            $sQuery  = 'SELECT COUNT(*) AS numrows FROM  ' . $aTables[$i]->name . ' WHERE ' . implode(' OR ', $aColumnConditional);
-            $oResult = $oDb->query($sQuery)->row();
-
-            if (empty($oResult->numrows)) {
-                $aTables[$i] = null;
-            } else {
-                $aTables[$i]->numRows = $oResult->numrows;
-            }
-        }
-
-        $aTables = array_values(array_filter($aTables));
-
-        // --------------------------------------------------------------------------
-
-        if ($bIsPreview) {
-
-            $out = (object) [
-                'user'  => $this->getById($iUserId),
-                'merge' => [],
-            ];
-
-            foreach ($aMergeIds as $iMergeUserId) {
-                $out->merge[] = $this->getById($iMergeUserId);
+            //  Catch the email table, additional logic required
+            if ($sTable === $this->oEmailModel->getTableName()) {
+                $oDb->set('is_primary', false);
             }
 
-            $out->tables       = $aTables;
-            $out->ignoreTables = $aIgnoreTables;
+            $oDb->where_in($sColumn, $aMergeIds);
 
-        } else {
-
-            $oDb->transaction()->start();
-
-            //  For each table update the user columns
-            for ($i = 0; $i < count($aTables); $i++) {
-
-                foreach ($aTables[$i]->columns as $column) {
-
-                    //  Additional updates for certain tables
-                    switch ($aTables[$i]->name) {
-                        case $this->oEmailModel->getTableName():
-                            $oDb->set('is_primary', false);
-                            break;
-                    }
-
-                    $oDb->set($column, $iUserId);
-                    $oDb->where_in($column, $aMergeIds);
-                    if (!$oDb->update($aTables[$i]->name)) {
-                        $this->setError(
-                            'Failed to migrate column "' . $column . '" in table "' . $aTables[$i]->name . '"'
-                        );
-                        $oDb->transaction()->rollback();
-                        return false;
-                    }
-                }
-            }
-
-            //  Now delete each user
-            for ($i = 0; $i < count($aMergeIds); $i++) {
-                if (!$this->destroy($aMergeIds[$i])) {
-                    $this->setError('Failed to delete user "' . $aMergeIds[$i] . '" ');
-                    $oDb->transaction()->rollback();
-                    return false;
-                }
-            }
-
-            if ($oDb->transaction()->status() === false) {
-                $oDb->transaction()->rollback();
-                $out = false;
-            } else {
-                $oDb->transaction()->commit();
-                $out = true;
+            if (!$oDb->update($sTable)) {
+                throw new MergeException(sprintf(
+                    'Failed to migrate column "%s" in table "%s"',
+                    $sColumn,
+                    $sTable
+                ));
             }
         }
 
-        return $out;
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Deletes merged users
+     *
+     * @return $this
+     * @throws \Nails\Auth\Exception\User\MergeException
+     * @throws \Nails\Common\Exception\FactoryException
+     * @throws \Nails\Common\Exception\ModelException
+     */
+    protected function mergeDeleteMergedUsers(array $aMergeIds): self
+    {
+        foreach ($aMergeIds as $iMergeId) {
+            if (!$this->destroy($iMergeId)) {
+                throw new MergeException(sprintf(
+                    'Failed to delete user "%s"',
+                    $iMergeId,
+                ));
+            }
+        }
+
+        return $this;
     }
 
     // --------------------------------------------------------------------------

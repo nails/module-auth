@@ -60,4 +60,28 @@ class Events extends Base
      * @param int $iId The ID of the user who logged out
      */
     const USER_LOG_OUT = 'AUTH:USER:LOGGED_OUT';
+
+    /**
+     * Fired before users are merged
+     *
+     * @param int   $iKeepId   The ID of the user who is to be kept
+     * @param int[] $aMergeIds The IDs of the users who will be merged into $iKeepId
+     */
+    const USER_MERGE_PRE = 'AUTH:USER:MERGE:PRE';
+
+    /**
+     * Fired after users are merged, but before users are deleted
+     *
+     * @param int   $iKeepId   The ID of the user who was kept
+     * @param int[] $aMergeIds The IDs of the users who were merged into $iKeepId
+     */
+    const USER_MERGE_POST = 'AUTH:USER:MERGE:POST';
+
+    /**
+     * Fired after merged users are deleted
+     *
+     * @param int   $iKeepId   The ID of the user who was kept
+     * @param int[] $aMergeIds The IDs of the users who were merged into $iKeepId
+     */
+    const USER_MERGE_COMPLETE = 'AUTH:USER:MERGE:COMPLETE';
 }
