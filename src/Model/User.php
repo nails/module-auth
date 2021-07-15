@@ -2556,12 +2556,12 @@ class User extends Base
     /**
      * Rewards a user for their referral
      *
-     * @param int $iUserId    The ID of the user who signed up
-     * @param int $referrerId The ID of the user who made the referral
+     * @param int $iUserId     The ID of the user who signed up
+     * @param int $iReferrerId The ID of the user who made the referral
      *
      * @return void
      */
-    public function rewardReferral($iUserId, $referrerId)
+    public function rewardReferral($iUserId, $iReferrerId)
     {
         // @todo Implement this method where appropriate
     }

@@ -3,11 +3,10 @@
 /**
  * This model contains all methods for interacting with user groups.
  *
- * @package     Nails
- * @subpackage  module-auth
- * @category    Model
- * @author      Nails Dev Team
- * @link
+ * @package    Nails
+ * @subpackage module-auth
+ * @category   Model
+ * @author     Nails Dev Team
  */
 
 namespace Nails\Auth\Model\User;
@@ -19,6 +18,11 @@ use Nails\Common\Service\Database;
 use Nails\Config;
 use Nails\Factory;
 
+/**
+ * Class AccessToken
+ *
+ * @package Nails\Auth\Model\User
+ */
 class AccessToken extends Base
 {
     /**

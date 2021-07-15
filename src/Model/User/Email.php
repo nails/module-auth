@@ -3,11 +3,10 @@
 /**
  * This model contains all methods for interacting with user emails.
  *
- * @package     Nails
- * @subpackage  module-auth
- * @category    Model
- * @author      Nails Dev Team
- * @link
+ * @package    Nails
+ * @subpackage module-auth
+ * @category   Model
+ * @author     Nails Dev Team
  */
 
 namespace Nails\Auth\Model\User;
@@ -15,6 +14,11 @@ namespace Nails\Auth\Model\User;
 use Nails\Auth\Constants;
 use Nails\Common\Model\Base;
 
+/**
+ * Class Email
+ *
+ * @package Nails\Auth\Model\User
+ */
 class Email extends Base
 {
     /**
