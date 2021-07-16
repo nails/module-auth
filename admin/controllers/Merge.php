@@ -59,11 +59,12 @@ class Merge extends BaseAdmin
      */
     public static function permissions(): array
     {
-        $aPermissions = parent::permissions();
-
-        $aPermissions['users'] = 'Can merge users';
-
-        return $aPermissions;
+        return array_merge(
+            parent::permissions(),
+            [
+                'users' => 'Can merge users',
+            ]
+        );
     }
 
     // --------------------------------------------------------------------------
@@ -88,51 +89,45 @@ class Merge extends BaseAdmin
 
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
+        /** @var UserFeedback $oUserFeedback */
+        $oUserFeedback = Factory::service('UserFeedback');
+        /** @var User $oUserModel */
+        $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
+
         if ($oInput->post()) {
             try {
 
                 /** @var FormValidation $oFormValidation */
                 $oFormValidation = Factory::service('FormValidation');
+                $oFormValidation
+                    ->buildValidator([
+                        'user_id'   => [
+                            $oFormValidation::RULE_REQUIRED,
+                        ],
+                        'merge_ids' => [
+                            $oFormValidation::RULE_REQUIRED,
+                            function ($mInput) use ($oInput) {
+                                $aMergeIds = explode(',', $mInput);
+                                if (in_array(activeUser('id'), $aMergeIds)) {
+                                    throw new ValidationException('You cannot list yourself as a user to merge.');
 
-                $oFormValidation->set_rules('user_id', '', 'required');
-                $oFormValidation->set_rules('merge_ids', '', 'required');
+                                } elseif (in_array($oInput->post('user_id'), $aMergeIds)) {
+                                    throw new ValidationException('You cannot merge the target user into itself.');
+                                }
+                            },
+                        ],
+                    ])
+                    ->run();
 
-                $oFormValidation->set_message('required', lang('fv_required'));
+                $oUserModel->merge(
+                    (int) $oInput->post('user_id'),
+                    explode(',', $oInput->post('merge_ids'))
+                );
 
-                if (!$oFormValidation->run()) {
-                    throw new ValidationException(lang('fv_there_were_errors'));
-                }
+                $oUserFeedback->success('Users were merged successfully.');
+                redirect('admin/auth/merge');
 
-                $iUserId   = (int) $oInput->post('user_id') ?: null;
-                $aMergeIds = explode(',', $oInput->post('merge_ids'));
-                $bPreview  = !((bool) $oInput->post('do_merge'));
-
-                if (in_array(activeUser('id'), $aMergeIds)) {
-                    throw new ValidationException('You cannot list yourself as a user to merge.');
-                }
-
-                /** @var User $oUserModel */
-                $oUserModel   = Factory::model('User', Constants::MODULE_SLUG);
-                $oMergeResult = $oUserModel->merge($iUserId, $aMergeIds, $bPreview);
-
-                if (empty($oMergeResult)) {
-                    throw new \RuntimeException('Failed to merge users. ' . $oUserModel->lastError());
-                }
-
-                if ($bPreview) {
-
-                    $this->data['mergeResult'] = $oMergeResult;
-                    Helper::loadView('preview');
-                    return;
-
-                } else {
-                    /** @var UserFeedback $oUserFeedback */
-                    $oUserFeedback = Factory::service('UserFeedback');
-                    $oUserFeedback->success('Users were merged successfully.');
-                    redirect('admin/auth/merge');
-                }
-
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $this->data['error'] = $e->getMessage();
             }
         }
