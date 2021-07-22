@@ -67,18 +67,18 @@ class Group extends Base
 
         //  Unset old default
         $oDb->set('is_default', false);
-        $oDb->set('modified', 'NOW()', false);
+        $oDb->set($this->getColumnModified(), 'NOW()', false);
         if (isLoggedIn()) {
-            $oDb->set('modified_by', activeUser('id'));
+            $oDb->set($this->getColumnModifiedBy(), activeUser('id'));
         }
         $oDb->where('is_default', true);
         $oDb->update($this->getTableName());
 
         //  Set new default
         $oDb->set('is_default', true);
-        $oDb->set('modified', 'NOW()', false);
+        $oDb->set($this->getColumnModified(), 'NOW()', false);
         if (isLoggedIn()) {
-            $oDb->set('modified_by', activeUser('id'));
+            $oDb->set($this->getColumnModifiedBy(), activeUser('id'));
         }
         $oDb->where('id', $oGroup->id);
         $oDb->update($this->getTableName());

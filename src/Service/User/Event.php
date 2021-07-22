@@ -95,13 +95,13 @@ class Event
         ];
 
         if (!empty($iCreatedBy)) {
-            $aData['created_by']  = $iCreatedBy;
-            $aData['modified_by'] = $iCreatedBy;
+            $aData[$this->oModel->getColumnCreatedBy()]  = $iCreatedBy;
+            $aData[$this->oModel->getColumnModifiedBy()] = $iCreatedBy;
         }
 
         if (!empty($sCreated)) {
-            $aData['created']  = $sCreated;
-            $aData['modified'] = $sCreated;
+            $aData[$this->oModel->getColumnCreated()]  = $sCreated;
+            $aData[$this->oModel->getColumnModified()] = $sCreated;
         }
 
         // --------------------------------------------------------------------------
