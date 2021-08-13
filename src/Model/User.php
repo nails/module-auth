@@ -842,7 +842,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    protected function getCountCommon(array $aData = []): void
+    protected function getCountCommon(array &$aData = []): void
     {
         //  Define the selects
         /** @var Database $oDb */
