@@ -48,4 +48,11 @@ class Blocker extends Base
      * @var bool
      */
     const AUTO_SET_USER = false;
+
+    /**
+     * Disable setting of created and modified columns
+     *
+     * @var bool
+     */
+    const AUTO_SET_TIMESTAMP = false;
 }
