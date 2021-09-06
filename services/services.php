@@ -44,42 +44,49 @@ return [
         },
     ],
     'models'    => [
-        'User'            => function (): Model\User {
+        'User'             => function (): Model\User {
             if (class_exists('\App\Auth\Model\User')) {
                 return new \App\Auth\Model\User();
             } else {
                 return new Model\User();
             }
         },
-        'UserAccessToken' => function (): Model\User\AccessToken {
+        'UserAccessToken'  => function (): Model\User\AccessToken {
             if (class_exists('\App\Auth\Model\User\AccessToken')) {
                 return new \App\Auth\Model\User\AccessToken();
             } else {
                 return new Model\User\AccessToken();
             }
         },
-        'UserEmail'       => function (): Model\User\Email {
+        'UserEmail'        => function (): Model\User\Email {
             if (class_exists('\App\Auth\Model\User\Email')) {
                 return new \App\Auth\Model\User\Email();
             } else {
                 return new Model\User\Email();
             }
         },
-        'UserEvent'       => function (): Model\User\Event {
+        'UserEmailBlocker' => function (): Model\User\Email\Blocker {
+            if (class_exists('\App\Auth\Model\User\Email\Blocker')) {
+                return new \App\Auth\Model\User\Email\Blocker();
+            } else {
+                return new Model\User\Email\Blocker();
+            }
+        },
+        'UserEvent'        => function (): Model\User\Event {
             if (class_exists('\App\Auth\Model\User\Event')) {
                 return new \App\Auth\Model\User\Event();
             } else {
                 return new Model\User\Event();
             }
         },
-        'UserGroup'       => function (): Model\User\Group {
+        'UserGroup'        => function (): Model\User\Group {
             if (class_exists('\App\Auth\Model\User\Group')) {
                 return new \App\Auth\Model\User\Group();
             } else {
                 return new Model\User\Group();
             }
         },
-        'UserPassword'    => function (): Model\User\Password {
+        'UserPassword'     => function (): Model\User\Password {
             if (class_exists('\App\Auth\Model\User\Password')) {
                 return new \App\Auth\Model\User\Password();
             } else {
@@ -128,6 +135,13 @@ return [
                 return new \App\Auth\Resource\User\Email($mObj);
             } else {
                 return new Resource\User\Email($mObj);
+            }
+        },
+        'UserEmailBlocker'  => function ($mObj): Resource\User\Email\Blocker {
+            if (class_exists('\App\Auth\Resource\User\Email\Blocker')) {
+                return new \App\Auth\Resource\User\Email\Blocker($mObj);
+            } else {
+                return new Resource\User\Email\Blocker($mObj);
             }
         },
         'UserEvent'         => function ($mObj): Resource\User\Event {
