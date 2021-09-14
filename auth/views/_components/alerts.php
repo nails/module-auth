@@ -1,20 +1,23 @@
 <?php
 
 $aAlerts = [
-    ['danger', $error ?? null],
-    ['danger', $negative ?? null],
-    ['success', $success ?? null],
-    ['success', $positive ?? null],
-    ['info', $info ?? null],
-    ['warning', $warning ?? null],
+    ['danger', $error],
+    ['danger', $negative],
+    ['success', $success],
+    ['success', $positive],
+    ['info', $info],
+    ['warning', $warning],
 
     //  @deprecated
-    ['warning', $message ?? null],
-    ['info', $notice ?? null],
+    ['warning', $message],
+    ['info', $notice],
 ];
 
 foreach ($aAlerts as $aAlert) {
-    [$sClass, $sMessage] = $aAlert;
+
+    [$sClass, $oMessage] = $aAlert;
+    $sMessage            = (string) $oMessage;
+
     if (!empty($sMessage)) {
         ?>
         <div class="alert alert--<?=$sClass?>">
