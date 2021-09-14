@@ -375,7 +375,9 @@ class Accounts extends DefaultController
         // --------------------------------------------------------------------------
 
         //  Attempt to create the new user account
+        /** @var Input $oInput */
         $oInput = Factory::service('Input');
+
         if ($oInput->post()) {
 
             /** @var FormValidation $oFormValidation */
@@ -442,16 +444,13 @@ class Accounts extends DefaultController
                      * might happen along the way
                      */
 
-                    /** @var UserFeedback $oUserFeedback */
-                    $oUserFeedback = Factory::service('UserFeedback');
-
                     if ($oUserModel->getErrors()) {
 
                         $sMessage = '<strong>Please note:</strong> while the user was created successfully, the ';
                         $sMessage .= 'following issues were encountered:';
                         $sMessage .= '<ul><li>' . implode('</li><li>', $oUserModel->getErrors()) . '</li></ul>';
 
-                        $oUserFeedback->warning($sMessage);
+                        $this->oUserFeedback->warning($sMessage);
                     }
 
                     // --------------------------------------------------------------------------
@@ -472,7 +471,7 @@ class Accounts extends DefaultController
 
                     // --------------------------------------------------------------------------
 
-                    $oUserFeedback->success(sprintf(
+                    $this->oUserFeedback->success(sprintf(
                         'A user account was created for <strong>%s</strong>, update their details now.',
                         $oNewUser->first_name
                     ));
@@ -484,13 +483,14 @@ class Accounts extends DefaultController
                     );
 
                 } else {
-                    $this->data['error'] = 'There was an error when creating the user ';
-                    $this->data['error'] .= 'account:<br />&rsaquo; ';
-                    $this->data['error'] .= implode('<br />&rsaquo; ', $oUserModel->getErrors());
+                    $this->oUserFeedback->error(sprintf(
+                        'There was an error when creating the user account: <br />&rsaquo; %s',
+                        implode('<br />&rsaquo; ', $oUserModel->getErrors())
+                    ));
                 }
 
             } else {
-                $this->data['error'] = lang('fv_there_were_errors');
+                $this->oUserFeedback->error(lang('fv_there_were_errors'));
             }
         }
 
@@ -529,8 +529,6 @@ class Accounts extends DefaultController
         $oUri = Factory::service('Uri');
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
 
@@ -543,20 +541,17 @@ class Accounts extends DefaultController
         $oUser = $oUserModel->getById($oUri->segment(5));
 
         if (empty($oUser)) {
-
-            $oUserFeedback->error(lang('accounts_edit_error_unknown_id'));
+            $this->oUserFeedback->error(lang('accounts_edit_error_unknown_id'));
             $this->returnToIndex();
 
         } elseif (!$oUserModel->isSuperuser() && userHasPermission('superuser', $oUser)) {
-
             //  Non-superusers editing superusers is not cool
-            $oUserFeedback->error(lang('accounts_edit_error_noteditable'));
+            $this->oUserFeedback->error(lang('accounts_edit_error_noteditable'));
             $this->returnToIndex();
 
         } elseif (activeUser('id') != $oUser->id && !userHasPermission('admin:auth:accounts:editOthers')) {
-
             //  Is this user editing someone other than themselves? If so, do they have permission?
-            $oUserFeedback->error(lang('accounts_edit_error_noteditable'));
+            $this->oUserFeedback->error(lang('accounts_edit_error_noteditable'));
             $this->returnToIndex();
         }
 
@@ -606,7 +601,7 @@ class Accounts extends DefaultController
                     $oUserModel->getById($oUser->id)
                 );
 
-                $oUserFeedback->success(sprintf(
+                $this->oUserFeedback->success(sprintf(
                     'User %s updated successfully.',
                     $oUser->name
                 ));
@@ -618,7 +613,7 @@ class Accounts extends DefaultController
                 );
 
             } catch (ValidationException $e) {
-                $this->data['error'] = $e->getMessage();
+                $this->oUserFeedback->error($e->getMessage());
             }
         }
 
@@ -667,8 +662,6 @@ class Accounts extends DefaultController
         $oUri = Factory::service('Uri');
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
 
@@ -679,7 +672,7 @@ class Accounts extends DefaultController
 
         //  Non-superusers editing superusers is not cool
         if (!isSuperuser() && userHasPermission('superuser', $oUser)) {
-            $oUserFeedback->error(lang('accounts_edit_error_noteditable'));
+            $this->oUserFeedback->error(lang('accounts_edit_error_noteditable'));
             $this->returnToIndex();
         }
 
@@ -691,7 +684,7 @@ class Accounts extends DefaultController
         if (!$oUser) {
             show404();
         } elseif ($oUser->id == activeUser('id')) {
-            $oUserFeedback->error(lang('accounts_delete_error_selfie'));
+            $this->oUserFeedback->error(lang('accounts_delete_error_selfie'));
             $this->returnToIndex();
         }
 
@@ -700,7 +693,7 @@ class Accounts extends DefaultController
         //  Define messages
         if ($oUserModel->destroy($iUserId)) {
 
-            $oUserFeedback->success(lang('accounts_delete_success', $oUser->name));
+            $this->oUserFeedback->success(lang('accounts_delete_success', $oUser->name));
 
             //  Update admin changelog
             $this->oChangeLogModel->add(
@@ -712,7 +705,7 @@ class Accounts extends DefaultController
             );
 
         } else {
-            $oUserFeedback->error(lang('accounts_delete_error', $oUser->name));
+            $this->oUserFeedback->error(lang('accounts_delete_error', $oUser->name));
         }
 
         // --------------------------------------------------------------------------
@@ -763,14 +756,16 @@ class Accounts extends DefaultController
         $aUsers = array_values($aUsers);
 
         if (!empty($aRemovedUsers)) {
-            $this->data['warning'] = 'You do not have permission to change the group of the following users: ' .
+            $this->oUserFeedback->warning(sprintf(
+                'You do not have permission to change the group of the following users: %s',
                 implode(', ', array_map(function ($oUser) {
                     return '<br><strong>#' . $oUser->id . ' ' . $oUser->name . '</strong>';
-                }, $aRemovedUsers));
+                }, $aRemovedUsers))
+            ));
         }
 
         if (empty($aUsers)) {
-            $this->data['error'] = 'No users selected';
+            $this->oUserFeedback->error('No users selected.');
         }
 
         // --------------------------------------------------------------------------
@@ -797,13 +792,13 @@ class Accounts extends DefaultController
         // --------------------------------------------------------------------------
 
         if ($oInput->post()) {
+
+
             if ($oUserGroupModel->changeUserGroup(arrayExtractProperty($aUsers, 'id'), (int) $oInput->post('group_id'))) {
-                /** @var UserFeedback $oUserFeedback */
-                $oUserFeedback = Factory::service('UserFeedback');
-                $oUserFeedback->success('User group was updated successfully.');
+                $this->oUserFeedback->success('User group was updated successfully.');
                 $this->returnToIndex();
             } else {
-                $this->data['error'] = 'Failed to update user group. ' . $oUserGroupModel->lastError();
+                $this->oUserFeedback->error('Failed to update user group. ' . $oUserGroupModel->lastError());
             }
         }
 
@@ -838,8 +833,6 @@ class Accounts extends DefaultController
         $oUri = Factory::service('Uri');
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
 
@@ -851,7 +844,7 @@ class Accounts extends DefaultController
 
         //  Non-superusers editing superusers is not cool
         if (!isSuperuser() && userHasPermission('superuser', $oUser)) {
-            $oUserFeedback->error(lang('accounts_edit_error_noteditable'));
+            $this->oUserFeedback->error(lang('accounts_edit_error_noteditable'));
             $this->returnToIndex();
         }
 
@@ -870,11 +863,11 @@ class Accounts extends DefaultController
 
         //  Define messages
         if (!$oUser->is_suspended) {
-            $oUserFeedback->error(
+            $this->oUserFeedback->error(
                 lang('accounts_suspend_error', $oUser->name)
             );
         } else {
-            $oUserFeedback->success(
+            $this->oUserFeedback->success(
                 lang('accounts_suspend_success', $oUser->name)
             );
         }
@@ -921,8 +914,6 @@ class Accounts extends DefaultController
         $oUri = Factory::service('Uri');
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
 
@@ -934,7 +925,7 @@ class Accounts extends DefaultController
 
         //  Non-superusers editing superusers is not cool
         if (!isSuperuser() && userHasPermission('superuser', $oUser)) {
-            $oUserFeedback->error(lang('accounts_edit_error_noteditable'));
+            $this->oUserFeedback->error(lang('accounts_edit_error_noteditable'));
             $this->returnToIndex();
         }
 
@@ -953,9 +944,9 @@ class Accounts extends DefaultController
 
         //  Define messages
         if ($oUser->is_suspended) {
-            $oUserFeedback->error(lang('accounts_unsuspend_error', $oUser->name));
+            $this->oUserFeedback->error(lang('accounts_unsuspend_error', $oUser->name));
         } else {
-            $oUserFeedback->success(lang('accounts_unsuspend_success', $oUser->name));
+            $this->oUserFeedback->success(lang('accounts_unsuspend_success', $oUser->name));
         }
 
         // --------------------------------------------------------------------------
@@ -990,8 +981,6 @@ class Accounts extends DefaultController
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
 
@@ -1006,25 +995,25 @@ class Accounts extends DefaultController
                 $bIsVerified = (bool) $oInput->post('is_verified');
 
                 if ($oUserModel->emailAdd($sEmail, $iId, $bIsPrimary, $bIsVerified)) {
-                    $oUserFeedback->success('"' . $sEmail . '" was added successfully. ');
+                    $this->oUserFeedback->success('"' . $sEmail . '" was added successfully. ');
                 } else {
-                    $oUserFeedback->error('Failed to add email. ' . $oUserModel->lastError());
+                    $this->oUserFeedback->error('Failed to add email. ' . $oUserModel->lastError());
                 }
                 break;
 
             case 'delete':
                 if ($oUserModel->emailDelete($sEmail, $iId)) {
-                    $oUserFeedback->success('"' . $sEmail . '" was deleted successfully. ');
+                    $this->oUserFeedback->success('"' . $sEmail . '" was deleted successfully. ');
                 } else {
-                    $oUserFeedback->error('Failed to delete email "' . $sEmail . '". ' . $oUserModel->lastError());
+                    $this->oUserFeedback->error('Failed to delete email "' . $sEmail . '". ' . $oUserModel->lastError());
                 }
                 break;
 
             case 'makePrimary':
                 if ($oUserModel->emailMakePrimary($sEmail, $iId)) {
-                    $oUserFeedback->success('"' . $sEmail . '" was set as the primary email.');
+                    $this->oUserFeedback->success('"' . $sEmail . '" was set as the primary email.');
                 } else {
-                    $oUserFeedback->error('Failed to mark "' . $sEmail . '" as the primary address. ' . $oUserModel->lastError());
+                    $this->oUserFeedback->error('Failed to mark "' . $sEmail . '" as the primary address. ' . $oUserModel->lastError());
                 }
                 break;
 
@@ -1040,16 +1029,16 @@ class Accounts extends DefaultController
                 }
 
                 if (!empty($sCode) && $oUserModel->emailVerify($iId, $sCode)) {
-                    $oUserFeedback->success('"' . $sEmail . '" was verified successfully.');
+                    $this->oUserFeedback->success('"' . $sEmail . '" was verified successfully.');
                 } elseif (empty($sCode)) {
-                    $oUserFeedback->error('Failed to mark "' . $sEmail . '" as verified. Could not determine email\'s security code.');
+                    $this->oUserFeedback->error('Failed to mark "' . $sEmail . '" as verified. Could not determine email\'s security code.');
                 } else {
-                    $oUserFeedback->error('Failed to mark "' . $sEmail . '" as verified. ' . $oUserModel->lastError());
+                    $this->oUserFeedback->error('Failed to mark "' . $sEmail . '" as verified. ' . $oUserModel->lastError());
                 }
                 break;
 
             default:
-                $oUserFeedback->error('Unknown action: "' . $sAction . '"');
+                $this->oUserFeedback->error('Unknown action: "' . $sAction . '"');
                 break;
         }
 

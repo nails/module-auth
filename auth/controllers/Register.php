@@ -18,7 +18,6 @@ use Nails\Auth\Service\SocialSignOn;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\Session;
-use Nails\Common\Service\UserFeedback;
 use Nails\Config;
 use Nails\Factory;
 
@@ -58,8 +57,6 @@ class Register extends Base
     {
         /** @var Session $oSession */
         $oSession = Factory::service('Session');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var FormValidation $oFormValidation */
         $oFormValidation = Factory::service('FormValidation');
         /** @var Input $oInput */
@@ -75,7 +72,7 @@ class Register extends Base
 
         //  If you're logged in you shouldn't be accessing this method
         if (isLoggedIn()) {
-            $oUserFeedback->error(lang('auth_no_access_already_logged_in', activeUser('email')));
+            $this->oUserFeedback->error(lang('auth_no_access_already_logged_in', activeUser('email')));
             redirect('/');
         }
 
@@ -173,7 +170,7 @@ class Register extends Base
                     redirect('auth/login');
 
                 } else {
-                    $oUserFeedback->success(lang('auth_register_flashdata_welcome', $oUser->first_name));
+                    $this->oUserFeedback->success(lang('auth_register_flashdata_welcome', $oUser->first_name));
                 }
 
                 // --------------------------------------------------------------------------
@@ -193,10 +190,10 @@ class Register extends Base
                 redirect($sRedirectUrl);
 
             } catch (\Nails\Common\Exception\ValidationException $e) {
-                $this->data['error'] = $e->getMessage();
+                $this->oUserFeedback->error($e->getMessage());
 
             } catch (AuthException $e) {
-                $this->data['error'] = $e->getMessage();
+                $this->oUserFeedback->error($e->getMessage());
             }
         }
 

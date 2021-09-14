@@ -17,7 +17,6 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\NailsException;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
-use Nails\Common\Service\UserFeedback;
 use Nails\Factory;
 
 class MfaQuestion extends BaseMfa
@@ -72,7 +71,7 @@ class MfaQuestion extends BaseMfa
             if ($bIsValid) {
                 $this->loginUser();
             } else {
-                $this->data['error'] = lang('auth_twofactor_answer_incorrect');
+                $this->oUserFeedback->error(lang('auth_twofactor_answer_incorrect'));
                 $this->askQuestion();
             }
 
@@ -207,9 +206,7 @@ class MfaQuestion extends BaseMfa
 
                             if ($oAuthService->mfaQuestionSet($this->mfaUser->id, $aData)) {
 
-                                /** @var UserFeedback $oUserFeedback */
-                                $oUserFeedback = Factory::service('UserFeedback');
-                                $oUserFeedback->success(
+                                $this->oUserFeedback->success(
                                     '<strong>Multi Factor Authentication Enabled!</strong><br />You successfully ' .
                                     'set your security questions. You will be asked to answer one of them every time ' .
                                     'you log in.'
@@ -218,18 +215,20 @@ class MfaQuestion extends BaseMfa
                                 $this->loginUser();
 
                             } else {
-
-                                $oUserModel          = Factory::model('User', Constants::MODULE_SLUG);
-                                $this->data['error'] = lang('auth_twofactor_question_set_fail');
-                                $this->data['error'] .= ' ' . $oUserModel->lastError();
+                                $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
+                                $this->oUserFeedback->error(sprintf(
+                                    '%s %s',
+                                    lang('auth_twofactor_question_set_fail'),
+                                    $oUserModel->lastError()
+                                ));
                             }
 
                         } else {
-                            $this->data['error'] = lang('auth_twofactor_question_unique');
+                            $this->oUserFeedback->error(lang('auth_twofactor_question_unique'));
                         }
 
                     } else {
-                        $this->data['error'] = lang('fv_there_were_errors');
+                        $this->oUserFeedback->error(lang('fv_there_were_errors'));
                     }
                 }
 

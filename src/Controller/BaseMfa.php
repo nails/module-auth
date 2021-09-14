@@ -17,7 +17,6 @@ use Nails\Auth\Model\User;
 use Nails\Auth\Service\Authentication;
 use Nails\Common\Service\Config;
 use Nails\Common\Service\Input;
-use Nails\Common\Service\UserFeedback;
 use Nails\Common\Service\Uri;
 use Nails\Factory;
 
@@ -56,8 +55,6 @@ abstract class BaseMfa extends Base
 
     protected function validateToken()
     {
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
         /** @var Input $oInput */
@@ -71,7 +68,7 @@ abstract class BaseMfa extends Base
         $this->mfaUser  = $oUserModel->getById($iUserId);
 
         if (!$this->mfaUser) {
-            $oUserFeedback->error(lang('auth_twofactor_token_unverified'));
+            $this->oUserFeedback->error(lang('auth_twofactor_token_unverified'));
             if ($this->returnTo) {
                 redirect('auth/login?return_to=' . $this->returnTo);
             } else {
@@ -103,7 +100,7 @@ abstract class BaseMfa extends Base
         $oAuthService = Factory::service('Authentication', Constants::MODULE_SLUG);
         if (!$oAuthService->mfaTokenValidate($this->mfaUser->id, $sSalt, $sToken, $sIpAddress)) {
 
-            $oUserFeedback->error(lang('auth_twofactor_token_unverified'));
+            $this->oUserFeedback->error(lang('auth_twofactor_token_unverified'));
 
             $aQuery = array_filter([
                 'return_to' => $this->returnTo,
@@ -163,9 +160,6 @@ abstract class BaseMfa extends Base
         // --------------------------------------------------------------------------
 
         //  Say hello
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
-
         if ($this->mfaUser->last_login) {
 
             /** @var Config $oConfig */
@@ -176,7 +170,7 @@ abstract class BaseMfa extends Base
                 : toUserDatetime($this->mfaUser->last_login);
 
             if ($oConfig->item('authShowLastIpOnLogin')) {
-                $oUserFeedback->success(lang(
+                $this->oUserFeedback->success(lang(
                     'auth_login_ok_welcome_with_ip',
                     [
                         $this->mfaUser->first_name,
@@ -186,7 +180,7 @@ abstract class BaseMfa extends Base
                 ));
 
             } else {
-                $oUserFeedback->success(lang(
+                $this->oUserFeedback->success(lang(
                     'auth_login_ok_welcome',
                     [
                         $this->mfaUser->first_name,
@@ -196,7 +190,7 @@ abstract class BaseMfa extends Base
             }
 
         } else {
-            $oUserFeedback->success(lang(
+            $this->oUserFeedback->success(lang(
                 'auth_login_ok_welcome_notime',
                 [
                     $this->mfaUser->first_name,

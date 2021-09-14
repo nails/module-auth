@@ -24,7 +24,6 @@ use Nails\Common\Factory\Model\Field;
 use Nails\Common\Service\DateTime;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
-use Nails\Common\Service\UserFeedback;
 use Nails\Common\Service\View;
 use Nails\Config;
 use Nails\Factory;
@@ -78,9 +77,9 @@ class Import extends BaseAdmin
                 }
 
             } catch (ValidationException $e) {
-                $this->data['error'] = $e->getMessage();
+                $this->oUserFeedback->error($e->getMessage());
             } catch (\Exception $e) {
-                $this->data['error'] = $e->getMessage();
+                $this->oUserFeedback->error($e->getMessage());
             }
         }
 
@@ -699,11 +698,8 @@ class Import extends BaseAdmin
             true
         );
 
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
-
         if (!empty($iSuccess)) {
-            $oUserFeedback->success(sprintf(
+            $this->oUserFeedback->success(sprintf(
                 '%s user accounts created successfully. <a href="%s" style="text-decoration: underline">See log for details.</a>',
                 $iSuccess,
                 cdnServe($oLog->id, true)
@@ -711,7 +707,7 @@ class Import extends BaseAdmin
         }
 
         if (!empty($iSkipped)) {
-            $oUserFeedback->warning(sprintf(
+            $this->oUserFeedback->warning(sprintf(
                 '%s user accounts skipped. <a href="%s" style="text-decoration: underline">See log for details.</a>',
                 $iSkipped,
                 cdnServe($oLog->id, true)
@@ -719,7 +715,7 @@ class Import extends BaseAdmin
         }
 
         if (!empty($iError)) {
-            $oUserFeedback->error(sprintf(
+            $this->oUserFeedback->error(sprintf(
                 '%s user accounts encountered errors. <a href="%s" style="text-decoration: underline">See log for details.</a>',
                 $iError,
                 cdnServe($oLog->id, true)

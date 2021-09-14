@@ -18,7 +18,6 @@ use Nails\Auth\Service\Authentication;
 use Nails\Common\Service\Config;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
-use Nails\Common\Service\UserFeedback;
 use Nails\Common\Service\Uri;
 use Nails\Factory;
 
@@ -36,9 +35,7 @@ class PasswordReset extends Base
 
         //  If user is logged in they shouldn't be accessing this method
         if (isLoggedIn()) {
-            /** @var UserFeedback $oUserFeedback */
-            $oUserFeedback = Factory::service('UserFeedback');
-            $oUserFeedback->error(lang('auth_no_access_already_logged_in', activeUser('email')));
+            $this->oUserFeedback->error(lang('auth_no_access_already_logged_in', activeUser('email')));
             redirect('/');
         }
     }
@@ -109,9 +106,7 @@ class PasswordReset extends Base
                                     $bMfaValid = true;
 
                                 } else {
-
-                                    $this->data['error'] = 'Sorry, the answer to your security ';
-                                    $this->data['error'] .= 'question was incorrect.';
+                                    $this->oUserFeedback->error('Sorry, the answer to your security question was incorrect.');
                                 }
                             }
 
@@ -137,13 +132,13 @@ class PasswordReset extends Base
                                 );
 
                                 if ($isValid) {
-
                                     $bMfaValid = true;
 
                                 } else {
-
-                                    $this->data['error'] = 'Sorry, that code could not be validated. ';
-                                    $this->data['error'] .= $oAuthService->lastError();
+                                    $this->oUserFeedback->error(sprintf(
+                                        'Sorry, that code could not be validated. %s',
+                                        $oAuthService->lastError()
+                                    ));
                                 }
                             }
 
@@ -206,9 +201,6 @@ class PasswordReset extends Base
                     if ($oLoginUser) {
 
                         //  Say hello
-                        /** @var UserFeedback $oUserFeedback */
-                        $oUserFeedback = Factory::service('UserFeedback');
-
                         if ($oLoginUser->last_login) {
 
                             if ($oConfig->item('authShowNicetimeOnLogin')) {
@@ -219,7 +211,7 @@ class PasswordReset extends Base
 
                             if ($oConfig->item('authShowLastIpOnLogin')) {
 
-                                $oUserFeedback->success(lang(
+                                $this->oUserFeedback->success(lang(
                                     'auth_login_ok_welcome_with_ip',
                                     [
                                         $oLoginUser->first_name,
@@ -229,7 +221,7 @@ class PasswordReset extends Base
                                 ));
 
                             } else {
-                                $oUserFeedback->success(lang(
+                                $this->oUserFeedback->success(lang(
                                     'auth_login_ok_welcome',
                                     [
                                         $oLoginUser->first_name,
@@ -239,7 +231,7 @@ class PasswordReset extends Base
                             }
 
                         } else {
-                            $oUserFeedback->success(lang(
+                            $this->oUserFeedback->success(lang(
                                 'auth_login_ok_welcome_notime',
                                 [
                                     $oLoginUser->first_name,
@@ -262,14 +254,14 @@ class PasswordReset extends Base
                         }
 
                     } else {
-                        $this->data['error'] = lang('auth_forgot_reset_badlogin', siteUrl('auth/login'));
+                        $this->oUserFeedback->error(lang('auth_forgot_reset_badlogin', siteUrl('auth/login')));
                     }
 
                 } catch (\Nails\Common\Exception\ValidationException $e) {
-                    $this->data['error'] = $e->getMessage();
+                    $this->oUserFeedback->error($e->getMessage());
 
                 } catch (\Nails\Auth\Exception\AuthException $e) {
-                    $this->data['error'] = $e->getMessage();
+                    $this->oUserFeedback->error($e->getMessage());
                 }
             }
 
@@ -282,20 +274,20 @@ class PasswordReset extends Base
             $this->data['return_to']     = $oInput->get('return_to');
             $this->data['remember']      = $oInput->get('remember');
 
-            if (empty($this->data['warning'])) {
+            if (empty((string) $this->data['warning'])) {
 
                 switch ($oInput->get('reason')) {
 
                     case 'EXPIRED':
-                        $this->data['warning'] = lang(
+                        $this->oUserFeedback->warning(lang(
                             'auth_login_pw_expired',
                             $oUserPasswordModel->expiresAfter($oUser->group_id)
-                        );
+                        ));
                         break;
 
                     case 'TEMP':
                     default:
-                        $this->data['warning'] = lang('auth_login_pw_temp');
+                    $this->oUserFeedback->warning(lang('auth_login_pw_temp'));
                         break;
                 }
             }

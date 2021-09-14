@@ -239,23 +239,20 @@ class Settings extends BaseAdmin
                     }
 
                     if ($bRollback) {
-
                         $oDb->transaction()->rollback();
-                        $this->data['error'] = 'There was a problem saving authentication settings.';
+                        $this->oUserFeedback->error('There was a problem saving authentication settings.');
 
                     } else {
-
                         $oDb->transaction()->commit();
-                        $this->data['success'] = 'Authentication settings were saved.';
-
+                        $this->oUserFeedback->success('Authentication settings were saved.');
                     }
 
                 } else {
-                    $this->data['error'] = 'There was a problem saving authentication settings. ' . $error;
+                    $this->oUserFeedback->success('There was a problem saving authentication settings. ' . $error);
                 }
 
             } else {
-                $this->data['warning'] = 'No settings to save.';
+                $this->oUserFeedback->warning('No settings to save.');
             }
         }
 

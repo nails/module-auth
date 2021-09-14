@@ -24,7 +24,6 @@ use Nails\Common\Exception\NailsException;
 use Nails\Common\Service\Config;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
-use Nails\Common\Service\UserFeedback;
 use Nails\Common\Service\Uri;
 use Nails\Factory;
 
@@ -59,8 +58,6 @@ class PasswordForgotten extends Base
         $oFormValidation = Factory::service('FormValidation');
         /** @var Config $oConfig */
         $oConfig = Factory::service('Config');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var Password $oUserPasswordModel */
         $oUserPasswordModel = Factory::model('UserPassword', Constants::MODULE_SLUG);
         /** @var User $oUserModel */
@@ -160,11 +157,11 @@ class PasswordForgotten extends Base
                     );
                 }
 
-                $oUserFeedback->success(lang('auth_forgot_success'));
+                $this->oUserFeedback->success(lang('auth_forgot_success'));
                 redirect('auth/login');
 
             } catch (Exception $e) {
-                $this->data['error'] = $e->getMessage();
+                $this->oUserFeedback->error($e->getMessage());
             }
         }
 
@@ -199,8 +196,6 @@ class PasswordForgotten extends Base
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var Config $oConfig */
         $oConfig = Factory::service('Config');
         /** @var Authentication $oAuthService */
@@ -221,12 +216,12 @@ class PasswordForgotten extends Base
         if ($mNewPassword === 'EXPIRED') {
 
             //  Code has expired
-            $this->data['error'] = lang('auth_forgot_expired_code');
+            $this->oUserFeedback->error(lang('auth_forgot_expired_code'));
 
         } elseif ($mNewPassword === false) {
 
             //  Code was invalid
-            $this->data['error'] = lang('auth_forgot_invalid_code');
+            $this->oUserFeedback->error(lang('auth_forgot_invalid_code'));
 
         } else {
 
@@ -255,7 +250,7 @@ class PasswordForgotten extends Base
                             // --------------------------------------------------------------------------
 
                             //  Set some flashdata for the login page when they go to it; just a little reminder
-                            $oUserFeedback->warning(lang('auth_forgot_reminder', htmlentities($mNewPassword['password'])));
+                            $this->oUserFeedback->warning(lang('auth_forgot_reminder', htmlentities($mNewPassword['password'])));
 
                             // --------------------------------------------------------------------------
 
@@ -280,7 +275,7 @@ class PasswordForgotten extends Base
                             return;
 
                         } else {
-                            $this->data['error'] = lang('auth_twofactor_answer_incorrect');
+                            $this->oUserFeedback->error(lang('auth_twofactor_answer_incorrect'));
                         }
                     }
 
@@ -305,7 +300,7 @@ class PasswordForgotten extends Base
                     // --------------------------------------------------------------------------
 
                     //  Set some flashdata for the login page when they go to it; just a little reminder
-                    $oUserFeedback->warning(lang('auth_forgot_reminder', htmlentities($mNewPassword['password'])));
+                    $this->oUserFeedback->warning(lang('auth_forgot_reminder', htmlentities($mNewPassword['password'])));
 
                     // --------------------------------------------------------------------------
 
@@ -350,7 +345,7 @@ class PasswordForgotten extends Base
                             // --------------------------------------------------------------------------
 
                             //  Set some flashdata for the login page when they go to it; just a little reminder
-                            $oUserFeedback->warning(lang('auth_forgot_reminder', htmlentities($mNewPassword['password'])));
+                            $this->oUserFeedback->warning(lang('auth_forgot_reminder', htmlentities($mNewPassword['password'])));
 
                             // --------------------------------------------------------------------------
 
@@ -375,8 +370,7 @@ class PasswordForgotten extends Base
                             return;
 
                         } else {
-                            $this->data['error'] = 'Sorry, that code failed to validate. Please try again. ';
-                            $this->data['error'] .= $oAuthService->lastError();
+                            $this->oUserFeedback->error('Sorry, that code failed to validate. Please try again. ' . $oAuthService->lastError());
                         }
                     }
 
@@ -401,7 +395,7 @@ class PasswordForgotten extends Base
                     // --------------------------------------------------------------------------
 
                     //  Set some flashdata for the login page when they go to it; just a little reminder
-                    $oUserFeedback->warning(lang('auth_forgot_reminder', htmlentities($mNewPassword['password'])));
+                    $this->oUserFeedback->warning(lang('auth_forgot_reminder', htmlentities($mNewPassword['password'])));
 
                     // --------------------------------------------------------------------------
 
@@ -426,7 +420,7 @@ class PasswordForgotten extends Base
 
                 //  Everything worked!
                 //  Set some flashdata for the login page when they go to it; just a little reminder
-                $oUserFeedback->warning(lang('auth_forgot_reminder', htmlentities($mNewPassword['password'])));
+                $this->oUserFeedback->warning(lang('auth_forgot_reminder', htmlentities($mNewPassword['password'])));
 
                 // --------------------------------------------------------------------------
 
@@ -477,9 +471,7 @@ class PasswordForgotten extends Base
     {
         //  If you're logged in you shouldn't be accessing this method
         if (isLoggedIn()) {
-            /** @var UserFeedback $oUserFeedback */
-            $oUserFeedback = Factory::service('UserFeedback');
-            $oUserFeedback->error(lang('auth_no_access_already_logged_in', activeUser('email')));
+            $this->oUserFeedback->error(lang('auth_no_access_already_logged_in', activeUser('email')));
             redirect('/');
         }
 

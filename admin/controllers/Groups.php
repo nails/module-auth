@@ -19,7 +19,6 @@ use Nails\Auth\Model\User\Password;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Resource;
 use Nails\Common\Service\Input;
-use Nails\Common\Service\UserFeedback;
 use Nails\Common\Service\Uri;
 use Nails\Config;
 use Nails\Factory;
@@ -148,8 +147,6 @@ class Groups extends DefaultController
     {
         /** @var Uri $oUri */
         $oUri = Factory::service('Uri');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var Group $oItemModel */
         $oItemModel = static::getModel();
 
@@ -160,15 +157,15 @@ class Groups extends DefaultController
             show404();
 
         } elseif ($oItem->id === activeUser('group_id')) {
-            $oUserFeedback->error('You cannot delete your own user group.');
+            $this->oUserFeedback->error('You cannot delete your own user group.');
             redirect('admin/auth/groups');
 
         } elseif (!isSuperuser() && groupHasPermission('admin:superuser', $oItem)) {
-            $oUserFeedback->error('You cannot delete a group which has super user permissions.');
+            $this->oUserFeedback->error('You cannot delete a group which has super user permissions.');
             redirect('admin/auth/groups');
 
         } elseif ($oItem->id === $oItemModel->getDefaultGroupId()) {
-            $oUserFeedback->error('You cannot delete the default user group.');
+            $this->oUserFeedback->error('You cannot delete the default user group.');
             redirect('admin/auth/groups');
 
         } else {
@@ -193,15 +190,13 @@ class Groups extends DefaultController
         $oUri = Factory::service('Uri');
         /** @var Group $oUserGroupModel */
         $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
 
         if ($oUserGroupModel->setAsDefault($oUri->segment(5))) {
-            $oUserFeedback->success(
+            $this->oUserFeedback->success(
                 'Group set as default successfully.'
             );
         } else {
-            $oUserFeedback->error(
+            $this->oUserFeedback->error(
                 'Failed to set default user group. ' . $oUserGroupModel->lastError()
             );
         }

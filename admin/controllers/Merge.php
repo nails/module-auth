@@ -21,7 +21,6 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
-use Nails\Common\Service\UserFeedback;
 use Nails\Factory;
 use stdClass;
 
@@ -89,8 +88,6 @@ class Merge extends BaseAdmin
 
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
 
@@ -124,11 +121,11 @@ class Merge extends BaseAdmin
                     explode(',', $oInput->post('merge_ids'))
                 );
 
-                $oUserFeedback->success('Users were merged successfully.');
+                $this->oUserFeedback->success('Users were merged successfully.');
                 redirect('admin/auth/merge');
 
             } catch (\Throwable $e) {
-                $this->data['error'] = $e->getMessage();
+                $this->oUserFeedback->error($e->getMessage());
             }
         }
 

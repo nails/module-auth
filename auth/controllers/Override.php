@@ -12,7 +12,6 @@
 
 use Nails\Auth\Constants;
 use Nails\Auth\Controller\Base;
-use Nails\Common\Service\UserFeedback;
 use Nails\Factory;
 
 /**
@@ -48,8 +47,6 @@ class Override extends Base
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
         /** @var \Nails\Common\Service\Uri $oUri */
         $oUri = Factory::service('Uri');
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var \Nails\Common\Service\Input $oInput */
         $oInput = Factory::service('Input');
 
@@ -78,7 +75,7 @@ class Override extends Base
 
             if (!$bHasPermission || $bIsCloning || $bIsSuperuser) {
                 if (!$bHasPermission) {
-                    $oUserFeedback->error(lang('auth_override_fail_nopermission'));
+                    $this->oUserFeedback->error(lang('auth_override_fail_nopermission'));
                     redirect('admin/dashboard');
 
                 } elseif ($bIsCloning) {
@@ -102,7 +99,7 @@ class Override extends Base
             $oUserModel->setAdminRecoveryData($oUser->id, $oInput->get('return_to'));
             $sRedirectUrl = $oInput->get('forward_to') ?: $oUser->group_homepage;
 
-            $oUserFeedback->success(lang('auth_override_ok', $oUser->first_name . ' ' . $oUser->last_name));
+            $this->oUserFeedback->success(lang('auth_override_ok', $oUser->first_name . ' ' . $oUser->last_name));
 
         } elseif (wasAdmin()) {
 
@@ -116,7 +113,7 @@ class Override extends Base
 
             unsetAdminRecoveryData();
 
-            $oUserFeedback->success(lang('auth_override_return', $oUser->first_name . ' ' . $oUser->last_name));
+            $this->oUserFeedback->success(lang('auth_override_return', $oUser->first_name . ' ' . $oUser->last_name));
 
         } else {
 
@@ -127,7 +124,7 @@ class Override extends Base
 
             $sRedirectUrl = $oInput->get('forward_to') ?: $oUser->group_homepage;
 
-            $oUserFeedback->success(lang('auth_override_ok', $oUser->first_name . ' ' . $oUser->last_name));
+            $this->oUserFeedback->success(lang('auth_override_ok', $oUser->first_name . ' ' . $oUser->last_name));
         }
 
         // --------------------------------------------------------------------------
