@@ -51,6 +51,7 @@ class Events extends Base
      *
      * @param \Nails\Auth\Resource\User $oUser           The user who logged in
      * @param bool                      $bSetSessionData Whether session data was set
+     * @param bool                      $bIsOverride     Whether the login is an override
      */
     const USER_LOG_IN = 'AUTH:USER:LOGGED_IN';
 

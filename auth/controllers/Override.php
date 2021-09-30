@@ -143,7 +143,7 @@ class Override extends Base
         // --------------------------------------------------------------------------
 
         //  Replace current user's session data
-        $oUserModel->setLoginData($oUser->id);
+        $oUserModel->setLoginData($oUser->id, true, true);
 
         // --------------------------------------------------------------------------
 

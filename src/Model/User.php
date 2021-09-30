@@ -437,6 +437,7 @@ class User extends Base
      *
      * @param Resource\User|string|int $mUser           The user's Resource, ID, or identifier
      * @param bool                     $bSetSessionData Whether to set the session data or not
+     * @param bool                     $bIsOverride     Whether the login is an override
      *
      * @return bool
      * @throws FactoryException
@@ -444,7 +445,7 @@ class User extends Base
      * @throws NailsException
      * @throws ReflectionException
      */
-    public function setLoginData($mUser, bool $bSetSessionData = true): bool
+    public function setLoginData($mUser, bool $bSetSessionData = true, bool $bIsOverride = false): bool
     {
         //  Valid user?
         if ($mUser instanceof Resource\User) {
@@ -511,7 +512,7 @@ class User extends Base
             $oEventService->trigger(
                 Events::USER_LOG_IN,
                 Events::getEventNamespace(),
-                [$oUser, $bSetSessionData]
+                [$oUser, $bSetSessionData, $bIsOverride]
             );
 
             return true;
@@ -2731,7 +2732,6 @@ class User extends Base
                 Events::USER_MERGE_COMPLETE,
                 [$iKeepId, $aMergeIds]
             );
-
 
             $oDb->transaction()->commit();
 
