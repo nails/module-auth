@@ -287,7 +287,7 @@ class PasswordReset extends Base
 
                     case 'TEMP':
                     default:
-                    $this->oUserFeedback->warning(lang('auth_login_pw_temp'));
+                        $this->oUserFeedback->warning(lang('auth_login_pw_temp'));
                         break;
                 }
             }
