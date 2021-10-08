@@ -14,10 +14,10 @@ Your password is shown below. {{#temp_pw}}You will be asked to set this to somet
 
 You can log in using the link below:
 
-{unwrap}<?=siteUrl('auth/login')?>{/unwrap}
+<?=siteUrl('auth/login')?>
 
 {{#verifyUrl}}
 Additionally, we would appreciate it if you could verify your email address using the link below, we do this to maintain the integrity of our database.
 
-{unwrap}{{verifyUrl}}{/unwrap}
+{{verifyUrl}}
 {{/verifyUrl}}
