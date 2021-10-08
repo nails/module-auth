@@ -21,15 +21,7 @@
 </p>
 {{/password}}
 <p>
-    <?=anchor('auth/login', 'Click here to log in', 'class="btn"')?>
+    <a href="{{siteUrl('auth/login')}}" class="btn">
+        Click here to log in
+    </a>
 </p>
-{{#verifyUrl}}
-<hr/>
-<p>
-    Additionally, we would appreciate it if you could verify your email address by clicking the button below,
-    we do this to maintain the integrity of our database.
-</p>
-<p>
-    <a href="{{verifyUrl}}" class="btn small">Verify Email</a>
-</p>
-{{/verifyUrl}}

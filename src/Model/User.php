@@ -2432,11 +2432,6 @@ class User extends Base
                         }
                     }
 
-                    //  If the email isn't verified we'll want to include a note asking them to do so
-                    if (empty($bEmailIsVerified)) {
-                        $oEmail->data('verifyUrl', siteUrl('email/verify/' . $iId . '/' . $sCode));
-                    }
-
                     try {
 
                         $oEmail->send();
