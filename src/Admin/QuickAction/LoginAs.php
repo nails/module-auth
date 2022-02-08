@@ -2,12 +2,12 @@
 
 namespace Nails\Auth\Admin\QuickAction;
 
-use Nails\Admin\Interfaces\QuickAction;
+use Nails\Admin;
 use Nails\Auth\Constants;
 use Nails\Auth\Resource\User;
 use Nails\Factory;
 
-class LoginAs implements QuickAction
+class LoginAs implements Admin\Interfaces\QuickAction
 {
     public function getActions(string $sQuery, string $sOrigin): array
     {
@@ -17,7 +17,7 @@ class LoginAs implements QuickAction
         $oUserEmailModel = Factory::model('UserEmail', Constants::MODULE_SLUG);
 
         $aUsers = $oUserModel->getAll([
-            'limit'   => 5,
+            'limit'   => 3,
             'sort'    => [
                 ['first_name', 'asc'],
                 ['id', 'asc'],
@@ -42,18 +42,20 @@ class LoginAs implements QuickAction
         ]);
 
         return array_map(function (User $oUser) use ($sOrigin) {
-            return (object) [
-                'label'    => sprintf(
+            return Factory::factory(
+                'QuickActionAction',
+                Admin\Constants::MODULE_SLUG,
+                sprintf(
                     'Log in as %s',
                     $oUser->name,
                 ),
-                'sublabel' => sprintf(
+                sprintf(
                     '%s, #%s',
                     $oUser->email,
                     $oUser->id
                 ),
-                'url'      => $oUser->getLoginUrl(null, $sOrigin),
-            ];
+                $oUser->getLoginUrl(null, $sOrigin)
+            );
         }, $aUsers);
     }
 }
