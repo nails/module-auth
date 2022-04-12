@@ -456,17 +456,8 @@ class Accounts extends DefaultController
                     // --------------------------------------------------------------------------
 
                     //  Add item to admin changelog
-                    $sName = '#' . number_format($oNewUser->id);
-                    $sName .= trim($oNewUser->name);
-                    $sName = trim($sName);
-
-                    $this->oChangeLogModel->add(
-                        'created',
-                        'a',
-                        'user',
-                        $oNewUser->id,
-                        $sName,
-                        'admin/auth/accounts/edit/' . $oNewUser->id
+                    $this->addToChangeLogCreate(
+                        $oNewUser,
                     );
 
                     // --------------------------------------------------------------------------
@@ -792,7 +783,6 @@ class Accounts extends DefaultController
         // --------------------------------------------------------------------------
 
         if ($oInput->post()) {
-
 
             if ($oUserGroupModel->changeUserGroup(arrayExtractProperty($aUsers, 'id'), (int) $oInput->post('group_id'))) {
                 $this->oUserFeedback->success('User group was updated successfully.');
