@@ -39,6 +39,20 @@ class Group extends Base
      */
     const DEFAULT_SORT_COLUMN = 'id';
 
+    /**
+     * The name of the resource to use (as passed to \Nails\Factory::resource())
+     *
+     * @var string
+     */
+    const RESOURCE_NAME = 'UserGroup';
+
+    /**
+     * The provider of the resource to use (as passed to \Nails\Factory::resource())
+     *
+     * @var string
+     */
+    const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
+
     // --------------------------------------------------------------------------
 
     protected $oDefaultGroup;
@@ -327,35 +341,5 @@ class Group extends Base
         }
 
         return false;
-    }
-
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Formats a single object
-     *
-     * The getAll() method iterates over each returned item with this method so as to
-     * correctly format the output. Use this to cast integers and bools and/or organise data into objects.
-     *
-     * @param object $oObj      A reference to the object being formatted.
-     * @param array  $aData     The same data array which is passed to getCountCommon, for reference if needed
-     * @param array  $aIntegers Fields which should be cast as integers if numerical and not null
-     * @param array  $aBools    Fields which should be cast as bools if not null
-     * @param array  $aFloats   Fields which should be cast as floats if not null
-     *
-     * @return void
-     */
-    protected function formatObject(
-        &$oObj,
-        array $aData = [],
-        array $aIntegers = [],
-        array $aBools = [],
-        array $aFloats = []
-    ) {
-        parent::formatObject($oObj, $aData, $aIntegers, $aBools, $aFloats);
-
-        $oObj->acl            = json_decode($oObj->acl);
-        $oObj->password_rules = json_decode($oObj->password_rules);
     }
 }

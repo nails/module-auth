@@ -151,5 +151,12 @@ return [
                 return new Resource\User\Event($mObj);
             }
         },
+        'UserGroup'         => function ($mObj): Resource\User\Group {
+            if (class_exists('\App\Auth\Resource\User\Group')) {
+                return new \App\Auth\Resource\User\Group($mObj);
+            } else {
+                return new Resource\User\Group($mObj);
+            }
+        },
     ],
 ];
