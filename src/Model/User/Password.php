@@ -39,7 +39,9 @@ use Wikimedia\CommonPasswords\CommonPasswords;
  */
 class Password extends Base
 {
-    const DEFAULT_PASSWORD_ENGINE = Sha1::class;
+    const DEFAULT_PASSWORD_ENGINE     = Sha1::class;
+    const FORGOTTEN_PASSWORD_TTL      = 86400;
+    const FORGOTTEN_PASSWORD_DEBOUNCE = 300;
 
     // --------------------------------------------------------------------------
 
@@ -811,10 +813,12 @@ class Password extends Base
 
         //  Generate code
         $sCode = implode(':', [
-            //  TTL (24 hrs)
-            time() + 86400,
+            //  TTL
+            time() + static::FORGOTTEN_PASSWORD_TTL,
             //  Key
             $this->generatePasswordHash($this->salt(), $this->salt() . Config::get('PRIVATE_KEY')),
+            //  Request debounce
+            time() + static::FORGOTTEN_PASSWORD_DEBOUNCE,
         ]);
 
         // --------------------------------------------------------------------------
@@ -866,14 +870,12 @@ class Password extends Base
         // --------------------------------------------------------------------------
 
         $oUser = $oResult->row();
-        [$sTTL, $sKey] = array_pad(explode(':', $oUser->forgotten_password_code), 2, null);
-        $iTTL = (int) $sTTL;
+        [$iTimeExpires, $sKey, $iDebounce] = $this->parseToken($oUser->forgotten_password_code);
 
         // --------------------------------------------------------------------------
 
         //  Check that the link is still valid
-        if (time() > $iTTL) {
-
+        if (time() > $iTimeExpires) {
             return 'EXPIRED';
 
         } else {
@@ -935,6 +937,97 @@ class Password extends Base
         }
 
         return $aOut;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Determines if a forgotten password token has expired
+     *
+     * @param string|null $sToken
+     *
+     * @return bool
+     */
+    public function isTokenExpired(?string $sToken): bool
+    {
+        return time() > $this->extractTokenExpire($sToken);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Determines if a forgotten password token is debouncing (i.e has not reached the debounce timeout)
+     *
+     * @param string|null $sToken
+     *
+     * @return bool
+     */
+    public function isTokenDebouncing(?string $sToken): bool
+    {
+        return time() > $this->extractTokenDebounce($sToken);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Extract the Expire component of the token
+     *
+     * @param string|null $sToken
+     *
+     * @return int
+     */
+    public function extractTokenExpire(?string $sToken): int
+    {
+        [$iTimeExpires, $sKey, $iDebounce] = $this->parseToken($sToken);
+        return $iTimeExpires;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Extract the Key component of the token
+     *
+     * @param string|null $sToken
+     *
+     * @return int
+     */
+    public function extractTokenKey(?string $sToken): string
+    {
+        [$iTimeExpires, $sKey, $iDebounce] = $this->parseToken($sToken);
+        return $sKey;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Extract the Debounce component of the token
+     *
+     * @param string|null $sToken
+     *
+     * @return int
+     */
+    public function extractTokenDebounce(?string $sToken): int
+    {
+        [$iTimeExpires, $sKey, $iDebounce] = $this->parseToken($sToken);
+        return $iDebounce;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Parse a token string
+     *
+     * @param string|null $sToken
+     *
+     * @return array
+     */
+    protected function parseToken(?string $sToken): array
+    {
+        $aToken    = array_pad(explode(':', $sToken), 3, null);
+        $aToken[0] = (int) $aToken[0];
+        $aToken[1] = (string) $aToken[1];
+        $aToken[2] = (int) $aToken[2];
+        return $aToken;
     }
 
     // --------------------------------------------------------------------------

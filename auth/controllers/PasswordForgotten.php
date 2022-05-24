@@ -113,7 +113,29 @@ class PasswordForgotten extends Base
                 // --------------------------------------------------------------------------
 
                 /** @var \Nails\Auth\Resource\User $oUser */
-                $oUser           = $oUserModel->getByIdentifier($sIdentifier);
+                $oUser = $oUserModel
+                    ->skipCache()
+                    ->getByIdentifier($sIdentifier);
+
+                if ($oUserPasswordModel->isTokenDebouncing($oUser->forgotten_password_code)) {
+
+                    $oNow             = Factory::factory('DateTime');
+                    $oDebounceExpires = \DateTime::createFromFormat(
+                        'U',
+                        $oUserPasswordModel->extractTokenDebounce($oUser->forgotten_password_code)
+                    );
+                    $oDiff            = $oNow->diff($oDebounceExpires);
+                    $iWaitMins        = $oDiff->i + ($oDiff->s ? 1 : 0);
+
+                    throw new NailsException(
+                        sprintf(
+                            'You have recently requested a password reset, please wait %s minute%s before trying again. Remember to check your junk if you have not received the email.',
+                            $iWaitMins,
+                            $iWaitMins ? 's' : ''
+                        )
+                    );
+                }
+
                 $bAlwaysSucceed  = $oConfig->item('authForgottenPassAlwaysSucceed');
                 $bGeneratedToken = $oUserPasswordModel->setToken($oUser);
 
