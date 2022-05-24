@@ -858,7 +858,7 @@ class Password extends Base
 
         $oDb->select('u.id, u.group_id, u.forgotten_password_code, e.email, u.username');
         $oDb->join($oUserEmailModel->getTableName() . ' e', 'e.user_id = u.id AND e.is_primary = 1');
-        $oDb->like('forgotten_password_code', ':' . $sCode, 'before');
+        $oDb->like('forgotten_password_code', ':' . $sCode . ':');
         $oResult = $oDb->get($oUserModel->getTableName() . ' u');
 
         // --------------------------------------------------------------------------
