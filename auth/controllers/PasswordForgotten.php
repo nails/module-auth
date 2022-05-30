@@ -117,7 +117,7 @@ class PasswordForgotten extends Base
                     ->skipCache()
                     ->getByIdentifier($sIdentifier);
 
-                if ($oUserPasswordModel->isTokenDebouncing($oUser->forgotten_password_code)) {
+                if ($oUser && $oUserPasswordModel->isTokenDebouncing($oUser->forgotten_password_code)) {
 
                     $oNow             = Factory::factory('DateTime');
                     $oDebounceExpires = \DateTime::createFromFormat(
