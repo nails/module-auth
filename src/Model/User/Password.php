@@ -964,7 +964,8 @@ class Password extends Base
      */
     public function isTokenDebouncing(?string $sToken): bool
     {
-        return time() > $this->extractTokenDebounce($sToken);
+        $iDebounce = $this->extractTokenDebounce($sToken);
+        return $iDebounce && time() < $iDebounce;
     }
 
     // --------------------------------------------------------------------------
