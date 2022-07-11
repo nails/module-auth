@@ -13,9 +13,10 @@ use Nails\Factory;
     $oView = Factory::service('View');
     $oView->load('Accounts/create/inc-basic');
 
+    echo \Nails\Admin\Helper::floatingControls([
+        'save' => ['text' => lang('accounts_create_submit')],
+    ]);
+
     ?>
-    <p>
-        <?=form_submit('submit', lang('accounts_create_submit'), 'class="btn btn-primary"')?>
-    </p>
     <?=form_close()?>
 </div>
