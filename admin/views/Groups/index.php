@@ -1,7 +1,4 @@
 <div class="group-accounts groups overview">
-    <p>
-        Manage how groups of user's can interact with the site.
-    </p>
     <?=adminHelper('loadSearch', $search)?>
     <?=adminHelper('loadPagination', $pagination)?>
     <div class="table-responsive">
