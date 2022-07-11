@@ -10,12 +10,12 @@
  * @link
  */
 
-namespace Nails\Admin\Auth;
+namespace Nails\Auth\Admin\Controller;
 
+use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
 use Nails\Auth\Constants;
-use Nails\Auth\Controller\BaseAdmin;
 use Nails\Auth\Model\User;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
@@ -29,7 +29,7 @@ use stdClass;
  *
  * @package Nails\Admin\Auth
  */
-class Merge extends BaseAdmin
+class Merge extends Base
 {
     /**
      * Announces this controller's navGroups

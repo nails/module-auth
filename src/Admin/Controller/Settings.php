@@ -10,7 +10,7 @@
  * @link
  */
 
-namespace Nails\Admin\Auth;
+namespace Nails\Auth\Admin\Controller;
 
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;

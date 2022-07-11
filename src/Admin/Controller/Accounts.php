@@ -10,7 +10,7 @@
  * @link
  */
 
-namespace Nails\Admin\Auth;
+namespace Nails\Auth\Admin\Controller;
 
 use Nails\Admin\Controller\DefaultController;
 use Nails\Admin\Factory\Nav;
@@ -27,6 +27,7 @@ use Nails\Common\Exception\NailsException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\Component;
 use Nails\Common\Helper\Directory;
+use Nails\Common\Helper\Model\Where;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\UserFeedback;
@@ -91,26 +92,36 @@ class Accounts extends DefaultController
     {
         /** @var Nav $oNavGroup */
         $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
-        $oNavGroup->setLabel('Users');
-        $oNavGroup->setIcon('fa-users');
+        $oNavGroup
+            ->setLabel('Users')
+            ->setIcon('fa-users');
 
         if (userHasPermission('admin:auth:accounts:browse')) {
 
-            $oDb = Factory::service('Database');
-            $oDb->where('is_suspended', false);
-            $numTotal    = $oDb->count_all_results(Config::get('NAILS_DB_PREFIX') . 'user');
+            $oModel = Factory::model('User', Constants::MODULE_SLUG);
+
+            $iNumTotal = $oModel->countAll();
+
+            /** @var \Nails\Admin\Factory\Nav\Alert $oAlertTotal */
             $oAlertTotal = Factory::factory('NavAlert', \Nails\Admin\Constants::MODULE_SLUG);
-            $oAlertTotal->setValue($numTotal);
-            $oAlertTotal->setLabel('Number of Users');
+            $oAlertTotal
+                ->setValue($iNumTotal)
+                ->setLabel('Number of Users');
 
-            $oDb->where('is_suspended', true);
-            $numSuspended    = $oDb->count_all_results(Config::get('NAILS_DB_PREFIX') . 'user');
-            $oAlertSuspended = Factory::factory('NavAlert', \Nails\Admin\Constants::MODULE_SLUG);
-            $oAlertSuspended->setValue($numSuspended);
-            $oAlertSuspended->setSeverity('danger');
-            $oAlertSuspended->setLabel('Number of Suspended Users');
+            $iNumSuspended = $oModel->countAll([
+                new Where('is_suspended', true),
+            ]);
 
-            $oNavGroup->addAction('View All Users', 'index', [$oAlertTotal, $oAlertSuspended], 0);
+            if ($iNumSuspended) {
+                /** @var \Nails\Admin\Factory\Nav\Alert $oAlertSuspended */
+                $oAlertSuspended = Factory::factory('NavAlert', \Nails\Admin\Constants::MODULE_SLUG);
+                $oAlertSuspended
+                    ->setValue($iNumSuspended)
+                    ->setSeverity('danger')
+                    ->setLabel('Number of Suspended Users');
+            }
+
+            $oNavGroup->addAction('View All Users', 'index', array_filter([$oAlertTotal, $oAlertSuspended ?? null]), 0);
         }
 
         return $oNavGroup;
@@ -231,7 +242,7 @@ class Accounts extends DefaultController
                     },
                 ],
                 [
-                    'url'     => siteUrl('admin/auth/accounts/change_group?users={{id}}'),
+                    'url'     => self::url('change_group?users={{id}}'),
                     'label'   => 'Change Group',
                     'class'   => 'btn-default',
                     'enabled' => function ($oUser) {
@@ -284,7 +295,7 @@ class Accounts extends DefaultController
         if (userHasPermission('admin:auth:accounts:create')) {
             $this->aConfig['INDEX_HEADER_BUTTONS'][] = [
                 'label' => 'Import',
-                'url'   => 'admin/auth/import',
+                'url'   => self::url('import'),
             ];
         }
 

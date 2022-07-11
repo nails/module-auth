@@ -10,12 +10,12 @@
  * @link
  */
 
-namespace Nails\Admin\Auth;
+namespace Nails\Auth\Admin\Controller;
 
+use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
 use Nails\Auth\Constants;
-use Nails\Auth\Controller\BaseAdmin;
 use Nails\Auth\Model\User;
 use Nails\Cdn;
 use Nails\Common\Exception\FactoryException;
@@ -34,8 +34,15 @@ use stdClass;
  *
  * @package Nails\Admin\Auth
  */
-class Import extends BaseAdmin
+class Import extends Base
 {
+    public static function announce()
+    {
+        return null;
+    }
+
+    // --------------------------------------------------------------------------
+
     /**
      * Merge users
      *
