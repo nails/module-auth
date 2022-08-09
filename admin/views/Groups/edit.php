@@ -2,7 +2,44 @@
 
 use Nails\Factory;
 
+/** @var \Nails\Common\Service\View $oView */
+$oView = Factory::service('View');
+
+echo form_open();
+echo \Nails\Admin\Helper::tabs([
+    [
+        'label'   => 'Basic Details',
+        'content' => function () use ($oView) {
+            return \Nails\Admin\Helper::loadInlineView('edit/basic', [], true);
+        },
+    ],
+    [
+        'label'   => 'Password',
+        'content' => function () use ($oView) {
+            return \Nails\Admin\Helper::loadInlineView('edit/password', [], true);
+        },
+    ],
+    [
+        'label'   => '2FA',
+        'content' => function () use ($oView) {
+            return \Nails\Admin\Helper::loadInlineView('edit/2fa', [], true);
+        },
+    ],
+    [
+        'label'   => 'Permissions',
+        'content' => function () use ($oView) {
+            return \Nails\Admin\Helper::loadInlineView('edit/permissions', [], true);
+        },
+    ],
+]);
+echo \Nails\Admin\Helper::floatingControls();
+echo form_close();
+
+return;
+
+/** @var \Nails\Common\Service\Input $oInput */
 $oInput = Factory::service('Input');
+
 ?>
 <div class="group-accounts groups edit">
     <div class="alert alert-warning">
@@ -12,9 +49,9 @@ $oInput = Factory::service('Input');
         the effect of changing the permissions of a group other than your own, check that your changes
         have worked before considering the job done!
     </div>
-    <hr/>
+    <hr />
     <?=form_open()?>
-    <input type="hidden" name="activeTab" value="<?=set_value('activeTab')?>" id="activeTab"/>
+    <input type="hidden" name="activeTab" value="<?=set_value('activeTab')?>" id="activeTab" />
     <ul class="tabs">
         <li class="tab <?=$oInput->post('activeTab') == 'tab-basic' || !$oInput->post('activeTab') ? 'active' : ''?>">
             <a href="#" data-tab="tab-basic">Basic Details</a>
@@ -22,6 +59,7 @@ $oInput = Factory::service('Input');
         <li class="tab <?=$oInput->post('activeTab') == 'tab-password' ? 'active' : ''?>">
             <a href="#" data-tab="tab-password">Password</a>
         </li>
+        a
         <li class="tab <?=$oInput->post('activeTab') == 'tab-2fa' ? 'active' : ''?>">
             <a href="#" data-tab="tab-2fa">2FA</a>
         </li>

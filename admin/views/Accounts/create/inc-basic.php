@@ -17,7 +17,7 @@ $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
         //  Group ID
         $aField = [
             'key'      => 'group_id',
-            'label'    => lang('accounts_create_field_group_label'),
+            'label'    => 'Group',
             'required' => true,
             'default'  => $oUserGroupModel->getDefaultGroupId(),
             'class'    => 'select2',
@@ -28,7 +28,7 @@ $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
         foreach ($groups as $oGroup) {
 
             //  If the group is a superuser group and the active user is not a superuser then remove it
-            if (is_array($oGroup->acl) && in_array('admin:superuser', $oGroup->acl) && !isSuperuser()) {
+            if (is_array($oGroup->acl) && in_array('admin:superuser', $oGroup->acl) && !isSuperUser()) {
                 continue;
             }
 
@@ -40,7 +40,7 @@ $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
         $aField['info']  = '<ul id="user-group-descriptions">';
         foreach ($groups as $oGroup) {
 
-            if (is_array($oGroup->acl) && in_array('admin:superuser', $oGroup->acl) && !isSuperuser()) {
+            if (is_array($oGroup->acl) && in_array('admin:superuser', $oGroup->acl) && !isSuperUser()) {
                 continue;
             }
 
@@ -54,67 +54,6 @@ $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
         echo form_field_dropdown($aField, $aGroupsById, lang('accounts_create_field_group_tip'));
 
         // --------------------------------------------------------------------------
-
-        //  Password
-        $aField = [
-            'key'         => 'password',
-            'label'       => lang('form_label_password'),
-            'placeholder' => lang('accounts_create_field_password_placeholder'),
-        ];
-
-        //  Render password rules
-        $aField['info'] = '<ul id="user-group-pwrules">';
-        foreach ($passwordRules as $iGroupId => $sRules) {
-            if (!empty($sRules)) {
-                $sDisplay       = $iGroupId == $iDefaultGroupId ? 'block' : 'none';
-                $aField['info'] .= '<li class="alert alert-info" id="user-group-pw-' . $iGroupId . '" style="display:' . $sDisplay . ';">';
-                $aField['info'] .= $sRules;
-                $aField['info'] .= '</li>';
-            }
-        }
-        $aField['info'] .= '</ul>';
-
-        echo form_field($aField, lang('accounts_create_field_password_tip'));
-
-        // --------------------------------------------------------------------------
-
-        echo form_field_radio([
-            'key'      => 'send_activation',
-            'label'    => lang('accounts_create_field_send_welcome_label'),
-            'default'  => false,
-            'required' => false,
-            'options'  => [
-                [
-                    'value'    => 'true',
-                    'label'    => lang('accounts_create_field_send_welcome_yes'),
-                    'selected' => true,
-                ],
-                [
-                    'value'    => 'false',
-                    'label'    => lang('accounts_create_field_send_welcome_no'),
-                    'selected' => false,
-                ],
-            ],
-        ]);
-
-        echo form_field_radio([
-            'key'      => 'temp_pw',
-            'label'    => lang('accounts_create_field_temp_pw_label'),
-            'default'  => false,
-            'required' => false,
-            'options'  => [
-                [
-                    'value'    => 'true',
-                    'label'    => lang('accounts_create_field_temp_pw_yes'),
-                    'selected' => true,
-                ],
-                [
-                    'value'    => 'false',
-                    'label'    => lang('accounts_create_field_temp_pw_no'),
-                    'selected' => false,
-                ],
-            ],
-        ]);
 
         echo form_field([
             'key'         => 'first_name',
@@ -150,6 +89,53 @@ $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
                 'max_length'  => 150,
             ]);
         }
+
+        //  Password
+        $aField = [
+            'key'         => 'password',
+            'label'       => lang('form_label_password'),
+            'placeholder' => lang('accounts_create_field_password_placeholder'),
+        ];
+
+        //  Render password rules
+        $aField['info'] = '<ul id="user-group-pwrules">';
+        foreach ($passwordRules as $iGroupId => $sRules) {
+            if (!empty($sRules)) {
+                $sDisplay       = $iGroupId == $iDefaultGroupId ? 'block' : 'none';
+                $aField['info'] .= '<li class="alert alert-info" id="user-group-pw-' . $iGroupId . '" style="display:' . $sDisplay . ';">';
+                $aField['info'] .= $sRules;
+                $aField['info'] .= '</li>';
+            }
+        }
+        $aField['info'] .= '</ul>';
+
+        echo form_field($aField, lang('accounts_create_field_password_tip'));
+
+        ?>
+    </div>
+</fieldset>
+<fieldset>
+    <legend>Creation Behaviour</legend>
+    <div>
+        <?php
+
+        echo form_field_boolean([
+            'key'      => 'send_activation',
+            'label'    => 'Send Email',
+            'info'     => 'Send a welcome email containing their password',
+            'default'  => true,
+            'text_on'  => 'Yes',
+            'text_off' => 'No',
+        ]);
+
+        echo form_field_boolean([
+            'key'      => 'temp_pw',
+            'label'    => 'Temporary password',
+            'info'     => 'Require password update on first log in',
+            'default'  => true,
+            'text_on'  => 'Yes',
+            'text_off' => 'No',
+        ]);
 
         ?>
     </div>

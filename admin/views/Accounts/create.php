@@ -4,11 +4,9 @@ use Nails\Factory;
 
 ?>
 <div class="group-accounts create">
-    <?=form_open()?>
-    <p>
-        <?=lang('accounts_create_intro')?>
-    </p>
     <?php
+
+    echo form_open();
 
     $oView = Factory::service('View');
     $oView->load('Accounts/create/inc-basic');
@@ -17,6 +15,7 @@ use Nails\Factory;
         'save' => ['text' => lang('accounts_create_submit')],
     ]);
 
+    echo form_close();
+
     ?>
-    <?=form_close()?>
 </div>

@@ -12,6 +12,7 @@
 
 namespace Nails\Auth\Model\User;
 
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
 use Nails\Common\Exception\NailsException;
 use Nails\Common\Model\Base;
@@ -167,14 +168,17 @@ class Group extends Base
             return false;
         }
 
-        if (!empty($oGroup->acl) && in_array('admin:superuser', $oGroup->acl) && !isSuperuser()) {
+        if (!empty($oGroup->acl) && in_array('admin:superuser', $oGroup->acl) && !isSuperUser()) {
             $this->setError('You do not have permission to add user\'s to the superuser group.');
             return false;
         }
 
-        $oDb        = Factory::service('Database');
+        /** @var \Nails\Common\Service\Database $oDb */
+        $oDb = Factory::service('Database');
+        /** @var \Nails\Auth\Model\User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
-        $aUsers     = $oUserModel->getByIds((array) $aUserIds);
+
+        $aUsers = $oUserModel->getByIds($aUserIds);
 
         try {
 
@@ -182,37 +186,16 @@ class Group extends Base
             foreach ($aUsers as $oUser) {
 
                 //  Permission check
-                if ($oUser->id === activeUser('id') && !userHasPermission('admin:auth:accounts:changeOwnUserGroup')) {
-                    throw new \RuntimeException('You do not have permission to change your own user group');
-                } elseif ($oUser->id !== activeUser('id') && !userHasPermission('admin:auth:accounts:changeUserGroup')) {
-                    throw new \RuntimeException('You do not have permission to change another user\'s user group');
-                } elseif (isSuperuser($oUser) && !isSuperuser()) {
-                    throw new \RuntimeException('You do not have permission to change a super user\'s usergroup');
-                }
+                if (!userHasPermission(Permission\Users\Group\Change::class)) {
+                    throw new \RuntimeException('You do not have permission to change a user\'s group');
 
-                //  @todo (Pablo - 2019-01-25) - Use the event system
-                $sPreMethod  = 'changeUserGroup_pre_' . $oUser->group_slug . '_' . $oGroup->slug;
-                $sPostMethod = 'changeUserGroup_post_' . $oUser->group_slug . '_' . $oGroup->slug;
-
-                if (method_exists($this, $sPreMethod)) {
-                    if (!$this->$sPreMethod($oUser)) {
-                        throw new \RuntimeException(
-                            '"' . $sPreMethod . '()" returned false for user ' . $oUser->id . ', rolling back changes'
-                        );
-                    }
+                } elseif (isSuperUser($oUser) && !isSuperUser()) {
+                    throw new \RuntimeException('You do not have permission to change a super user\'s group');
                 }
 
                 $aData = ['group_id' => $oGroup->id];
                 if (!$oUserModel->update($oUser->id, $aData)) {
                     throw new \RuntimeException('Failed to update group ID for user ' . $oUser->id);
-                }
-
-                if (method_exists($this, $sPostMethod)) {
-                    if (!$this->$sPostMethod($oUser)) {
-                        throw new \RuntimeException(
-                            '"' . $sPostMethod . '()" returned false for user ' . $oUser->id . ', rolling back changes'
-                        );
-                    }
                 }
             }
             $oDb->transaction()->commit();
@@ -224,50 +207,6 @@ class Group extends Base
             $this->setError($e->getMessage());
             return false;
         }
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Formats an array of permissions into a JSON encoded string suitable for the database
-     *
-     * @param array $aPermissions An array of permissions to set
-     *
-     * @return string
-     */
-    public function processPermissions(array $aPermissions)
-    {
-        if (empty($aPermissions)) {
-            return null;
-        }
-
-        $aOut = [];
-
-        //  Level 1
-        foreach ($aPermissions as $levelOneSlug => $levelOnePermissions) {
-
-            if (is_string($levelOnePermissions)) {
-                $aOut[] = $levelOneSlug;
-                continue;
-            }
-
-            foreach ($levelOnePermissions as $levelTwoSlug => $levelTwoPermissions) {
-
-                if (is_string($levelTwoPermissions)) {
-                    $aOut[] = $levelOneSlug . ':' . $levelTwoSlug;
-                    continue;
-                }
-
-                foreach ($levelTwoPermissions as $levelThreeSlug => $levelThreePermissions) {
-                    $aOut[] = $levelOneSlug . ':' . $levelTwoSlug . ':' . $levelThreeSlug;
-                }
-            }
-        }
-
-        $aOut = array_unique($aOut);
-        $aOut = array_filter($aOut);
-
-        return json_encode($aOut);
     }
 
     // --------------------------------------------------------------------------

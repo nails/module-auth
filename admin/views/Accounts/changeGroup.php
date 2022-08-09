@@ -7,19 +7,15 @@
         $oInput   = Factory::service('Input');
         $sFormUrl = uri_string() . '?users=' . $oInput->get('users');
         echo form_open($sFormUrl);
+
         ?>
-        <p>
-            Use the following tool to change the group a user belongs to.
-        </p>
-        <hr/>
         <fieldset>
             <legend>Users to Update</legend>
-            <table>
-                <thead>
+            <table class="table table-striped table-hover table-bordered table-responsive mb-0">
+                <thead class="table-dark">
                     <tr>
-                        <th class="userId">ID</th>
+                        <th>ID</th>
                         <th>Name</th>
-                        <th>Current Group</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,9 +23,8 @@
                     foreach ($aUsers as $oUser) {
                         ?>
                         <tr>
-                            <td class="userId"><?=number_format($oUser->id)?></td>
-                            <?=adminHelper('loadUserCell', $oUser)?>
-                            <td><?=$oUser->group_name?></td>
+                            <td class="align-middle text-center"><?=number_format($oUser->id)?></td>
+                            <?=Nails\Admin\Helper::loadUserCell($oUser)?>
                         </tr>
                         <?php
                     }
@@ -39,22 +34,12 @@
         </fieldset>
         <fieldset>
             <legend>New Group</legend>
-            <?=form_dropdown('group_id', $aUserGroups, null, 'class=select2')?>
+            <?=form_dropdown('group_id', $aUserGroups, null, 'class="select2" style="width:100%"')?>
         </fieldset>
         <?php
-        echo \Nails\Admin\Helper::floatingControls([
-            'save' => [
-                'text' => 'Update User Groups'
-            ]
-        ]);
-        echo \Nails\Factory::service('View')
-            ->load(
-                'admin/_components/floating-controls',
-                [
-                    ''
-                ],
-                true
-            );
+
+        echo \Nails\Admin\Helper::floatingControls();
     }
+
     ?>
 </div>

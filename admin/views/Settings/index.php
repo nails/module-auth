@@ -5,15 +5,11 @@ $oInput = \Nails\Factory::service('Input');
 
 ?>
 <div class="group-settings site">
-    <p>
-        Configure how the site handles authentication.
-    </p>
-    <hr />
     <?php
 
     echo form_open();
     echo \Nails\Admin\Helper::tabs(array_filter([
-        !userHasPermission('admin:auth:settings:update:registration') ? null : [
+        !userHasPermission(\Nails\Auth\Admin\Permission\Settings\Registration::class) ? null : [
             'label'   => 'Registration',
             'content' => function () {
                 echo form_field_boolean([
@@ -31,7 +27,7 @@ $oInput = \Nails\Factory::service('Input');
             },
         ],
 
-        !userHasPermission('admin:auth:settings:update:login') ? null : [
+        !userHasPermission(\Nails\Auth\Admin\Permission\Settings\Login::class) ? null : [
             'label'   => 'Login',
             'content' => function () {
                 echo form_field_boolean([
@@ -43,7 +39,7 @@ $oInput = \Nails\Factory::service('Input');
             },
         ],
 
-        !userHasPermission('admin:auth:settings:update:password') ? null : [
+        !userHasPermission(\Nails\Auth\Admin\Permission\Settings\Password::class) ? null : [
             'label'   => 'Password Reset',
             'content' => function () {
                 echo form_field_boolean([
@@ -55,7 +51,7 @@ $oInput = \Nails\Factory::service('Input');
             },
         ],
 
-        !userHasPermission('admin:auth:groups:edit') ? null : [
+        !userHasPermission(\Nails\Auth\Admin\Permission\Groups\Edit::class) ? null : [
             'label'   => 'Security',
             'content' => function () {
                 ?>
@@ -65,7 +61,7 @@ $oInput = \Nails\Factory::service('Input');
             },
         ],
 
-        !userHasPermission('admin:auth:settings:update:social') && !empty($aProviders) ? null : [
+        !userHasPermission(\Nails\Auth\Admin\Permission\Settings\Social::class) && !empty($aProviders) ? null : [
             'label'   => 'Social Integration',
             'content' => function () use ($aProviders) {
                 ?>
@@ -156,14 +152,6 @@ $oInput = \Nails\Factory::service('Input');
             },
         ],
     ]));
-    ?>
-    <div class="admin-floating-controls">
-        <button type="submit" class="btn btn-primary">
-            Save Changes
-        </button>
-    </div>
-    <?php
-
     echo \Nails\Admin\Helper::floatingControls();
     echo form_close()
 

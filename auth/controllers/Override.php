@@ -69,9 +69,9 @@ class Override extends Base
 
         if (!wasAdmin()) {
 
-            $bHasPermission = userHasPermission('admin:auth:accounts:loginAs');
+            $bHasPermission = userHasPermission(\Nails\Auth\Admin\Permission\Users\LoginAs::class);
             $bIsCloning     = activeUser('id') == $oUser->id;
-            $bIsSuperuser   = !isSuperuser() && isSuperuser($oUser);
+            $bIsSuperuser   = !isSuperUser() && isSuperUser($oUser);
 
             if (!$bHasPermission || $bIsCloning || $bIsSuperuser) {
                 if (!$bHasPermission) {

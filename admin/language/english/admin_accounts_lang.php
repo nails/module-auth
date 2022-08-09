@@ -11,19 +11,11 @@
  */
 
 //  Create new user
-$lang['accounts_create_title']                      = 'Create New User';
-$lang['accounts_create_intro']                      = 'Create a new user by completing the following basic information and clicking \'Create User\' below. You will be given the opportunity to edit the user once the basic account has been created.';
+$lang['accounts_create_title']                      = 'Create User';
 $lang['accounts_create_basic_legend']               = 'Basic Information';
-$lang['accounts_create_field_group_label']          = 'User\'s Group';
 $lang['accounts_create_field_group_tip']            = 'Specify to which group this user belongs';
 $lang['accounts_create_field_password_tip']         = 'Leave the password field blank to have the system auto-generate a password.';
 $lang['accounts_create_field_password_placeholder'] = 'The user\'s password, leave blank to auto-generate';
-$lang['accounts_create_field_send_welcome_label']   = 'Send Welcome Email';
-$lang['accounts_create_field_send_welcome_yes']     = '<strong>Yes</strong>, send user welcome email containing their password.';
-$lang['accounts_create_field_send_welcome_no']      = '<strong>No</strong>, do not send welcome email.';
-$lang['accounts_create_field_temp_pw_label']        = 'Update on log in';
-$lang['accounts_create_field_temp_pw_yes']          = '<strong>Yes</strong>, require password update on first log in.';
-$lang['accounts_create_field_temp_pw_no']           = '<Strong>No</strong>, do not require password update on first log in.';
 $lang['accounts_create_field_first_placeholder']    = 'The user\'s first name';
 $lang['accounts_create_field_last_placeholder']     = 'The user\'s surname';
 $lang['accounts_create_field_email_placeholder']    = 'The user\'s email address';
@@ -47,13 +39,7 @@ $lang['accounts_edit_editing_self'] = '<strong>Hey %s!</strong> You are currentl
 
 $lang['accounts_edit_actions_legend'] = 'Actions';
 
-$lang['accounts_edit_password_legend']                     = 'Password';
-$lang['accounts_edit_password_field_password_label']       = 'Reset Password';
-$lang['accounts_edit_password_field_password_placeholder'] = 'Reset the user\'s password by specifying a new one here';
-$lang['accounts_edit_password_field_password_tip']         = 'The user WILL be informed that their password has been changed, but NOT what their new password is.';
-$lang['accounts_edit_password_field_temp_pw_label']        = 'Update on next log in';
-$lang['accounts_edit_password_field_temp_pw_yes']          = '<strong>Yes</strong>, require password update on next log in.';
-$lang['accounts_edit_password_field_temp_pw_no']           = '<strong>No</strong>, do not require password update on next log in.';
+$lang['accounts_edit_password_legend'] = 'Password';
 
 $lang['accounts_edit_mfa_question_legend']            = 'Multi Factor Authentication: Questions';
 $lang['accounts_edit_mfa_question_field_reset_label'] = 'Set new qustions on next log in';

@@ -4,6 +4,7 @@ namespace Nails\Auth\Admin\DataExport\Source\User;
 
 use Nails\Admin\DataExport\SourceResponse;
 use Nails\Admin\Interfaces\DataExport\Source;
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
 use Nails\Config;
 use Nails\Factory;
@@ -70,7 +71,7 @@ class Email implements Source
      */
     public function isEnabled(): bool
     {
-        return userHasPermission('admin:auth:accounts:browse');
+        return userHasPermission(Permission\Users\Browse::class);
     }
 
     // --------------------------------------------------------------------------

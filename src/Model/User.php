@@ -349,7 +349,7 @@ class User extends Base
     {
         //  Only look for a value if we're logged in
         if (!$this->isLoggedIn()) {
-            return false;
+            return null;
         }
 
         // --------------------------------------------------------------------------
@@ -363,7 +363,6 @@ class User extends Base
 
         //  If only one key is being requested then don't do anything fancy
         if (strpos($sKeys, ',') === false) {
-
             $val = isset($this->oActiveUser->{trim($sKeys)}) ? $this->oActiveUser->{trim($sKeys)} : null;
 
         } else {
@@ -604,22 +603,6 @@ class User extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Determines whether the active user group has admin permissions.
-     *
-     * @param mixed $mUser The user to check, uses activeUser if null
-     *
-     * @return bool
-     * @throws FactoryException
-     * @throws ModelException
-     */
-    public function isAdmin($mUser = null): bool
-    {
-        return $this->hasPermission('admin:.+', $mUser);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * When an admin 'logs in as' another user a hash is added to the session so
      * the system can log them back in. This method is simply a quick and logical
      * way of checking if the session variable exists.
@@ -754,7 +737,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function isSuperuser($mUser = null): bool
+    public function isSuperUser($mUser = null): bool
     {
         return $this->hasPermission('admin:superuser', $mUser);
     }
@@ -1480,6 +1463,10 @@ class User extends Base
 
         if (empty($oUser)) {
             $this->setError('Invalid User ID');
+            return false;
+
+        } elseif (empty($sEmail)) {
+            $this->setError('Email is required');
             return false;
         }
 

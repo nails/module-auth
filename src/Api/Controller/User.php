@@ -13,6 +13,7 @@
 namespace Nails\Auth\Api\Controller;
 
 use Nails\Api;
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
 use Nails\Factory;
 
@@ -59,11 +60,11 @@ class User extends Api\Controller\DefaultController
     /**
      * Search for an item
      *
-     * @return array
+     * @return \Nails\Api\Factory\ApiResponse
      */
     public function getSearch($aData = [])
     {
-        if (!userHasPermission('admin:auth:accounts:browse')) {
+        if (!userHasPermission(Permission\Users\Browse::class)) {
             $oHttpCodes = Factory::service('HttpCodes');
             throw new Api\Exception\ApiException(
                 'You are not authorised to search users',
@@ -83,15 +84,17 @@ class User extends Api\Controller\DefaultController
      */
     public function getEmail()
     {
+        /** @var \Nails\Common\Service\HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:auth:accounts:browse')) {
+        if (!userHasPermission(Permission\Users\Browse::class)) {
             throw new Api\Exception\ApiException(
                 'You are not authorised to browse users',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
         }
 
+        /** @var \Nails\Common\Service\Input $oInput */
         $oInput = Factory::service('Input');
         $sEmail = $oInput->get('email');
 
@@ -125,14 +128,17 @@ class User extends Api\Controller\DefaultController
      */
     public function postRemap()
     {
+        /** @var \Nails\Common\Service\Uri $oUri */
         $oUri    = Factory::service('Uri');
         $iItemId = (int) $oUri->segment(4);
-        if ($iItemId && $iItemId != activeUSer('id') && !userHasPermission('admin:auth:accounts:editothers')) {
+
+        if ($iItemId && !userHasPermission(Permission\Users\Edit::class)) {
             return [
                 'status' => 401,
                 'error'  => 'You do not have permission to update this resource',
             ];
-        } elseif (!$iItemId && !userHasPermission('admin:auth:accounts:create')) {
+
+        } elseif (!$iItemId && !userHasPermission(Permission\Users\Create::class)) {
             return [
                 'status' => 401,
                 'error'  => 'You do not have permission to create this type of resource',

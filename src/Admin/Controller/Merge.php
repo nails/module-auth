@@ -15,6 +15,7 @@ namespace Nails\Auth\Admin\Controller;
 use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
 use Nails\Auth\Model\User;
 use Nails\Common\Exception\FactoryException;
@@ -39,7 +40,7 @@ class Merge extends Base
      */
     public static function announce()
     {
-        if (userHasPermission('admin:auth:merge:users')) {
+        if (userHasPermission(Permission\Users\Merge::class)) {
             /** @var Nav $oNavGroup */
             $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
             return $oNavGroup
@@ -52,23 +53,6 @@ class Merge extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Returns an array of extra permissions for this controller
-     *
-     * @return array
-     */
-    public static function permissions(): array
-    {
-        return array_merge(
-            parent::permissions(),
-            [
-                'users' => 'Can merge users',
-            ]
-        );
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Merge users
      *
      * @return void
@@ -76,7 +60,7 @@ class Merge extends Base
      */
     public function index(): void
     {
-        if (!userHasPermission('admin:auth:merge:users')) {
+        if (!userHasPermission(Permission\Users\Merge::class)) {
             unauthorised();
         }
 

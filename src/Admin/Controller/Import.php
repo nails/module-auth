@@ -51,7 +51,7 @@ class Import extends Base
      */
     public function index(): void
     {
-        if (!userHasPermission('admin:auth:accounts:create')) {
+        if (!userHasPermission(\Nails\Auth\Admin\Permission\Users\Create::class)) {
             unauthorised();
         }
 
@@ -85,6 +85,7 @@ class Import extends Base
 
             } catch (ValidationException $e) {
                 $this->oUserFeedback->error($e->getMessage());
+
             } catch (\Exception $e) {
                 $this->oUserFeedback->error($e->getMessage());
             }
