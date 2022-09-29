@@ -38,7 +38,7 @@ class PasswordForgotten extends Base
     public function __construct()
     {
         parent::__construct();
-        $this->data['page']->title = lang('auth_title_forgotten_password');
+        $this->oMetaData->setTitles([lang('auth_title_forgotten_password')]);
     }
 
     // --------------------------------------------------------------------------
@@ -301,7 +301,7 @@ class PasswordForgotten extends Base
                         }
                     }
 
-                    $this->data['page']->title = lang('auth_title_forgotten_password_security_question');
+                    $this->oMetaData->setTitles([lang('auth_title_forgotten_password_security_question')]);
 
                     $this->loadStyles(\Nails\Config::get('NAILS_APP_PATH') . 'application/modules/auth/views/mfa/question/ask.php');
 
@@ -395,8 +395,8 @@ class PasswordForgotten extends Base
                             $this->oUserFeedback->error('Sorry, that code failed to validate. Please try again. ' . $oAuthService->lastError());
                         }
                     }
-
-                    $this->data['page']->title = 'Please enter the code from your device';
+                    
+                    $this->oMetaData->setTitles(['Please enter the code from your device']);
 
                     $this->loadStyles(\Nails\Config::get('NAILS_APP_PATH') . 'application/modules/auth/views/mfa/device/ask.php');
 

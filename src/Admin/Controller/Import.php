@@ -93,8 +93,9 @@ class Import extends Base
 
         // --------------------------------------------------------------------------
 
-        $this->data['page']->title = 'Import Users';
-        Helper::loadView('index');
+        $this
+            ->setTitles(['Import Users'])
+            ->loadView('index');
     }
 
     // --------------------------------------------------------------------------
@@ -549,9 +550,10 @@ class Import extends Base
         $this->data['aData']         = $aData;
         $this->data['oObject']       = $oObject;
         $this->data['bSkipExisting'] = $bSkipExisting;
-        $this->data['page']->title   = 'Import Users: Preview (' . count($aData) . ')';
 
-        Helper::loadView('preview');
+        $this
+            ->setTitles(['Import Users: Preview (' . count($aData) . ')'])
+            ->loadView('preview');
     }
 
     // --------------------------------------------------------------------------

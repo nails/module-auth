@@ -43,7 +43,7 @@ class Register extends Base
         // --------------------------------------------------------------------------
 
         //  Specify a default title for this page
-        $this->data['page']->title = lang('auth_title_register');
+        $this->oMetaData->setTitles([lang('auth_title_register')]);
     }
 
     // --------------------------------------------------------------------------

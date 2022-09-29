@@ -250,17 +250,9 @@ class Settings extends Base
 
         // --------------------------------------------------------------------------
 
-        //  Existing settings
-        $this->data['settings'] = appSetting(null, 'auth', null, true);
-
-        // --------------------------------------------------------------------------
-
-        //  Set page title
-        $this->data['page']->title = 'Settings &rsaquo; Authentication';
-
-        // --------------------------------------------------------------------------
-
-        //  Load view
-        Helper::loadView('index');
+        $this
+            ->setData('settings', appSetting(null, 'auth', null, true))
+            ->setTitles(['Settings', 'Authentication'])
+            ->loadView('index');
     }
 }

@@ -358,8 +358,7 @@ class Accounts extends DefaultController
 
         // --------------------------------------------------------------------------
 
-        //  Page Title
-        $this->data['page']->title = lang('accounts_create_title');
+        $this->setTitles([lang('accounts_create_title')]);
 
         // --------------------------------------------------------------------------
 
@@ -599,24 +598,27 @@ class Accounts extends DefaultController
 
         // --------------------------------------------------------------------------
 
-        $this->data['aTabs'] = $aTabs;
-        $this->data['oUser'] = $oUser;
-        $this->data['oItem'] = $oUser;
-
-        //  Page Title
-        $this->data['page']->title = lang(
-            'accounts_edit_title',
-            $oUser->name
-        );
-
-        // --------------------------------------------------------------------------
-
         if (activeUser('id') == $oUser->id) {
             $this->oUserFeedback->info(lang('accounts_edit_editing_self', [$oUser->first_name]));
         }
 
-        //  Load views
-        Helper::loadView('edit');
+        // --------------------------------------------------------------------------
+
+        $this->data['aTabs'] = $aTabs;
+        $this->data['oUser'] = $oUser;
+        $this->data['oItem'] = $oUser;
+
+        $this
+            ->setData('aTabs', $aTabs)
+            ->setData('oUser', $oUser)
+            ->setData('oItem', $oUser)
+            ->setTitles([
+                lang(
+                    'accounts_edit_title',
+                    $oUser->name
+                ),
+            ])
+            ->loadView('edit');
     }
 
     // --------------------------------------------------------------------------
@@ -777,14 +779,13 @@ class Accounts extends DefaultController
             }
         }
 
-        $this->data['aUsers']      = $aUsers;
-        $this->data['aUserGroups'] = $aUserGroups;
-        $this->data['page']->title = 'Change a user\'s group';
-
         // --------------------------------------------------------------------------
 
-        //  Load views
-        Helper::loadView('changeGroup');
+        $this
+            ->setTitles(['Change a user\'s group'])
+            ->setData('aUsers', $aUsers)
+            ->setData('aUserGroups', $aUserGroups)
+            ->loadView('changeGroup');
     }
 
     // --------------------------------------------------------------------------
@@ -792,8 +793,10 @@ class Accounts extends DefaultController
     /**
      * Suspend a user
      *
+     * @return void
      * @throws FactoryException
      * @throws ModelException
+     * @throws NailsException
      */
     public function suspend(): void
     {
