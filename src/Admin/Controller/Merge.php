@@ -106,7 +106,7 @@ class Merge extends Base
                 );
 
                 $this->oUserFeedback->success('Users were merged successfully.');
-                redirect('admin/auth/merge');
+                redirect(self::url());
 
             } catch (\Throwable $e) {
                 $this->oUserFeedback->error($e->getMessage());

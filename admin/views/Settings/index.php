@@ -22,7 +22,7 @@ $oInput = \Nails\Factory::service('Input');
                     'key'     => 'user_registration_captcha_enabled',
                     'label'   => 'Captcha',
                     'default' => (bool) appSetting('user_registration_captcha_enabled', 'auth'),
-                    'info'    => 'May not apply to custom registration flow. ' . anchor('admin/captcha/settings', 'Manage captcha settings here'),
+                    'info'    => 'May not apply to custom registration flow.',
                 ]);
             },
         ],
@@ -34,7 +34,6 @@ $oInput = \Nails\Factory::service('Input');
                     'key'     => 'user_login_captcha_enabled',
                     'label'   => 'Captcha',
                     'default' => (bool) appSetting('user_login_captcha_enabled', 'auth'),
-                    'info'    => anchor('admin/captcha/settings', 'Manage captcha settings here'),
                 ]);
             },
         ],
@@ -46,7 +45,6 @@ $oInput = \Nails\Factory::service('Input');
                     'key'     => 'user_password_reset_captcha_enabled',
                     'label'   => 'Captcha',
                     'default' => (bool) appSetting('user_password_reset_captcha_enabled', 'auth'),
-                    'info'    => anchor('admin/captcha/settings', 'Manage captcha settings here'),
                 ]);
             },
         ],
@@ -56,7 +54,7 @@ $oInput = \Nails\Factory::service('Input');
             'content' => function () {
                 ?>
                 <p>Security settings are configured on a per group basis.</p>
-                <p><?=anchor('admin/auth/groups/index', 'Edit Groups', 'class="btn btn-primary btn-xs"')?></p>
+                <p><?=anchor(\Nails\Auth\Admin\Controller\Groups::url(), 'Edit Groups', 'class="btn btn-primary btn-xs"')?></p>
                 <?php
             },
         ],

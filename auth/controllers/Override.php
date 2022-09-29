@@ -76,7 +76,7 @@ class Override extends Base
             if (!$bHasPermission || $bIsCloning || $bIsSuperuser) {
                 if (!$bHasPermission) {
                     $this->oUserFeedback->error(lang('auth_override_fail_nopermission'));
-                    redirect('admin/dashboard');
+                    redirect(\Nails\Admin\Admin\Controller\Dashboard::url());
 
                 } elseif ($bIsCloning) {
                     show404();

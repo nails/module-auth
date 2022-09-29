@@ -46,14 +46,14 @@ if ($oUser->id != activeUser('id') && userHasPermission(\Nails\Auth\Admin\Permis
 //  Suspend/restore
 if ($oUser->is_suspended && activeUser('id') !== $oUser->id && userHasPermission(\Nails\Auth\Admin\Permission\Users\Suspend::class)) {
     $aButtons[] = anchor(
-        'admin/auth/accounts/unsuspend/' . $oUser->id . $sReturnString,
+        \App\Admin\Controller\Auth\Accounts::url('unsuspend/' . $oUser->id . $sReturnString),
         lang('action_unsuspend'),
         'class="btn btn-success"'
     );
 
 } elseif (!$oUser->is_suspended && activeUser('id') !== $oUser->id && userHasPermission(\Nails\Auth\Admin\Permission\Users\Suspend::class)) {
     $aButtons[] = anchor(
-        'admin/auth/accounts/suspend/' . $oUser->id . $sReturnString,
+        \App\Admin\Controller\Auth\Accounts::url('suspend/' . $oUser->id . $sReturnString),
         lang('action_suspend'),
         'class="btn btn-danger"'
     );

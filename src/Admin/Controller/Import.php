@@ -732,7 +732,7 @@ class Import extends Base
 
         $oCdn->objectDestroy($iObjectId);
 
-        redirect('admin/auth/import');
+        redirect(self::url());
     }
 
     // --------------------------------------------------------------------------

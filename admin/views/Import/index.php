@@ -6,7 +6,7 @@
         echo form_field_upload([
             'key'    => 'csv',
             'label'  => 'CSV',
-            'info'   => anchor('admin/auth/import/template', 'Download a template CSV file', 'style="text-decoration: underline;"'),
+            'info'   => anchor(\Nails\Auth\Admin\Controller\Import::url('template'), 'Download a template CSV file', 'style="text-decoration: underline;"'),
             'accept' => 'text/csv',
         ]);
         ?>
