@@ -499,8 +499,10 @@ class Accounts extends DefaultController
     /**
      * Edit a user account
      *
+     * @return void
      * @throws FactoryException
      * @throws ModelException
+     * @throws NailsException
      */
     public function edit(): void
     {
@@ -517,6 +519,7 @@ class Accounts extends DefaultController
 
         // --------------------------------------------------------------------------
 
+        /** @var \Nails\Auth\Resource\User $oUser */
         $oUser = $oUserModel->getById($oUri->segment(5));
 
         if (empty($oUser)) {

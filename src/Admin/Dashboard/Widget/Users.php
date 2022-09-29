@@ -6,13 +6,14 @@ use Nails\Admin\Admin\Dashboard\Widget\Base;
 use Nails\Admin\Interfaces;
 use Nails\Admin\Service;
 use Nails\Admin\Traits;
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
 use Nails\Auth\Model\User;
 use Nails\Auth\Model\User\Group;
 use Nails\Factory;
 
 /**
- * Class USers
+ * Class Users
  *
  * @package Nails\Auth\Admin\Dashboard\Widget
  */
