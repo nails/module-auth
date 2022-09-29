@@ -121,8 +121,8 @@ class Users implements Interfaces\Dashboard\Widget
         $sBody = implode(PHP_EOL, $aBody);
 
         return <<<EOT
-            <table>
-                <thead>
+            <table class="table table-striped table-hover table-bordered table-responsive">
+                <thead class="table-dark">
                     <tr>
                         <th style="vertical-align: middle;">
                             Group
@@ -133,17 +133,17 @@ class Users implements Interfaces\Dashboard\Widget
                         <th style="width: 100px; vertical-align: middle; text-align: center;">
                             Suspended
                         </th>
-                        <th style="width: 100px; vertical-align: middle; text-align: center;">
+                        <th style="width: 150px; vertical-align: middle; text-align: center;">
                             Seen Recently
                             <br><small>within 7 days</small>
                         </th>
-                        <th style="width: 100px; vertical-align: middle; text-align: center;">
+                        <th style="width: 150px; vertical-align: middle; text-align: center;">
                             Not Seen Recently
                             <br><small>over 7 days</small>
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="align-middle">
                     $sBody
                 </tbody>
             </table>
