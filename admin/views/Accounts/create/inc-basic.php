@@ -28,7 +28,7 @@ $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
         foreach ($groups as $oGroup) {
 
             //  If the group is a superuser group and the active user is not a superuser then remove it
-            if (is_array($oGroup->acl) && in_array('admin:superuser', $oGroup->acl) && !isSuperUser()) {
+            if (isGroupSuperUser($oGroup) && !isSuperUser()) {
                 continue;
             }
 
@@ -40,7 +40,7 @@ $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
         $aField['info']  = '<ul id="user-group-descriptions">';
         foreach ($groups as $oGroup) {
 
-            if (is_array($oGroup->acl) && in_array('admin:superuser', $oGroup->acl) && !isSuperUser()) {
+            if (isGroupSuperUser($oGroup) && !isSuperUser()) {
                 continue;
             }
 

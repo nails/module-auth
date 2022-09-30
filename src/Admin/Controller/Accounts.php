@@ -757,7 +757,7 @@ class Accounts extends DefaultController
 
         if (!isSuperUser()) {
             foreach ($aGroups as &$oGroup) {
-                if (!empty($oGroup->acl) && in_array('admin:superuser', $oGroup->acl)) {
+                if (isGroupSuperUser($oGroup)) {
                     $oGroup = null;
                 }
             }
