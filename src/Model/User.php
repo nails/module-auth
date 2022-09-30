@@ -137,12 +137,12 @@ class User extends Base
     /**
      * The ID of the active user
      */
-    protected ?int $iActiveUserId;
+    protected ?int $iActiveUserId = null;
 
     /**
      * The Active User object
      */
-    protected ?Resource\User $oActiveUser;
+    protected ?Resource\User $oActiveUser = null;
 
     /**
      * Whether the active user is to be remembered
