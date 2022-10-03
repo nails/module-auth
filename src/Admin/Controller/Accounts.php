@@ -270,7 +270,7 @@ class Accounts extends DefaultController
 
         // --------------------------------------------------------------------------
 
-        if (userHasPermission(Permissions\Users\Create::class)) {
+        if (userHasPermission(Permission\Users\Create::class)) {
             $this->aConfig['INDEX_HEADER_BUTTONS'][] = [
                 'label' => 'Import',
                 'url'   => self::url('import'),
