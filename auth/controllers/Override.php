@@ -69,14 +69,14 @@ class Override extends Base
 
         if (!wasAdmin()) {
 
-            $bHasPermission = userHasPermission('admin:auth:accounts:loginAs');
+            $bHasPermission = userHasPermission(\Nails\Auth\Admin\Permission\Users\LoginAs::class);
             $bIsCloning     = activeUser('id') == $oUser->id;
-            $bIsSuperuser   = !isSuperuser() && isSuperuser($oUser);
+            $bIsSuperuser   = !isSuperUser() && isSuperUser($oUser);
 
             if (!$bHasPermission || $bIsCloning || $bIsSuperuser) {
                 if (!$bHasPermission) {
                     $this->oUserFeedback->error(lang('auth_override_fail_nopermission'));
-                    redirect('admin/dashboard');
+                    redirect(\Nails\Admin\Admin\Controller\Dashboard::url());
 
                 } elseif ($bIsCloning) {
                     show404();

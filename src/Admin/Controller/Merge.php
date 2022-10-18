@@ -10,12 +10,13 @@
  * @link
  */
 
-namespace Nails\Admin\Auth;
+namespace Nails\Auth\Admin\Controller;
 
+use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
-use Nails\Auth\Controller\BaseAdmin;
 use Nails\Auth\Model\User;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
@@ -29,7 +30,7 @@ use stdClass;
  *
  * @package Nails\Admin\Auth
  */
-class Merge extends BaseAdmin
+class Merge extends Base
 {
     /**
      * Announces this controller's navGroups
@@ -39,7 +40,7 @@ class Merge extends BaseAdmin
      */
     public static function announce()
     {
-        if (userHasPermission('admin:auth:merge:users')) {
+        if (userHasPermission(Permission\Users\Merge::class)) {
             /** @var Nav $oNavGroup */
             $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
             return $oNavGroup
@@ -52,23 +53,6 @@ class Merge extends BaseAdmin
     // --------------------------------------------------------------------------
 
     /**
-     * Returns an array of extra permissions for this controller
-     *
-     * @return array
-     */
-    public static function permissions(): array
-    {
-        return array_merge(
-            parent::permissions(),
-            [
-                'users' => 'Can merge users',
-            ]
-        );
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Merge users
      *
      * @return void
@@ -76,13 +60,13 @@ class Merge extends BaseAdmin
      */
     public function index(): void
     {
-        if (!userHasPermission('admin:auth:merge:users')) {
+        if (!userHasPermission(Permission\Users\Merge::class)) {
             unauthorised();
         }
 
         // --------------------------------------------------------------------------
 
-        $this->data['page']->title = 'Merge Users';
+        $this->setTitles(['Merge Users']);
 
         // --------------------------------------------------------------------------
 
@@ -122,7 +106,7 @@ class Merge extends BaseAdmin
                 );
 
                 $this->oUserFeedback->success('Users were merged successfully.');
-                redirect('admin/auth/merge');
+                redirect(self::url());
 
             } catch (\Throwable $e) {
                 $this->oUserFeedback->error($e->getMessage());

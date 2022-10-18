@@ -20,7 +20,7 @@ class Routes implements RouteGenerator
      * Returns an array of routes for this module
      * @return array
      */
-    public static function generate()
+    public static function generate(): array
     {
         return [
             'auth/password/forgotten(/(.+))?'           => 'auth/PasswordForgotten/$2',

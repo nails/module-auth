@@ -89,8 +89,9 @@ class Login extends Base
         // --------------------------------------------------------------------------
 
         //  Specify a default title for this page
-        $this->data['page']->title = lang('auth_title_login');
-        $this->oMetaData->setDescription('Log in to your ' . \Nails\Config::get('APP_NAME') . ' account');
+        $this->oMetaData
+            ->setTitles([lang('auth_title_login')])
+            ->setDescription('Log in to your ' . \Nails\Config::get('APP_NAME') . ' account');
     }
 
     // --------------------------------------------------------------------------
@@ -103,7 +104,7 @@ class Login extends Base
     public function index()
     {
         if (isLoggedIn()) {
-            redirect($this->data['return_to'] ?: activeUser('group_homepage'));
+            redirect($this->data['return_to'] ?: activeUser()->group()->default_homepage);
         }
 
         // --------------------------------------------------------------------------
@@ -415,13 +416,10 @@ class Login extends Base
 
                 //  We are attempting to log in as who we're already logged in as, redirect normally
                 if ($this->data['return_to']) {
-
                     redirect($this->data['return_to']);
 
                 } else {
-
-                    //  Nowhere to go? Send them to their default homepage
-                    redirect(activeUser('group_homepage'));
+                    redirect(activeUser()->group()->default_homepage);
                 }
 
             } else {

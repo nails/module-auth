@@ -6,13 +6,14 @@ use Nails\Admin\Admin\Dashboard\Widget\Base;
 use Nails\Admin\Interfaces;
 use Nails\Admin\Service;
 use Nails\Admin\Traits;
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
 use Nails\Auth\Model\User;
 use Nails\Auth\Model\User\Group;
 use Nails\Factory;
 
 /**
- * Class USers
+ * Class Users
  *
  * @package Nails\Auth\Admin\Dashboard\Widget
  */
@@ -38,6 +39,13 @@ class Users implements Interfaces\Dashboard\Widget
     public function getDescription(): string
     {
         return 'Renders a table of the site\'s user groups with top-line numbers about the users they contain.';
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function isEnabled(\Nails\Auth\Resource\User $oUser = null): bool
+    {
+        return userHasPermission(Permission\Users\Browse::class, $oUser);
     }
 
     // --------------------------------------------------------------------------
@@ -113,8 +121,8 @@ class Users implements Interfaces\Dashboard\Widget
         $sBody = implode(PHP_EOL, $aBody);
 
         return <<<EOT
-            <table>
-                <thead>
+            <table class="table table-striped table-hover table-bordered table-responsive">
+                <thead class="table-dark">
                     <tr>
                         <th style="vertical-align: middle;">
                             Group
@@ -125,17 +133,17 @@ class Users implements Interfaces\Dashboard\Widget
                         <th style="width: 100px; vertical-align: middle; text-align: center;">
                             Suspended
                         </th>
-                        <th style="width: 100px; vertical-align: middle; text-align: center;">
+                        <th style="width: 150px; vertical-align: middle; text-align: center;">
                             Seen Recently
                             <br><small>within 7 days</small>
                         </th>
-                        <th style="width: 100px; vertical-align: middle; text-align: center;">
+                        <th style="width: 150px; vertical-align: middle; text-align: center;">
                             Not Seen Recently
                             <br><small>over 7 days</small>
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="align-middle">
                     $sBody
                 </tbody>
             </table>

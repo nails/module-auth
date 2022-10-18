@@ -10,12 +10,13 @@
  * @link
  */
 
-namespace Nails\Admin\Auth;
+namespace Nails\Auth\Admin\Controller;
 
 use Nails\Admin\Controller\DefaultController;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
 use Nails\Admin\Model\ChangeLog;
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
 use Nails\Auth\Interfaces\Admin\User\Tab;
 use Nails\Auth\Model\User;
@@ -27,6 +28,7 @@ use Nails\Common\Exception\NailsException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\Component;
 use Nails\Common\Helper\Directory;
+use Nails\Common\Helper\Model\Where;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\UserFeedback;
@@ -45,7 +47,6 @@ class Accounts extends DefaultController
 {
     const CONFIG_MODEL_NAME          = 'User';
     const CONFIG_MODEL_PROVIDER      = Constants::MODULE_SLUG;
-    const CONFIG_PERMISSION          = 'auth:accounts';
     const CONFIG_SORT_DIRECTION      = 'desc';
     const EDIT_ENABLE_MODIFIED_CHECK = false;
     const CONFIG_INDEX_DATA          = [
@@ -54,7 +55,6 @@ class Accounts extends DefaultController
     const CONFIG_INDEX_FIELDS        = [
         'ID'          => 'id',
         'User'        => 'id',
-        'Group'       => 'group_name',
         'Login Count' => 'login_count',
         'Registered'  => 'created',
         'Last Login'  => 'last_login',
@@ -69,6 +69,10 @@ class Accounts extends DefaultController
         'Last Seen'   => 'last_seen',
         'Last Login'  => 'last_login',
     ];
+    const CONFIG_PERMISSION_BROWSE   = Permission\Users\Browse::class;
+    const CONFIG_PERMISSION_CREATE   = Permission\Users\Create::class;
+    const CONFIG_PERMISSION_DELETE   = Permission\Users\Delete::class;
+    const CONFIG_PERMISSION_EDIT     = Permission\Users\Edit::class;
 
     // --------------------------------------------------------------------------
 
@@ -91,54 +95,39 @@ class Accounts extends DefaultController
     {
         /** @var Nav $oNavGroup */
         $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
-        $oNavGroup->setLabel('Users');
-        $oNavGroup->setIcon('fa-users');
+        $oNavGroup
+            ->setLabel('Users')
+            ->setIcon('fa-users');
 
-        if (userHasPermission('admin:auth:accounts:browse')) {
+        if (userHasPermission(Permission\Users\Browse::class)) {
 
-            $oDb = Factory::service('Database');
-            $oDb->where('is_suspended', false);
-            $numTotal    = $oDb->count_all_results(Config::get('NAILS_DB_PREFIX') . 'user');
+            $oModel = Factory::model('User', Constants::MODULE_SLUG);
+
+            $iNumTotal = $oModel->countAll();
+
+            /** @var \Nails\Admin\Factory\Nav\Alert $oAlertTotal */
             $oAlertTotal = Factory::factory('NavAlert', \Nails\Admin\Constants::MODULE_SLUG);
-            $oAlertTotal->setValue($numTotal);
-            $oAlertTotal->setLabel('Number of Users');
+            $oAlertTotal
+                ->setValue($iNumTotal)
+                ->setLabel('Number of Users');
 
-            $oDb->where('is_suspended', true);
-            $numSuspended    = $oDb->count_all_results(Config::get('NAILS_DB_PREFIX') . 'user');
-            $oAlertSuspended = Factory::factory('NavAlert', \Nails\Admin\Constants::MODULE_SLUG);
-            $oAlertSuspended->setValue($numSuspended);
-            $oAlertSuspended->setSeverity('danger');
-            $oAlertSuspended->setLabel('Number of Suspended Users');
+            $iNumSuspended = $oModel->countAll([
+                new Where('is_suspended', true),
+            ]);
 
-            $oNavGroup->addAction('View All Users', 'index', [$oAlertTotal, $oAlertSuspended], 0);
+            if ($iNumSuspended) {
+                /** @var \Nails\Admin\Factory\Nav\Alert $oAlertSuspended */
+                $oAlertSuspended = Factory::factory('NavAlert', \Nails\Admin\Constants::MODULE_SLUG);
+                $oAlertSuspended
+                    ->setValue($iNumSuspended)
+                    ->setSeverity('danger')
+                    ->setLabel('Number of Suspended Users');
+            }
+
+            $oNavGroup->addAction('View All Users', 'index', array_filter([$oAlertTotal, $oAlertSuspended ?? null]), 0);
         }
 
         return $oNavGroup;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Returns an array of extra permissions for this controller
-     *
-     * @return array
-     */
-    public static function permissions(): array
-    {
-        return array_merge(
-            parent::permissions(),
-            [
-                'browse'             => 'Can browse users',
-                'create'             => 'Can create users',
-                'delete'             => 'Can delete users',
-                'suspend'            => 'Can suspend users',
-                'unsuspend'          => 'Can unsuspend users',
-                'loginAs'            => 'Can log in as another user',
-                'editOthers'         => 'Can edit other users',
-                'changeUserGroup'    => 'Can change a user\'s group',
-                'changeOwnUserGroup' => 'Can change their own user group',
-            ]
-        );
     }
 
     // --------------------------------------------------------------------------
@@ -189,7 +178,7 @@ class Accounts extends DefaultController
                          * - if target user is a superuser active user must also be a superuser
                          */
                         return $oUser->id !== activeUser('id')
-                            && userHasPermission('admin:auth:accounts:loginAs')
+                            && userHasPermission(Permission\Users\LoginAs::class)
                             && !$oUser->is_suspended
                             && $this->activeUserCanEditSuperUser($oUser);
                     },
@@ -207,7 +196,7 @@ class Accounts extends DefaultController
                          * - if target user is a superuser active user must also be a superuser
                          */
                         return $oUser->id !== activeUser('id')
-                            && userHasPermission('admin:auth:accounts:suspend')
+                            && userHasPermission(Permission\Users\Suspend::class)
                             && !$oUser->is_suspended
                             && $this->activeUserCanEditSuperUser($oUser);
                     },
@@ -225,13 +214,13 @@ class Accounts extends DefaultController
                          * - if target user is a superuser active user must also be a superuser
                          */
                         return $oUser->id !== activeUser('id')
-                            && userHasPermission('admin:auth:accounts:unsuspend')
+                            && userHasPermission(Permission\Users\Suspend::class)
                             && $oUser->is_suspended
                             && $this->activeUserCanEditSuperUser($oUser);
                     },
                 ],
                 [
-                    'url'     => siteUrl('admin/auth/accounts/change_group?users={{id}}'),
+                    'url'     => self::url('change_group?users={{id}}'),
                     'label'   => 'Change Group',
                     'class'   => 'btn-default',
                     'enabled' => function ($oUser) {
@@ -242,8 +231,8 @@ class Accounts extends DefaultController
                          * - if target user is a superuser active user must also be a superuser
                          */
                         return (
-                                ($oUser->id === activeUser('id') && userHasPermission('admin:auth:accounts:changeOwnUserGroup'))
-                                || ($oUser->id !== activeUser('id') && userHasPermission('admin:auth:accounts:changeUserGroup'))
+                                ($oUser->id === activeUser('id') && userHasPermission(Permission\Users\Group\ChangeSelf::class))
+                                || ($oUser->id !== activeUser('id') && userHasPermission(Permission\Users\Group\Change::class))
                             )
                             && $this->activeUserCanEditSuperUser($oUser);
                     },
@@ -258,8 +247,8 @@ class Accounts extends DefaultController
             if ($aButton['label'] === lang('action_edit')) {
 
                 $aButton['enabled'] = function ($oUser) {
-                    return ($oUser->id === activeUser('id') || userHasPermission('admin:auth:accounts:editOthers')) &&
-                        !(!isSuperuser() && isSuperuser($oUser));
+                    return ($oUser->id === activeUser('id') || userHasPermission(Permission\Users\Edit::class)) &&
+                        !(!isSuperUser() && isSuperUser($oUser));
                 };
 
             } elseif ($aButton['label'] === lang('action_delete')) {
@@ -267,7 +256,7 @@ class Accounts extends DefaultController
                 $aButton['enabled'] = function ($oUser) {
                     return static::isDeleteButtonEnabled($oUser) &&
                         $oUser->id !== activeUser('id') &&
-                        !(!isSuperuser() && isSuperuser($oUser));
+                        !(!isSuperUser() && isSuperUser($oUser));
                 };
             }
         }
@@ -281,10 +270,10 @@ class Accounts extends DefaultController
 
         // --------------------------------------------------------------------------
 
-        if (userHasPermission('admin:auth:accounts:create')) {
+        if (userHasPermission(Permission\Users\Create::class)) {
             $this->aConfig['INDEX_HEADER_BUTTONS'][] = [
                 'label' => 'Import',
-                'url'   => 'admin/auth/import',
+                'url'   => self::url('import'),
             ];
         }
 
@@ -306,7 +295,7 @@ class Accounts extends DefaultController
      */
     protected function activeUserCanEditSuperUser($oUser): bool
     {
-        return !(!isSuperuser() && isSuperuser($oUser));
+        return !(!isSuperUser() && isSuperUser($oUser));
     }
 
     // --------------------------------------------------------------------------
@@ -363,14 +352,13 @@ class Accounts extends DefaultController
      */
     public function create(): void
     {
-        if (!userHasPermission('admin:auth:accounts:create')) {
+        if (!userHasPermission(Permission\Users\Create::class)) {
             unauthorised();
         }
 
         // --------------------------------------------------------------------------
 
-        //  Page Title
-        $this->data['page']->title = lang('accounts_create_title');
+        $this->setTitles([lang('accounts_create_title')]);
 
         // --------------------------------------------------------------------------
 
@@ -469,8 +457,8 @@ class Accounts extends DefaultController
 
                     redirect(
                         $oInput->get('isModal')
-                            ? 'admin/auth/accounts/edit/' . $oNewUser->id . '?isModal=true'
-                            : 'admin/auth/accounts/edit/' . $oNewUser->id
+                            ? static::url('edit/' . $oNewUser->id . '?isModal=true')
+                            : static::url('edit/' . $oNewUser->id)
                     );
 
                 } else {
@@ -511,8 +499,10 @@ class Accounts extends DefaultController
     /**
      * Edit a user account
      *
+     * @return void
      * @throws FactoryException
      * @throws ModelException
+     * @throws NailsException
      */
     public function edit(): void
     {
@@ -523,24 +513,25 @@ class Accounts extends DefaultController
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
 
-        if ($oUri->segment(5) != activeUser('id') && !userHasPermission('admin:auth:accounts:editOthers')) {
+        if ($oUri->segment(5) != activeUser('id') && !userHasPermission(Permission\Users\Edit::class)) {
             unauthorised();
         }
 
         // --------------------------------------------------------------------------
 
+        /** @var \Nails\Auth\Resource\User $oUser */
         $oUser = $oUserModel->getById($oUri->segment(5));
 
         if (empty($oUser)) {
             $this->oUserFeedback->error(lang('accounts_edit_error_unknown_id'));
             $this->returnToIndex();
 
-        } elseif (!$oUserModel->isSuperuser() && userHasPermission('superuser', $oUser)) {
+        } elseif (!isSuperUser() && isSuperUser($oUser)) {
             //  Non-superusers editing superusers is not cool
             $this->oUserFeedback->error(lang('accounts_edit_error_noteditable'));
             $this->returnToIndex();
 
-        } elseif (activeUser('id') != $oUser->id && !userHasPermission('admin:auth:accounts:editOthers')) {
+        } elseif (activeUser('id') != $oUser->id && !userHasPermission(Permission\Users\Edit::class)) {
             //  Is this user editing someone other than themselves? If so, do they have permission?
             $this->oUserFeedback->error(lang('accounts_edit_error_noteditable'));
             $this->returnToIndex();
@@ -599,8 +590,8 @@ class Accounts extends DefaultController
 
                 redirect(
                     $oInput->get('isModal')
-                        ? 'admin/auth/accounts/edit/' . $oUser->id . '?isModal=true'
-                        : 'admin/auth/accounts/edit/' . $oUser->id
+                        ? static::url('edit/' . $oUser->id . '?isModal=true')
+                        : static::url('edit/' . $oUser->id)
                 );
 
             } catch (ValidationException $e) {
@@ -610,24 +601,27 @@ class Accounts extends DefaultController
 
         // --------------------------------------------------------------------------
 
-        $this->data['aTabs'] = $aTabs;
-        $this->data['oUser'] = $oUser;
-        $this->data['oItem'] = $oUser;
-
-        //  Page Title
-        $this->data['page']->title = lang(
-            'accounts_edit_title',
-            $oUser->name
-        );
-
-        // --------------------------------------------------------------------------
-
         if (activeUser('id') == $oUser->id) {
             $this->oUserFeedback->info(lang('accounts_edit_editing_self', [$oUser->first_name]));
         }
 
-        //  Load views
-        Helper::loadView('edit');
+        // --------------------------------------------------------------------------
+
+        $this->data['aTabs'] = $aTabs;
+        $this->data['oUser'] = $oUser;
+        $this->data['oItem'] = $oUser;
+
+        $this
+            ->setData('aTabs', $aTabs)
+            ->setData('oUser', $oUser)
+            ->setData('oItem', $oUser)
+            ->setTitles([
+                lang(
+                    'accounts_edit_title',
+                    $oUser->name
+                ),
+            ])
+            ->loadView('edit');
     }
 
     // --------------------------------------------------------------------------
@@ -642,7 +636,7 @@ class Accounts extends DefaultController
      */
     public function delete(): void
     {
-        if (!userHasPermission('admin:auth:accounts:delete')) {
+        if (!userHasPermission(Permission\Users\Delete::class)) {
             unauthorised();
         }
 
@@ -662,7 +656,7 @@ class Accounts extends DefaultController
         // --------------------------------------------------------------------------
 
         //  Non-superusers editing superusers is not cool
-        if (!isSuperuser() && userHasPermission('superuser', $oUser)) {
+        if (!isSuperUser() && isSuperUser($oUser)) {
             $this->oUserFeedback->error(lang('accounts_edit_error_noteditable'));
             $this->returnToIndex();
         }
@@ -713,7 +707,7 @@ class Accounts extends DefaultController
      */
     public function change_group(): void
     {
-        if (!userHasPermission('admin:auth:accounts:changeUserGroup') && !userHasPermission('admin:auth:accounts:changeOwnUserGroup')) {
+        if (!userHasPermission(Permission\Users\Group\Change::class)) {
             show404();
         }
 
@@ -733,11 +727,7 @@ class Accounts extends DefaultController
 
         $aRemovedUsers = [];
         foreach ($aUsers as &$oUser) {
-            if (
-                ($oUserModel->isSuperuser($oUser) && !$oUserModel->isSuperuser())
-                || ($oUser->id === activeUser('id') && !userHasPermission('admin:auth:accounts:changeOwnUserGroup'))
-                || ($oUser->id !== activeUser('id') && !userHasPermission('admin:auth:accounts:changeUserGroup'))
-            ) {
+            if (isSuperUser($oUser) && !isSuperUser()) {
                 $aRemovedUsers[] = $oUser;
                 $oUser           = null;
             }
@@ -765,9 +755,9 @@ class Accounts extends DefaultController
         $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
         $aGroups         = $oUserGroupModel->getAll();
 
-        if (!isSuperuser()) {
+        if (!isSuperUser()) {
             foreach ($aGroups as &$oGroup) {
-                if (!empty($oGroup->acl) && in_array('admin:superuser', $oGroup->acl)) {
+                if (isGroupSuperUser($oGroup)) {
                     $oGroup = null;
                 }
             }
@@ -792,14 +782,13 @@ class Accounts extends DefaultController
             }
         }
 
-        $this->data['aUsers']      = $aUsers;
-        $this->data['aUserGroups'] = $aUserGroups;
-        $this->data['page']->title = 'Change a user\'s group';
-
         // --------------------------------------------------------------------------
 
-        //  Load views
-        Helper::loadView('changeGroup');
+        $this
+            ->setTitles(['Change a user\'s group'])
+            ->setData('aUsers', $aUsers)
+            ->setData('aUserGroups', $aUserGroups)
+            ->loadView('changeGroup');
     }
 
     // --------------------------------------------------------------------------
@@ -807,12 +796,14 @@ class Accounts extends DefaultController
     /**
      * Suspend a user
      *
+     * @return void
      * @throws FactoryException
      * @throws ModelException
+     * @throws NailsException
      */
     public function suspend(): void
     {
-        if (!userHasPermission('admin:auth:accounts:suspend')) {
+        if (!userHasPermission(Permission\Users\Suspend::class)) {
             unauthorised();
         }
 
@@ -833,7 +824,7 @@ class Accounts extends DefaultController
         // --------------------------------------------------------------------------
 
         //  Non-superusers editing superusers is not cool
-        if (!isSuperuser() && userHasPermission('superuser', $oUser)) {
+        if (!isSuperUser() && isSuperUser($oUser)) {
             $this->oUserFeedback->error(lang('accounts_edit_error_noteditable'));
             $this->returnToIndex();
         }
@@ -871,7 +862,7 @@ class Accounts extends DefaultController
             'user',
             $iUserId,
             '#' . number_format($iUserId) . ' ' . $oUser->name,
-            'admin/auth/accounts/edit/' . $iUserId,
+            static::url('edit/' . $iUserId),
             'is_suspended',
             $bOldValue,
             $bNewValue,
@@ -893,7 +884,7 @@ class Accounts extends DefaultController
      */
     public function unsuspend(): void
     {
-        if (!userHasPermission('admin:auth:accounts:unsuspend')) {
+        if (!userHasPermission(Permission\Users\Suspend::class)) {
             unauthorised();
         }
 
@@ -914,7 +905,7 @@ class Accounts extends DefaultController
         // --------------------------------------------------------------------------
 
         //  Non-superusers editing superusers is not cool
-        if (!isSuperuser() && userHasPermission('superuser', $oUser)) {
+        if (!isSuperUser() && isSuperUser($oUser)) {
             $this->oUserFeedback->error(lang('accounts_edit_error_noteditable'));
             $this->returnToIndex();
         }
@@ -948,7 +939,7 @@ class Accounts extends DefaultController
             'user',
             $iUserId,
             '#' . number_format($iUserId) . ' ' . $oUser->name,
-            'admin/auth/accounts/edit/' . $iUserId,
+            static::url('edit/' . $iUserId),
             'is_suspended',
             $bOldValue,
             $bNewValue,

@@ -2,6 +2,7 @@
 
 namespace Nails\Auth\Auth\Admin\User\Tab;
 
+use Nails\Auth\Admin\Controller\Accounts;
 use Nails\Auth\Constants;
 use Nails\Auth\Interfaces\Admin\User\Tab;
 use Nails\Auth\Resource\User;
@@ -86,7 +87,7 @@ class Emails implements Tab
         $oInput = Factory::service('Input');
 
         return
-            form_open('admin/auth/accounts/email', 'id="email-form"') .
+            form_open(Accounts::url('email'), 'id="email-form"') .
             form_hidden('id', $oUser->id) .
             form_hidden('return', uri_string() . '?' . $oInput->server('QUERY_STRING')) .
             form_hidden('email') .

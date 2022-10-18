@@ -12,6 +12,8 @@
 
 namespace Nails\Auth\Model;
 
+use DateInterval;
+use Exception;
 use Nails\Auth\Constants;
 use Nails\Auth\Events;
 use Nails\Auth\Exception\User\MergeException;
@@ -26,6 +28,7 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
 use Nails\Common\Factory\Model\Field;
+use Nails\Common\Helper\Form;
 use Nails\Common\Model\Base;
 use Nails\Common\Service\Cookie;
 use Nails\Common\Service\Database;
@@ -42,7 +45,6 @@ use Nails\Environment;
 use Nails\Factory;
 use Nails\Testing;
 use ReflectionException;
-use stdClass;
 
 /**
  * Class User
@@ -134,66 +136,48 @@ class User extends Base
 
     /**
      * The ID of the active user
-     *
-     * @var int|null
      */
-    protected $iActiveUserId;
+    protected ?int $iActiveUserId = null;
 
     /**
      * The Active User object
-     *
-     * @var Resource\User
      */
-    protected $oActiveUser;
+    protected ?Resource\User $oActiveUser = null;
 
     /**
      * Whether the active user is to be remembered
-     *
-     * @var bool
      */
-    protected $bIsRemembered = false;
+    protected ?bool $bIsRemembered = null;
 
     /**
      * Whether the active user is logged in or not
-     *
-     * @var bool
      */
-    protected $bIsLoggedIn = false;
+    protected bool $bIsLoggedIn = false;
 
     /**
      * The name of the "Admin recovery" field
-     *
-     * @var string
      */
-    protected $sAdminRecoveryField = 'nailsAdminRecoveryData';
+    protected string $sAdminRecoveryField = 'nailsAdminRecoveryData';
 
     /**
      * The columns in the user table
-     *
-     * @var array|null
      */
-    protected $aUserColumns = null;
+    protected ?array $aUserColumns = null;
 
     /**
      * The columns in the user meta table
-     *
-     * @var array|null
      */
-    protected $aMetaColumns = null;
+    protected ?array $aMetaColumns = null;
 
     /**
      * The user group model
-     *
-     * @var Group
      */
-    protected $oGroupModel;
+    protected Group $oGroupModel;
 
     /**
      * The user email model
-     *
-     * @var Email
      */
-    protected $oEmailModel;
+    protected Email $oEmailModel;
 
     /**
      * The name of the "slug" column
@@ -208,7 +192,6 @@ class User extends Base
      * User constructor.
      *
      * @throws FactoryException
-     * @throws ModelException
      */
     public function __construct()
     {
@@ -230,7 +213,8 @@ class User extends Base
     /**
      * Returns the searchable columns for this module
      *
-     * @return string[]
+     * @return array|string[]
+     * @throws ModelException
      */
     public function getSearchableColumns(): array
     {
@@ -295,7 +279,7 @@ class User extends Base
      * @throws NailsException
      * @throws ReflectionException
      */
-    protected function loginRememberedUser()
+    protected function loginRememberedUser(): bool
     {
         //  Is remember me functionality enabled?
         /** @var \Nails\Common\Service\Config $oConfig */
@@ -316,8 +300,8 @@ class User extends Base
         if ($remember) {
 
             $remember = explode('|', $remember);
-            $email    = isset($remember[0]) ? $remember[0] : null;
-            $code     = isset($remember[1]) ? $remember[1] : null;
+            $email    = $remember[0] ?? null;
+            $code     = $remember[1] ?? null;
 
             if ($email && $code) {
 
@@ -349,7 +333,7 @@ class User extends Base
     {
         //  Only look for a value if we're logged in
         if (!$this->isLoggedIn()) {
-            return false;
+            return null;
         }
 
         // --------------------------------------------------------------------------
@@ -363,8 +347,7 @@ class User extends Base
 
         //  If only one key is being requested then don't do anything fancy
         if (strpos($sKeys, ',') === false) {
-
-            $val = isset($this->oActiveUser->{trim($sKeys)}) ? $this->oActiveUser->{trim($sKeys)} : null;
+            $val = $this->oActiveUser->{trim($sKeys)} ?? null;
 
         } else {
 
@@ -409,10 +392,10 @@ class User extends Base
 
         //  Set the user's date/time formats
         $sFormatDate = $this->activeUser('pref_date_format');
-        $sFormatDate = $sFormatDate ? $sFormatDate : $oDateTimeService->getDateFormatDefaultSlug();
+        $sFormatDate = $sFormatDate ?: $oDateTimeService->getDateFormatDefaultSlug();
 
         $sFormatTime = $this->activeUser('pref_time_format');
-        $sFormatTime = $sFormatTime ? $sFormatTime : $oDateTimeService->getTimeFormatDefaultSlug();
+        $sFormatTime = $sFormatTime ?: $oDateTimeService->getTimeFormatDefaultSlug();
 
         $oDateTimeService->setUserFormats($sFormatDate, $sFormatTime);
     }
@@ -422,12 +405,13 @@ class User extends Base
     /**
      * Clear the active user
      *
-     * @return void
+     * @return $this
      * @throws FactoryException
      */
-    public function clearActiveUser()
+    public function clearActiveUser(): self
     {
         $this->oActiveUser = Factory::resource(static::RESOURCE_NAME, static::RESOURCE_PROVIDER, (object) []);
+        return $this;
     }
 
     // --------------------------------------------------------------------------
@@ -590,7 +574,7 @@ class User extends Base
         /**
          * Look for the remember me cookie and explode it, if we're landed with a 2
          * part array then it's likely this is a valid cookie - however, this test
-         * is, obviously, not gonna detect a spoof.
+         * is, obviously, not going to detect a spoof.
          */
 
         $cookie = get_cookie(static::REMEMBER_ME_COOKIE);
@@ -599,22 +583,6 @@ class User extends Base
         $this->bIsRemembered = count($cookie) == 2;
 
         return $this->bIsRemembered;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Determines whether the active user group has admin permissions.
-     *
-     * @param mixed $mUser The user to check, uses activeUser if null
-     *
-     * @return bool
-     * @throws FactoryException
-     * @throws ModelException
-     */
-    public function isAdmin($mUser = null): bool
-    {
-        return $this->hasPermission('admin:.+', $mUser);
     }
 
     // --------------------------------------------------------------------------
@@ -639,13 +607,13 @@ class User extends Base
     /**
      * Adds to the admin recovery array, allowing suers to login as other users multiple times, and come back
      *
-     * @param int    $iloggingInAs The ID of the user who is being imitated
+     * @param int    $iLoggingInAs The ID of the user who is being imitated
      * @param string $sReturnTo    Where to redirect the user when they log back in
      *
      * @return $this
      * @throws FactoryException
      */
-    public function setAdminRecoveryData(int $iloggingInAs, string $sReturnTo = ''): self
+    public function setAdminRecoveryData(int $iLoggingInAs, string $sReturnTo = ''): self
     {
         /** @var Session $oSession */
         $oSession = Factory::service('Session');
@@ -660,7 +628,7 @@ class User extends Base
         /** @var Resource\User\AdminRecovery $oAdminRecoveryData */
         $oAdminRecoveryData = Factory::resource('UserAdminRecovery', Constants::MODULE_SLUG, [
             'oldUserId' => activeUser('id'),
-            'newUserId' => $iloggingInAs,
+            'newUserId' => $iLoggingInAs,
             'hash'      => activeUser('password_md5'),
             'name'      => activeUser('name'),
             'email'     => activeUser('email'),
@@ -685,7 +653,7 @@ class User extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Returns the recovery data at the bottom of the stack, i.e the most recently added
+     * Returns the recovery data at the bottom of the stack, i.e. the most recently added
      *
      * @return Resource\User\AdminRecovery|null
      * @throws FactoryException
@@ -740,95 +708,6 @@ class User extends Base
         $oSession->setUserData($this->sAdminRecoveryField, $aExistingRecoveryData);
 
         return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Determines whether the active user is a superuser. Extend this method to
-     * alter it's response.
-     *
-     * @param mixed $mUser The user to check, uses activeUser if null
-     *
-     * @return bool
-     * @throws FactoryException
-     * @throws ModelException
-     */
-    public function isSuperuser($mUser = null): bool
-    {
-        return $this->hasPermission('admin:superuser', $mUser);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Determines whether the specified user has a certain ACL permission
-     *
-     * @param string $sSearch The permission to check for
-     * @param mixed  $mUser   The user to check for; if null uses activeUser, if numeric, fetches user, if object uses that object
-     *
-     * @return bool
-     * @throws FactoryException
-     * @throws ModelException
-     */
-    public function hasPermission(string $sSearch, $mUser = null): bool
-    {
-        //  Fetch the correct ACL
-        if (is_numeric($mUser)) {
-
-            $oUser = $this->getById($mUser);
-
-            if (isset($oUser->acl)) {
-                $aAcl = $oUser->acl;
-                unset($oUser);
-
-            } else {
-                return false;
-            }
-
-        } elseif (isset($mUser->acl)) {
-            $aAcl = $mUser->acl;
-
-        } else {
-            $aAcl = (array) $this->activeUser('acl');
-        }
-
-        // --------------------------------------------------------------------------
-
-        // Super users or CLI users can do anything their heart desires
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
-        if (in_array('admin:superuser', $aAcl) || $oInput::isCli()) {
-            return true;
-        }
-
-        // --------------------------------------------------------------------------
-
-        /**
-         * Test the ACL
-         * We're going to use regular expressions here so we can allow for some
-         * flexibility in the search, i.e admin:* would return true if the user has
-         * access to any of admin.
-         */
-
-        /**
-         * Replace :* with :.* - this is a common mistake when using the permission
-         * system (i.e., assuming that star on it's own will match)
-         */
-
-        $sSearch = strtolower(preg_replace('/:\*/', ':.*', $sSearch));
-
-        foreach ($aAcl as $sPermission) {
-
-            $sPattern = '/^' . $sSearch . '$/';
-            $bMatch   = preg_match($sPattern, $sPermission);
-
-            if ($bMatch) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     // --------------------------------------------------------------------------
@@ -900,32 +779,6 @@ class User extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Filter out duplicates and prefix column names if necessary
-     *
-     * @param string $sPrefix
-     * @param array  $aCols
-     *
-     * @return array
-     */
-    protected function prepareDbColumns($sPrefix = '', $aCols = [])
-    {
-        //  Clean up
-        $aCols = array_unique($aCols);
-        $aCols = array_filter($aCols);
-
-        //  Prefix all the values, if needed
-        if ($sPrefix) {
-            foreach ($aCols as $key => &$value) {
-                $value = $sPrefix . '.' . $value;
-            }
-        }
-
-        return $aCols;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Look up a user by their identifier
      *
      * @param string $sIdentifier The user's identifier, either an email address or a username
@@ -941,20 +794,15 @@ class User extends Base
 
             case 'EMAIL':
                 return $this->getByEmail($sIdentifier, $aData);
-                break;
 
             case 'USERNAME':
                 return $this->getByUsername($sIdentifier, $aData);
-                break;
 
             default:
                 Factory::helper('email');
-                if (valid_email($sIdentifier)) {
-                    return $this->getByEmail($sIdentifier, $aData);
-                } else {
-                    return $this->getByUsername($sIdentifier, $aData);
-                }
-                break;
+                return valid_email($sIdentifier)
+                    ? $this->getByEmail($sIdentifier, $aData)
+                    : $this->getByUsername($sIdentifier, $aData);
         }
     }
 
@@ -1008,6 +856,7 @@ class User extends Base
      * @param array  $aData  Any additional data to pass in
      *
      * @return Resource\User|null
+     * @throws FactoryException
      * @throws ModelException
      */
     public function getByHashes(string $sMd5Id, string $sMd5Pw, array $aData = []): ?Resource\User
@@ -1031,30 +880,14 @@ class User extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Get a user by their referral code
-     *
-     * @param string $sReferralCode The user's referral code
-     * @param array  $aData         Any additional data to pass in
-     *
-     * @return Resource\User|null
-     * @throws ModelException
-     */
-    public function getByReferral(string $sReferralCode, array $aData = []): ?Resource\User
-    {
-        return $this->getByColumn($this->getColumn('referral'), $sReferralCode, $aData, false);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Get all the email addresses which are registered to a particular user ID
      *
      * @param int $iId The user's ID
      *
-     * @return \Nails\Common\Resource[]
+     * @return Resource\User[]
      * @throws ModelException
      */
-    public function getEmailsForUser($iId)
+    public function getEmailsForUser(int $iId): array
     {
         return $this->oEmailModel->getAll([
             'where' => [
@@ -1078,14 +911,14 @@ class User extends Base
      * @param array $aData   Any data to be updated
      *
      * @return bool
+     * @throws EnvironmentException
      * @throws FactoryException
      * @throws ModelException
      */
-    public function update($iUserId = null, array $aData = null): bool
+    public function update($iUserId = null, array $aData = []): bool
     {
         /** @var \DateTime $oDate */
         $oDate   = Factory::factory('DateTime');
-        $aData   = (array) $aData;
         $iUserId = $this->getUserId($iUserId);
         if (empty($iUserId)) {
             return false;
@@ -1099,7 +932,7 @@ class User extends Base
             return false;
         }
 
-        //  Deep clone so we're sure it isn't inadvertently updated
+        //  Deep clone, so we're sure it isn't inadvertently updated
         $oOldUser = unserialize(serialize($oOldUser));
 
         // --------------------------------------------------------------------------
@@ -1141,7 +974,7 @@ class User extends Base
             foreach ($aData as $key => $val) {
 
                 //  user or user_meta?
-                if (array_search($key, $aCols) !== false) {
+                if (in_array($key, $aCols)) {
 
                     //  Careful now, some items cannot be blank and must be null
                     switch ($key) {
@@ -1312,7 +1145,7 @@ class User extends Base
 
                 $oDb->transaction()->commit();
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $oDb->transaction()->rollback();
                 $this->setError($e->getMessage());
                 return false;
@@ -1393,12 +1226,14 @@ class User extends Base
      *
      * @return int
      */
-    protected function getUserId($iUserId = null)
+    protected function getUserId(int $iUserId = null)
     {
         if (!empty($iUserId)) {
-            $iUid = (int) $iUserId;
+            $iUid = $iUserId;
+
         } elseif ($this->activeUser('id')) {
             $iUid = $this->activeUser('id');
+
         } else {
             $this->setError('No user ID set');
             return false;
@@ -1418,9 +1253,10 @@ class User extends Base
      * @return bool
      * @throws ModelException
      */
-    public function setCacheUser($iUserId, $aData = [])
+    public function setCacheUser(int $iUserId, array $aData = []): bool
     {
         $this->unsetCacheUser($iUserId);
+        /** @var Resource\User $oUser */
         $oUser = $this->getById($iUserId);
 
         if (empty($oUser)) {
@@ -1442,11 +1278,13 @@ class User extends Base
      *
      * @param int $iUserId The User ID to remove
      */
-    public function unsetCacheUser($iUserId)
+    public function unsetCacheUser(int $iUserId): self
     {
         $this->unsetCachePrefix(
             $this->prepareCacheKey($this->getColumn('id'), $iUserId)
         );
+
+        return $this;
     }
 
     // --------------------------------------------------------------------------
@@ -1456,9 +1294,9 @@ class User extends Base
      *
      * @param string   $sEmail        The email address to add
      * @param int|null $iUserId       The ID of the user to add for, defaults to $this->activeUser('id')
-     * @param bool     $bIsPrimary    Whether or not the email address should be the primary email address for the user
-     * @param bool     $bIsVerified   Whether or not the email should be marked as verified
-     * @param bool     $bSendEmail    If unverified, whether or not the verification email should be sent
+     * @param bool     $bIsPrimary    Whether the email address should be the primary email address for the user
+     * @param bool     $bIsVerified   Whether the email should be marked as verified
+     * @param bool     $bSendEmail    If unverified, whether the verification email should be sent
      * @param bool     $bTriggerEvent Whether to trigger the user modified event
      *
      * @return bool|string          String containing verification code on success, false on failure
@@ -1476,10 +1314,16 @@ class User extends Base
 
         $iUserId = empty($iUserId) ? $this->activeUser('id') : $iUserId;
         $sEmail  = trim(strtolower($sEmail));
-        $oUser   = $this->getById($iUserId);
+
+        /** @var Resource\User $oUser */
+        $oUser = $this->getById($iUserId);
 
         if (empty($oUser)) {
             $this->setError('Invalid User ID');
+            return false;
+
+        } elseif (empty($sEmail)) {
+            $this->setError('Email is required');
             return false;
         }
 
@@ -1548,11 +1392,12 @@ class User extends Base
         $oPasswordModel = Factory::model('UserPassword', Constants::MODULE_SLUG);
         $sCode          = $oPasswordModel->salt();
 
-        $oDb->set('user_id', $oUser->id);
-        $oDb->set('email', $sEmail);
-        $oDb->set('code', $sCode);
-        $oDb->set('is_verified', (bool) $bIsVerified);
-        $oDb->set('date_added', 'NOW()', false);
+        $oDb
+            ->set('user_id', $oUser->id)
+            ->set('email', $sEmail)
+            ->set('code', $sCode)
+            ->set('is_verified', $bIsVerified)
+            ->set('date_added', 'NOW()', false);
 
         if ((bool) $bIsVerified) {
             $oDb->set('date_verified', 'NOW()', false);
@@ -1588,8 +1433,8 @@ class User extends Base
                 if ($bIsPrimary) {
                     $this->oActiveUser->email                   = $sEmail;
                     $this->oActiveUser->email_verification_code = $sCode;
-                    $this->oActiveUser->email_is_verified       = (bool) $bIsVerified;
-                    $this->oActiveUser->email_is_verified_on    = (bool) $bIsVerified ? $oDate->format('Y-m-d H:i:s') : null;
+                    $this->oActiveUser->email_is_verified       = $bIsVerified;
+                    $this->oActiveUser->email_is_verified_on    = $bIsVerified ? $oDate->format('Y-m-d H:i:s') : null;
                 }
             }
 
@@ -1610,7 +1455,7 @@ class User extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Send, or resend, the verify email for a particular email address
+     * Send (or resend) the verify email for a particular email address
      *
      * @param string|int $mEmailId The email or email  ID
      * @param int|null   $iUserId  The user's ID
@@ -1619,7 +1464,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function emailAddSendVerify($mEmailId, $iUserId = null)
+    public function emailAddSendVerify($mEmailId, int $iUserId = null): bool
     {
         if (!Config::get('NAILS_AUTH_EMAIL_VERIFY_ON_ADD', true)) {
             return true;
@@ -1684,7 +1529,7 @@ class User extends Base
 
             $oEmail->send();
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->setError('The verification email failed to send.');
             return false;
         }
@@ -1706,7 +1551,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function emailDelete($mEmailId, int $iUserId = null, bool $bTriggerEvent = true)
+    public function emailDelete($mEmailId, int $iUserId = null, bool $bTriggerEvent = true): bool
     {
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
@@ -1729,6 +1574,7 @@ class User extends Base
             return false;
         }
 
+        /** @var Resource\User $oUser */
         $oUser = $this->getById($oRow->user_id);
 
         $oDb->where('id', $oRow->id);
@@ -1765,7 +1611,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function emailVerify($mIdEmail, string $sCode, bool $bTriggerEvent = true)
+    public function emailVerify($mIdEmail, string $sCode, bool $bTriggerEvent = true): bool
     {
         //  Check user exists
         if (is_numeric($mIdEmail)) {
@@ -1784,9 +1630,9 @@ class User extends Base
         //  Check if email has already been verified
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
-        $oDb->where('user_id', $oUser->id);
-        $oDb->where('is_verified', true);
-        $oDb->where('code', $sCode);
+        $oDb->where('user_id', $oUser->id)
+            ->where('is_verified', true)
+            ->where('code', $sCode);
 
         if ($oDb->count_all_results($this->oEmailModel->getTableName())) {
             $this->setError('Email has already been verified.');
@@ -1796,15 +1642,15 @@ class User extends Base
         // --------------------------------------------------------------------------
 
         //  Go ahead and set as verified
-        $oDb->set('is_verified', true);
-        $oDb->set('date_verified', 'NOW()', false);
-        $oDb->where('user_id', $oUser->id);
-        $oDb->where('is_verified', false);
-        $oDb->where('code', $sCode);
+        $oDb->set('is_verified', true)
+            ->set('date_verified', 'NOW()', false)
+            ->where('user_id', $oUser->id)
+            ->where('is_verified', false)
+            ->where('code', $sCode);
 
         $oDb->update($this->oEmailModel->getTableName());
 
-        if ((bool) $oDb->affected_rows()) {
+        if ($oDb->affected_rows()) {
 
             $this->unsetCacheUser($oUser->id);
 
@@ -1868,18 +1714,20 @@ class User extends Base
             return false;
         }
 
+        /** @var Resource\User $oUser */
         $oUser = $this->getById($oEmail->user_id);
 
         //  Update
         $oDb->transaction()->start();
         try {
-            $oDb->set('is_primary', false);
-            $oDb->where('user_id', $oEmail->user_id);
-            $oDb->update($this->oEmailModel->getTableName());
 
-            $oDb->set('is_primary', true);
-            $oDb->where('id', $oEmail->id);
-            $oDb->update($this->oEmailModel->getTableName());
+            $oDb->set('is_primary', false)
+                ->where('user_id', $oEmail->user_id)
+                ->update($this->oEmailModel->getTableName());
+
+            $oDb->set('is_primary', true)
+                ->where('id', $oEmail->id)
+                ->update($this->oEmailModel->getTableName());
 
             $this->unsetCacheUser($oEmail->user_id);
 
@@ -1903,7 +1751,7 @@ class User extends Base
 
             return true;
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->setError('Failed to set primary email. ' . $e->getMessage());
             $oDb->transaction()->rollback();
             return false;
@@ -1920,19 +1768,23 @@ class User extends Base
      * @param int $iExpires How long till the block, if the threshold is reached, expires.
      *
      * @return bool
+     * @throws EnvironmentException
      * @throws FactoryException
      * @throws ModelException
+     * @throws Exception
      */
     public function incrementFailedLogin(int $iUserId, int $iExpires = 300): bool
     {
         /** @var \DateTime $oDate */
         $oDate = Factory::factory('DateTime');
-        $oDate->add(new \DateInterval('PT' . $iExpires . 'S'));
+        $oDate->add(new DateInterval('PT' . $iExpires . 'S'));
 
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
-        $oDb->set('failed_login_count', '`failed_login_count`+1', false);
-        $oDb->set('failed_login_expires', $oDate->format('Y-m-d H:i:s'));
+        $oDb
+            ->set('failed_login_count', '`failed_login_count`+1', false)
+            ->set('failed_login_expires', $oDate->format('Y-m-d H:i:s'));
+
         return $this->update($iUserId);
     }
 
@@ -1944,6 +1796,7 @@ class User extends Base
      * @param int $iUserId The user ID to reset
      *
      * @return bool
+     * @throws EnvironmentException
      * @throws FactoryException
      * @throws ModelException
      */
@@ -1951,8 +1804,9 @@ class User extends Base
     {
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
-        $oDb->set('failed_login_count', 0);
-        $oDb->set('failed_login_expires', 'null', false);
+        $oDb->set('failed_login_count', 0)
+            ->set('failed_login_expires', 'null', false);
+
         return $this->update($iUserId);
     }
 
@@ -1964,15 +1818,18 @@ class User extends Base
      * @param int $iUserId The user ID to update
      *
      * @return bool
+     * @throws EnvironmentException
      * @throws FactoryException
      * @throws ModelException
      */
-    public function updateLastLogin($iUserId)
+    public function updateLastLogin(int $iUserId): bool
     {
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
-        $oDb->set('last_login', 'NOW()', false);
-        $oDb->set('login_count', 'login_count+1', false);
+        $oDb
+            ->set('last_login', 'NOW()', false)
+            ->set('login_count', 'login_count+1', false);
+
         return $this->update($iUserId);
     }
 
@@ -1986,11 +1843,11 @@ class User extends Base
      * @param string|null $sEmail    The user's email\
      *
      * @return bool
-     * @return bool
-     * @throws FactoryException
      * @throws EnvironmentException
+     * @throws FactoryException
+     * @throws ModelException
      */
-    public function setRememberCookie($iId = null, $sPassword = null, $sEmail = null)
+    public function setRememberCookie(int $iId = null, string $sPassword = null, string $sEmail = null): bool
     {
         //  Is remember me functionality enabled?
         /** @var \Nails\Common\Service\Config $oConfig */
@@ -2025,9 +1882,9 @@ class User extends Base
 
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
-        $oDb->set('remember_code', $sSalt);
-        $oDb->where('id', $iId);
-        $oDb->update($this->getTableName());
+        $oDb->set('remember_code', $sSalt)
+            ->where('id', $iId)
+            ->update($this->getTableName());
 
         // --------------------------------------------------------------------------
 
@@ -2066,10 +1923,10 @@ class User extends Base
      * @return bool
      * @throws FactoryException
      * @throws ModelException
-     * @throws NailsException
-     * @throws ReflectionException
+     * @throws \Nails\Common\Exception\NailsException
+     * @throws \ReflectionException
      */
-    protected function refreshSession()
+    protected function refreshSession(): bool
     {
         //  Get the user; be wary of admins logged in as other people
         /** @var Session $oSession */
@@ -2101,7 +1958,7 @@ class User extends Base
         // --------------------------------------------------------------------------
 
         /**
-         * If the user is isn't found (perhaps deleted) or has been suspended then
+         * If the user isn't found (perhaps deleted) or has been suspended then
          * obviously don't proceed with the log in
          */
 
@@ -2133,11 +1990,14 @@ class User extends Base
             $oInput = Factory::service('Input');
 
             $oDb->set('last_seen', 'NOW()', false);
+
             if (Config::get('NAILS_AUTH_LOG_IP', true)) {
                 $oDb->set('last_ip', $oInput->ipAddress());
             }
-            $oDb->where('id', $me->id);
-            $oDb->update($this->getTableName());
+
+            $oDb
+                ->where('id', $me->id)
+                ->update($this->getTableName());
         }
 
         return true;
@@ -2148,14 +2008,15 @@ class User extends Base
     /**
      * Create a new user
      *
-     * @param array $data         An array of data to create the user with
+     * @param array $aData        An array of data to create the user with
      * @param bool  $bSendWelcome Whether to send the welcome email
      *
-     * @return mixed                StdClass on success, false on failure
+     * @return mixed
      * @throws FactoryException
      * @throws ModelException
+     * @throws \Nails\Common\Exception\NailsException
      */
-    public function create(array $data = [], $bSendWelcome = true)
+    public function create(array $aData = [], $bSendWelcome = true)
     {
         /** @var \DateTime $oDate */
         $oDate = Factory::factory('DateTime');
@@ -2172,13 +2033,13 @@ class User extends Base
         if (Config::get('APP_NATIVE_LOGIN_USING') == 'EMAIL') {
 
             //  Email defined?
-            if (empty($data['email'])) {
+            if (empty($aData['email'])) {
                 $this->setError('An email address must be supplied.');
                 return false;
             }
 
             //  Check email against DB
-            $oDb->where('email', $data['email']);
+            $oDb->where('email', $aData['email']);
             if ($oDb->count_all_results($this->oEmailModel->getTableName())) {
                 $this->setError('This email is already in use.');
                 return false;
@@ -2187,32 +2048,32 @@ class User extends Base
         } elseif (Config::get('APP_NATIVE_LOGIN_USING') == 'USERNAME') {
 
             //  Username defined?
-            if (empty($data['username'])) {
+            if (empty($aData['username'])) {
                 $this->setError('A username must be supplied.');
                 return false;
             }
 
-            if (!$this->isValidUsername($data['username'], true)) {
+            if (!$this->isValidUsername($aData['username'], true)) {
                 return false;
             }
 
         } else {
 
             //  Both a username and an email must be supplied
-            if (empty($data['email']) || empty($data['username'])) {
+            if (empty($aData['email']) || empty($aData['username'])) {
                 $this->setError('An email address and a username must be supplied.');
                 return false;
             }
 
             //  Check email against DB
-            $oDb->where('email', $data['email']);
+            $oDb->where('email', $aData['email']);
             if ($oDb->count_all_results($this->oEmailModel->getTableName())) {
                 $this->setError('This email is already in use.');
                 return false;
             }
 
             //  Check username
-            if (!$this->isValidUsername($data['username'], true)) {
+            if (!$this->isValidUsername($aData['username'], true)) {
                 return false;
             }
         }
@@ -2225,12 +2086,13 @@ class User extends Base
         // --------------------------------------------------------------------------
 
         //  Check that we're dealing with a valid group
-        if (empty($data['group_id'])) {
+        if (empty($aData['group_id'])) {
             $aUserData['group_id'] = $oUserGroupModel->getDefaultGroupId();
         } else {
-            $aUserData['group_id'] = $data['group_id'];
+            $aUserData['group_id'] = $aData['group_id'];
         }
 
+        /** @var \Nails\Auth\Resource\User\Group $oGroup */
         $oGroup = $oUserGroupModel->getById($aUserData['group_id']);
 
         if (empty($oGroup)) {
@@ -2250,10 +2112,10 @@ class User extends Base
 
         try {
 
-            if (empty($data['password'])) {
+            if (empty($aData['password'])) {
                 $oPassword = $oUserPasswordModel->generateNullHash();
             } else {
-                $oPassword = $oUserPasswordModel->generateHash($aUserData['group_id'], $data['password']);
+                $oPassword = $oUserPasswordModel->generateHash($aUserData['group_id'], $aData['password']);
             }
 
         } catch (NailsException $e) {
@@ -2266,17 +2128,17 @@ class User extends Base
          * admin created the account, or if the system generated a new password
          */
 
-        $bInformUserPw = !empty($data['inform_user_pw']);
+        $bInformUserPw = !empty($aData['inform_user_pw']);
 
         // --------------------------------------------------------------------------
 
-        if (!empty($data['username'])) {
-            $aUserData['username'] = strtolower($data['username']);
+        if (!empty($aData['username'])) {
+            $aUserData['username'] = strtolower($aData['username']);
         }
 
-        if (!empty($data['email'])) {
-            $sEmail           = $data['email'];
-            $bEmailIsVerified = !empty($data['email_is_verified']);
+        if (!empty($aData['email'])) {
+            $sEmail           = $aData['email'];
+            $bEmailIsVerified = !empty($aData['email_is_verified']);
         }
 
         $aUserData['password']        = $oPassword->password;
@@ -2285,8 +2147,8 @@ class User extends Base
         $aUserData['salt']            = $oPassword->salt;
         $aUserData['created']         = $oDate->format('Y-m-d H:i:s');
         $aUserData['last_update']     = $oDate->format('Y-m-d H:i:s');
-        $aUserData['is_suspended']    = !empty($data['is_suspended']);
-        $aUserData['temp_pw']         = !empty($data['temp_pw']);
+        $aUserData['is_suspended']    = !empty($aData['is_suspended']);
+        $aUserData['temp_pw']         = !empty($aData['temp_pw']);
 
         if (Config::get('NAILS_AUTH_LOG_IP', true)) {
             $aUserData['ip_address'] = $oInput->ipAddress();
@@ -2295,39 +2157,39 @@ class User extends Base
 
         //  Referral code
         $aUserData['referral']    = $this->generateReferral();
-        $aUserData['referred_by'] = !empty($data['referred_by']) ? $data['referred_by'] : null;
+        $aUserData['referred_by'] = !empty($aData['referred_by']) ? $aData['referred_by'] : null;
 
         //  Other data
-        $aUserData['salutation'] = !empty($data['salutation']) ? $data['salutation'] : null;
-        $aUserData['first_name'] = !empty($data['first_name']) ? $data['first_name'] : null;
-        $aUserData['last_name']  = !empty($data['last_name']) ? $data['last_name'] : null;
+        $aUserData['salutation'] = !empty($aData['salutation']) ? $aData['salutation'] : null;
+        $aUserData['first_name'] = !empty($aData['first_name']) ? $aData['first_name'] : null;
+        $aUserData['last_name']  = !empty($aData['last_name']) ? $aData['last_name'] : null;
 
-        if (isset($data['gender'])) {
-            $aUserData['gender'] = $data['gender'];
+        if (isset($aData['gender'])) {
+            $aUserData['gender'] = $aData['gender'];
         }
 
-        if (isset($data['timezone'])) {
-            $aUserData['timezone'] = $data['timezone'];
+        if (isset($aData['timezone'])) {
+            $aUserData['timezone'] = $aData['timezone'];
         }
 
-        if (isset($data['datetime_format_date'])) {
-            $aUserData['datetime_format_date'] = $data['datetime_format_date'];
+        if (isset($aData['datetime_format_date'])) {
+            $aUserData['datetime_format_date'] = $aData['datetime_format_date'];
         }
 
-        if (isset($data['datetime_format_time'])) {
-            $aUserData['datetime_format_time'] = $data['datetime_format_time'];
+        if (isset($aData['datetime_format_time'])) {
+            $aUserData['datetime_format_time'] = $aData['datetime_format_time'];
         }
 
-        if (isset($data['language'])) {
-            $aUserData['language'] = $data['language'];
+        if (isset($aData['language'])) {
+            $aUserData['language'] = $aData['language'];
         }
 
-        if (isset($data['profile_img'])) {
-            $aUserData['profile_img'] = $data['profile_img'];
+        if (isset($aData['profile_img'])) {
+            $aUserData['profile_img'] = $aData['profile_img'];
         }
 
-        if (isset($data['dob'])) {
-            $aUserData['dob'] = $data['dob'];
+        if (isset($aData['dob'])) {
+            $aUserData['dob'] = $aData['dob'];
         }
 
         // --------------------------------------------------------------------------
@@ -2336,8 +2198,8 @@ class User extends Base
         $aMetaCols = array_keys($this->describeMetaFields());
         $aMetaData = [];
 
-        foreach ($data as $key => $val) {
-            if (array_search($key, $aMetaCols) !== false) {
+        foreach ($aData as $key => $val) {
+            if (in_array($key, $aMetaCols)) {
                 $aMetaData[$key] = $val;
             }
         }
@@ -2363,8 +2225,9 @@ class User extends Base
              * make use of looking up this hashed information; this should be quicker.
              */
 
-            $oDb->set('id_md5', md5($iId));
-            $oDb->where('id', $iId);
+            $oDb
+                ->set('id_md5', md5($iId))
+                ->where('id', $iId);
 
             if (!$oDb->update($this->getTableName())) {
                 throw new NailsException('Failed to update base user object.');
@@ -2422,13 +2285,13 @@ class User extends Base
                         ]);
                     }
 
-                    if (!empty($data['password']) && $bInformUserPw) {
+                    if (!empty($aData['password']) && $bInformUserPw) {
 
-                        $oEmail->data('password', $data['password']);
+                        $oEmail->data('password', $aData['password']);
 
                         //  Is this a temp password? We should let them know that too
                         if ($aUserData['temp_pw']) {
-                            $oEmail->data('isTemp', $data['temp_pw']);
+                            $oEmail->data('isTemp', $aData['temp_pw']);
                         }
                     }
 
@@ -2436,11 +2299,11 @@ class User extends Base
 
                         $oEmail->send();
 
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         throw new NailsException(sprintf(
                             'Failed to send welcome email. %s',
                             $bInformUserPw
-                                ? 'Inform the user their password is <strong>' . $data['password'] . '</strong>'
+                                ? 'Inform the user their password is <strong>' . $aData['password'] . '</strong>'
                                 : ''
                         ));
                     }
@@ -2458,7 +2321,7 @@ class User extends Base
 
             return $this->getById($iId);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $oDb->transaction()->rollback();
             $this->setError($e->getMessage());
             return false;
@@ -2489,12 +2352,12 @@ class User extends Base
         $oDb->where('user_id', $iUserId);
         $oDb->delete($this->getMetaTableName());
 
-        if ((bool) $oDb->affected_rows()) {
+        if ($oDb->affected_rows()) {
 
             $oDb->where('id', $iUserId);
             $oDb->delete($this->getTableName());
 
-            if ((bool) $oDb->affected_rows()) {
+            if ($oDb->affected_rows()) {
                 $this->unsetCacheUser($iUserId);
                 $this->triggerEvent(
                     Events::USER_DESTROYED,
@@ -2534,8 +2397,9 @@ class User extends Base
      *
      * @return string
      * @throws FactoryException
+     * @throws ModelException
      */
-    protected function generateReferral()
+    protected function generateReferral(): string
     {
         Factory::helper('string');
         /** @var Database $oDb */
@@ -2544,7 +2408,7 @@ class User extends Base
 
         while (1 > 0) {
 
-            $sReferral = random_string('alnum', 8);
+            $sReferral = random_string();
             $oQuery    = $oDb->get_where($this->getTableName(), ['referral' => $sReferral]);
 
             if ($oQuery->num_rows() == 0) {
@@ -2565,9 +2429,8 @@ class User extends Base
      *
      * @return void
      */
-    public function rewardReferral($iUserId, $iReferrerId)
+    public function rewardReferral(int $iUserId, int $iReferrerId)
     {
-        // @todo Implement this method where appropriate
     }
 
     // --------------------------------------------------------------------------
@@ -2578,10 +2441,11 @@ class User extends Base
      * @param int $iUserId The ID of the user to suspend
      *
      * @return bool
+     * @throws EnvironmentException
      * @throws FactoryException
      * @throws ModelException
      */
-    public function suspend($iUserId)
+    public function suspend(int $iUserId): bool
     {
         return $this->update($iUserId, ['is_suspended' => true]);
     }
@@ -2594,10 +2458,11 @@ class User extends Base
      * @param int $iUserId The ID of the user to unsuspend
      *
      * @return bool
+     * @throws EnvironmentException
      * @throws FactoryException
      * @throws ModelException
      */
-    public function unsuspend($iUserId)
+    public function unsuspend(int $iUserId): bool
     {
         return $this->update($iUserId, ['is_suspended' => false]);
     }
@@ -2613,8 +2478,9 @@ class User extends Base
      *
      * @return bool
      * @throws FactoryException
+     * @throws ModelException
      */
-    public function isValidUsername($sUsername, $bCheckDb = false, $iIgnoreUserId = null): bool
+    public function isValidUsername(string $sUsername, bool $bCheckDb = false, int $iIgnoreUserId = null): bool
     {
         /**
          * Check username doesn't contain invalid characters - we're actively looking
@@ -2623,7 +2489,7 @@ class User extends Base
          * we're good guys.
          */
 
-        $sInvalidChars = '/[^a-zA-Z0-9\-_\.]/';
+        $sInvalidChars = '/[^a-zA-Z\d\-_.]/';
 
         //  Minimum length of the username
         $iMinLength = 2;
@@ -2676,8 +2542,8 @@ class User extends Base
      *
      * @return $this
      * @throws \InvalidArgumentException
-     * @throws \Nails\Auth\Exception\User\MergeException
-     * @throws \Nails\Common\Exception\FactoryException
+     * @throws MergeException
+     * @throws FactoryException
      */
     public function merge(int $iKeepId, array $aMergeIds): self
     {
@@ -2751,8 +2617,8 @@ class User extends Base
      * personal preferences and shouldn't be merged.
      *
      * @return array
-     * @throws \Nails\Common\Exception\FactoryException
-     * @throws \Nails\Common\Exception\ModelException
+     * @throws FactoryException
+     * @throws ModelException
      */
     protected function mergeCompileMap(): array
     {
@@ -2798,11 +2664,13 @@ class User extends Base
      * Update merge columns
      *
      * @param array $aMap
+     * @param int   $iKeepId
+     * @param array $aMergeIds
      *
      * @return $this
-     * @throws \Nails\Auth\Exception\User\MergeException
-     * @throws \Nails\Common\Exception\FactoryException
-     * @throws \Nails\Common\Exception\ModelException
+     * @throws MergeException
+     * @throws FactoryException
+     * @throws ModelException
      */
     protected function mergeUpdateColumns(array $aMap, int $iKeepId, array $aMergeIds): self
     {
@@ -2840,9 +2708,9 @@ class User extends Base
      * Deletes merged users
      *
      * @return $this
-     * @throws \Nails\Auth\Exception\User\MergeException
-     * @throws \Nails\Common\Exception\FactoryException
-     * @throws \Nails\Common\Exception\ModelException
+     * @throws MergeException
+     * @throws FactoryException
+     * @throws ModelException
      */
     protected function mergeDeleteMergedUsers(array $aMergeIds): self
     {
@@ -2873,22 +2741,22 @@ class User extends Base
         $aFields = parent::describeFields($sTable);
 
         //  Data types
-        $aFields['profile_img']->type          = 'cdn_object_picker';
-        $aFields['timezone']->type             = 'dropdown';
-        $aFields['datetime_format_date']->type = 'dropdown';
-        $aFields['datetime_format_time']->type = 'dropdown';
+        $aFields['profile_img']->setType(\Nails\Cdn\Helper\Form::FIELD_OBJECT_PICKER);
+        $aFields['timezone']->setType(Form::FIELD_DROPDOWN);
+        $aFields['datetime_format_date']->setType(Form::FIELD_DROPDOWN);
+        $aFields['datetime_format_time']->setType(Form::FIELD_DROPDOWN);
 
         //  Labels
-        $aFields['first_name']->label           = 'First Name';
-        $aFields['last_name']->label            = 'Surname';
-        $aFields['profile_img']->label          = 'Profile Image';
-        $aFields['dob']->label                  = 'Date of Birth';
-        $aFields['datetime_format_date']->label = 'Date Format';
-        $aFields['datetime_format_time']->label = 'Time Format';
-        $aFields['ip_address']->label           = 'Registration IP';
-        $aFields['last_ip']->label              = 'Last IP';
-        $aFields['last_update']->label          = 'Modified';
-        $aFields['referral']->label             = 'Referral Code';
+        $aFields['first_name']->setLabel('First Name');
+        $aFields['last_name']->setLabel('Surname');
+        $aFields['profile_img']->setLabel('Profile Image');
+        $aFields['dob']->setLabel('Date of Birth');
+        $aFields['datetime_format_date']->setLabel('Date Format');
+        $aFields['datetime_format_time']->setLabel('Time Format');
+        $aFields['ip_address']->setLabel('Registration IP');
+        $aFields['last_ip']->setLabel('Last IP');
+        $aFields['last_update']->setLabel('Modified');
+        $aFields['referral']->setLabel('Referral Code');
 
         //  Validation rules
         $aRules = [
@@ -2900,34 +2768,34 @@ class User extends Base
 
         foreach ($aRules as $sRule => $aProperties) {
             foreach ($aProperties as $sProperty) {
-                $aFields[$sProperty]->validation[] = $sRule;
+                $aFields[$sProperty]->addValidation($sRule);
             }
         }
 
         //  Notes
-        $aFields['username']->info = 'Username can only contain alpha numeric characters, underscores, periods and dashes (no spaces).';
+        $aFields['username']->setInfo('Username can only contain alpha numeric characters, underscores, periods and dashes (no spaces).');
 
         //  Dropdown values
         /** @var DateTime $oDateTimeService */
-        $oDateTimeService                         = Factory::service('DateTime');
-        $aFields['timezone']->options             = $oDateTimeService->getAllTimezoneFlat();
-        $aFields['datetime_format_date']->options = $oDateTimeService->getAllDateFormatFlat();
-        $aFields['datetime_format_time']->options = $oDateTimeService->getAllTimeFormatFlat();
+        $oDateTimeService = Factory::service('DateTime');
+        $aFields['timezone']->setOptions($oDateTimeService->getAllTimezoneFlat());
+        $aFields['datetime_format_date']->setOptions($oDateTimeService->getAllDateFormatFlat());
+        $aFields['datetime_format_time']->setOptions($oDateTimeService->getAllTimeFormatFlat());
 
         //  Dropdown validation
-        $aFields['timezone']->validation[]             = 'in_list[' . implode(',', array_keys($aFields['timezone']->options)) . ']';
-        $aFields['datetime_format_date']->validation[] = 'in_list[' . implode(',', array_keys($aFields['datetime_format_date']->options)) . ']';
-        $aFields['datetime_format_time']->validation[] = 'in_list[' . implode(',', array_keys($aFields['datetime_format_time']->options)) . ']';
+        $aFields['timezone']->addValidation('in_list[' . implode(',', array_keys($aFields['timezone']->options)) . ']');
+        $aFields['datetime_format_date']->addValidation('in_list[' . implode(',', array_keys($aFields['datetime_format_date']->options)) . ']');
+        $aFields['datetime_format_time']->addValidation('in_list[' . implode(',', array_keys($aFields['datetime_format_time']->options)) . ']');
 
         //  Defaults
-        $aFields['timezone']->default             = $oDateTimeService->getTimezoneDefault();
-        $aFields['datetime_format_date']->default = $oDateTimeService->getDateFormatDefaultSlug();
-        $aFields['datetime_format_time']->default = $oDateTimeService->gettimeFormatDefaultSlug();
+        $aFields['timezone']->setDefault($oDateTimeService->getTimezoneDefault());
+        $aFields['datetime_format_date']->setDefault($oDateTimeService->getDateFormatDefaultSlug());
+        $aFields['datetime_format_time']->setDefault($oDateTimeService->gettimeFormatDefaultSlug());
 
         //  Misc
-        $aFields['timezone']->class             = 'select2';
-        $aFields['datetime_format_date']->class = 'select2';
-        $aFields['datetime_format_time']->class = 'select2';
+        $aFields['timezone']->setClass('select2');
+        $aFields['datetime_format_date']->setClass('select2');
+        $aFields['datetime_format_time']->setClass('select2');
 
         return $aFields;
     }
@@ -2951,9 +2819,11 @@ class User extends Base
     /**
      * Returns the name of the user meta table
      *
+     * @param bool $bIncludeAlias
+     *
      * @return string
      */
-    public function getMetaTableName($bIncludeAlias = false): string
+    public function getMetaTableName(bool $bIncludeAlias = false): string
     {
         return $bIncludeAlias
             ? trim(static::TABLE_META . ' as `' . $this->getMetaTableAlias() . '`')
@@ -2967,9 +2837,9 @@ class User extends Base
      *
      * @param bool $bIncludeSeparator Whether to include the separator
      *
-     * @return
+     * @return string
      */
-    public function getMetaTableAlias($bIncludeSeparator = false)
+    public function getMetaTableAlias(bool $bIncludeSeparator = false): string
     {
         $sTable = strtolower($this->getMetaTableName());
         $sTable = preg_replace('/[^a-z_]/', '', $sTable);

@@ -10,9 +10,11 @@
  * @link
  */
 
-namespace Nails\Admin\Auth;
+namespace Nails\Auth\Admin\Controller;
 
+use Nails\Admin\Admin\Permission\SuperUser;
 use Nails\Admin\Controller\DefaultController;
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
 use Nails\Auth\Model\User\Group;
 use Nails\Auth\Model\User\Password;
@@ -33,13 +35,15 @@ class Groups extends DefaultController
     const CONFIG_MODEL_NAME     = 'UserGroup';
     const CONFIG_MODEL_PROVIDER = Constants::MODULE_SLUG;
     const CONFIG_SIDEBAR_GROUP  = 'Users';
-    const CONFIG_PERMISSION     = 'groups';
     const CONFIG_SORT_OPTIONS   = [
-        'id'       => 'ID',
-        'label'    => 'Label',
-        'created'  => 'Created',
-        'modified' => 'Modified',
+        'Label'    => 'label',
+        'Created'  => 'created',
+        'Modified' => 'modified',
     ];
+    const CONFIG_PERMISSION_BROWSE   = Permission\Groups\Browse::class;
+    const CONFIG_PERMISSION_CREATE   = Permission\Groups\Create::class;
+    const CONFIG_PERMISSION_DELETE   = Permission\Groups\Delete::class;
+    const CONFIG_PERMISSION_EDIT     = Permission\Groups\Edit::class;
 
     // --------------------------------------------------------------------------
 
@@ -54,33 +58,9 @@ class Groups extends DefaultController
     {
         parent::loadEditViewData($oItem);
 
-        //  Get all available permissions
-        $this->data['aPermissions'] = [];
-        foreach ($this->data['adminControllers'] as $module => $oModuleDetails) {
-            foreach ($oModuleDetails->controllers as $sController => $aControllerDetails) {
-
-                $oTemp              = new \stdClass();
-                $oTemp->label       = ucfirst($module) . ': ' . ucfirst($sController);
-                $oTemp->slug        = strtolower($module . ':' . $sController);
-                $oTemp->permissions = $aControllerDetails['className']::permissions();
-
-                $aKeys   = array_keys($oTemp->permissions);
-                $aLabels = array_values($oTemp->permissions);
-
-                array_walk($aKeys, function (&$sValue) {
-                    $sValue = strtolower($sValue);
-                });
-
-                $oTemp->permissions = array_combine($aKeys, $aLabels);
-
-                if (!empty($oTemp->permissions)) {
-                    $this->data['aPermissions'][] = $oTemp;
-                }
-            }
-        }
-
-        arraySortMulti($this->data['aPermissions'], 'label');
-        $this->data['aPermissions'] = array_values($this->data['aPermissions']);
+        /** @var \Nails\Admin\Service\Permission $oPermissionService */
+        $oPermissionService         = Factory::service('Permission', \Nails\Admin\Constants::MODULE_SLUG);
+        $this->data['aPermissions'] = $oPermissionService->getGrouped();
     }
 
     // --------------------------------------------------------------------------
@@ -131,7 +111,15 @@ class Groups extends DefaultController
             'description'           => $oInput->post('description'),
             'default_homepage'      => $oInput->post('default_homepage'),
             'registration_redirect' => $oInput->post('registration_redirect'),
-            'acl'                   => $oUserGroupModel->processPermissions($oInput->post('acl') ?: []),
+            'acl'                   => json_encode(
+                array_values(
+                    array_filter(
+                        $oInput->post('is_superuser')
+                            ? [SuperUser::class]
+                            : (array) $oInput->post('acl'),
+                    )
+                )
+            ),
             'password_rules'        => $oUserPasswordModel->processRules($oInput->post('pw') ?: []),
         ];
     }
@@ -145,6 +133,10 @@ class Groups extends DefaultController
      */
     public function delete(): void
     {
+        if (!static::isDeleteButtonEnabled()) {
+            show404();
+        }
+
         /** @var Uri $oUri */
         $oUri = Factory::service('Uri');
         /** @var Group $oItemModel */
@@ -156,17 +148,17 @@ class Groups extends DefaultController
         if (empty($oItem)) {
             show404();
 
-        } elseif ($oItem->id === activeUser('group_id')) {
+        } elseif ($oItem->id === activeUser()->group()->id) {
             $this->oUserFeedback->error('You cannot delete your own user group.');
-            redirect('admin/auth/groups');
+            redirect(self::url());
 
-        } elseif (!isSuperuser() && groupHasPermission('admin:superuser', $oItem)) {
+        } elseif (!isSuperUser() && isGroupSuperUser($oItem)) {
             $this->oUserFeedback->error('You cannot delete a group which has super user permissions.');
-            redirect('admin/auth/groups');
+            redirect(self::url());
 
         } elseif ($oItem->id === $oItemModel->getDefaultGroupId()) {
             $this->oUserFeedback->error('You cannot delete the default user group.');
-            redirect('admin/auth/groups');
+            redirect(self::url());
 
         } else {
             parent::delete();
@@ -182,7 +174,7 @@ class Groups extends DefaultController
      */
     public function set_default(): void
     {
-        if (!userHasPermission('admin:auth:groups:setDefault')) {
+        if (!userHasPermission(Permission\Groups\SetDefault::class)) {
             show404();
         }
 
@@ -201,6 +193,6 @@ class Groups extends DefaultController
             );
         }
 
-        redirect('admin/auth/groups');
+        redirect(self::url());
     }
 }

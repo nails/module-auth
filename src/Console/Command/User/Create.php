@@ -3,6 +3,7 @@
 namespace Nails\Auth\Console\Command\User;
 
 use Exception;
+use Nails\Admin\Admin\Permission\SuperUser;
 use Nails\Auth\Constants;
 use Nails\Common\Exception\NailsException;
 use Nails\Config;
@@ -105,7 +106,7 @@ class Create extends Base
         }
 
         $oResult = $oDb->query(
-            'SELECT id, label FROM `' . Config::get('NAILS_DB_PREFIX') . 'user_group` WHERE `acl` LIKE \'%"admin:superuser"%\' LIMIT 1'
+            'SELECT id, label FROM `' . Config::get('NAILS_DB_PREFIX') . 'user_group` WHERE `acl` LIKE \'%"' . SuperUser::class . '"%\' LIMIT 1'
         );
         if (!$oResult->rowCount()) {
             throw new NailsException('Could not find a group with superuser permissions.');

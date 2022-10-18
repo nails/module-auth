@@ -14,7 +14,7 @@ $aButtons      = [];
 $sReturnString = '?return_to=' . urlencode(uri_string() . '?' . $oInput->server('QUERY_STRING'));
 
 //  Login as
-if ($oUser->id != activeUser('id') && userHasPermission('admin:auth:accounts:loginAs')) {
+if ($oUser->id != activeUser('id') && userHasPermission(\Nails\Auth\Admin\Permission\Users\LoginAs::class)) {
 
     //  Generate the return string
     $sUrl = uri_string();
@@ -36,42 +36,31 @@ if ($oUser->id != activeUser('id') && userHasPermission('admin:auth:accounts:log
 
     $aButtons[] = anchor(
         $oUser->getLoginUrl(),
-        lang('admin_login_as') . ' ' . $oUser->first_name,
-        'target="_parent"'
+        'Log in as ' . $oUser->name,
+        'class="btn btn-default" target="_parent"'
     );
 }
 
 // --------------------------------------------------------------------------
 
 //  Suspend/restore
-if ($oUser->is_suspended && activeUser('id') !== $oUser->id && userHasPermission('admin:auth:accounts:unsuspend')) {
+if ($oUser->is_suspended && activeUser('id') !== $oUser->id && userHasPermission(\Nails\Auth\Admin\Permission\Users\Suspend::class)) {
     $aButtons[] = anchor(
-        'admin/auth/accounts/unsuspend/' . $oUser->id . $sReturnString,
-        lang('action_unsuspend')
+        \App\Admin\Controller\Auth\Accounts::url('unsuspend/' . $oUser->id . $sReturnString),
+        lang('action_unsuspend'),
+        'class="btn btn-success"'
     );
 
-} elseif (!$oUser->is_suspended && activeUser('id') !== $oUser->id && userHasPermission('admin:auth:accounts:suspend')) {
+} elseif (!$oUser->is_suspended && activeUser('id') !== $oUser->id && userHasPermission(\Nails\Auth\Admin\Permission\Users\Suspend::class)) {
     $aButtons[] = anchor(
-        'admin/auth/accounts/suspend/' . $oUser->id . $sReturnString,
-        lang('action_suspend')
+        \App\Admin\Controller\Auth\Accounts::url('suspend/' . $oUser->id . $sReturnString),
+        lang('action_suspend'),
+        'class="btn btn-danger"'
     );
 }
 
 // --------------------------------------------------------------------------
 
-if ($aButtons) {
-    ?>
-    <div class="btn-group dropup">
-        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Actions <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu">
-            <?php
-            foreach ($aButtons as $sButton) {
-                echo '<li>' . $sButton . '</li>';
-            }
-            ?>
-        </ul>
-    </div>
-    <?php
+foreach ($aButtons as $sButton) {
+    echo $sButton . ' ';
 }

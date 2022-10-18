@@ -10,10 +10,12 @@
  * @link
  */
 
-namespace Nails\Admin\Auth;
+namespace Nails\Auth\Admin\Controller;
 
+use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
 use Nails\Auth\Controller\BaseAdmin;
 use Nails\Auth\Service\SocialSignOn;
@@ -28,8 +30,17 @@ use Nails\Factory;
  *
  * @package Nails\Admin\Auth
  */
-class Settings extends BaseAdmin
+class Settings extends Base
 {
+    const SETTINGS_PERMISSIONS = [
+        Permission\Settings\Login::class,
+        Permission\Settings\Password::class,
+        Permission\Settings\Registration::class,
+        Permission\Settings\Social::class,
+    ];
+
+    // --------------------------------------------------------------------------
+
     /**
      * Announces this controller's navGroups
      *
@@ -43,30 +54,11 @@ class Settings extends BaseAdmin
             ->setLabel('Settings')
             ->setIcon('fa-wrench');
 
-        if (userHasPermission('admin:auth:settings:update:.*')) {
+        if (userHasAnyPermission(static::SETTINGS_PERMISSIONS)) {
             $oNavGroup->addAction('Authentication');
         }
 
         return $oNavGroup;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Returns an array of permissions which can be configured for the user
-     *
-     * @return array
-     */
-    public static function permissions(): array
-    {
-        $aPermissions = parent::permissions();
-
-        $aPermissions['update:registration'] = 'Can configure registration';
-        $aPermissions['update:login']        = 'Can configure login';
-        $aPermissions['update:password']     = 'Can configure password';
-        $aPermissions['update:social']       = 'Can social integrations';
-
-        return $aPermissions;
     }
 
     // --------------------------------------------------------------------------
@@ -78,7 +70,7 @@ class Settings extends BaseAdmin
      */
     public function index(): void
     {
-        if (!userHasPermission('admin:auth:settings:update:.*')) {
+        if (!userHasAnyPermission(static::SETTINGS_PERMISSIONS)) {
             unauthorised();
         }
 
@@ -109,26 +101,26 @@ class Settings extends BaseAdmin
 
             // --------------------------------------------------------------------------
 
-            if (userHasPermission('admin:auth:settings:update:registration')) {
+            if (userHasPermission(Permission\Settings\Registration::class)) {
                 $aSettings['user_registration_enabled']         = (bool) $oInput->post('user_registration_enabled');
                 $aSettings['user_registration_captcha_enabled'] = (bool) $oInput->post('user_registration_captcha_enabled');
             }
 
             // --------------------------------------------------------------------------
 
-            if (userHasPermission('admin:auth:settings:update:login')) {
+            if (userHasPermission(Permission\Settings\Login::class)) {
                 $aSettings['user_login_captcha_enabled'] = (bool) $oInput->post('user_login_captcha_enabled');
             }
 
             // --------------------------------------------------------------------------
 
-            if (userHasPermission('admin:auth:settings:update:password')) {
+            if (userHasPermission(Permission\Settings\Password::class)) {
                 $aSettings['user_password_reset_captcha_enabled'] = (bool) $oInput->post('user_password_reset_captcha_enabled');
             }
 
             // --------------------------------------------------------------------------
 
-            if (userHasPermission('admin:auth:settings:update:social')) {
+            if (userHasPermission(Permission\Settings\Social::class)) {
 
                 /**
                  * Disable social signon, if any providers are properly enabled it'll
@@ -258,17 +250,9 @@ class Settings extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        //  Existing settings
-        $this->data['settings'] = appSetting(null, 'auth', null, true);
-
-        // --------------------------------------------------------------------------
-
-        //  Set page title
-        $this->data['page']->title = 'Settings &rsaquo; Authentication';
-
-        // --------------------------------------------------------------------------
-
-        //  Load view
-        Helper::loadView('index');
+        $this
+            ->setData('settings', appSetting(null, 'auth', null, true))
+            ->setTitles(['Settings', 'Authentication'])
+            ->loadView('index');
     }
 }

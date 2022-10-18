@@ -268,7 +268,7 @@ class PasswordReset extends Base
             // --------------------------------------------------------------------------
 
             //  Set data
-            $this->data['page']->title   = lang('auth_title_reset');
+            $this->oMetaData->setTitles([lang('auth_title_reset')]);
             $this->data['resetUrl']      = $oUserPasswordModel::resetUrl($oUser);
             $this->data['passwordRules'] = $oUserPasswordModel->getRulesAsString($oUser->group_id);
             $this->data['return_to']     = $oInput->get('return_to');

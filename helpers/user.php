@@ -23,25 +23,6 @@ if (!function_exists('activeUser')) {
     }
 }
 
-if (!function_exists('userHasPermission')) {
-    function userHasPermission(string $sSearch, $mUser = null): bool
-    {
-        /** @var Model\User $oUserModel */
-        $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
-        return $oUserModel->hasPermission($sSearch, $mUser);
-    }
-}
-
-if (!function_exists('groupHasPermission')) {
-
-    function groupHasPermission(string $sSearch, $mGroup): bool
-    {
-        /** @var Model\User\Group $oUserGroupModel */
-        $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
-        return $oUserGroupModel->hasPermission($sSearch, $mGroup);
-    }
-}
-
 if (!function_exists('isLoggedIn')) {
     function isLoggedIn(): bool
     {
@@ -51,30 +32,12 @@ if (!function_exists('isLoggedIn')) {
     }
 }
 
-if (!function_exists('isAdmin')) {
-    function isAdmin($mUser = null): bool
-    {
-        /** @var Model\User $oUserModel */
-        $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
-        return $oUserModel->isAdmin($mUser);
-    }
-}
-
 if (!function_exists('wasAdmin')) {
     function wasAdmin(): bool
     {
         /** @var Model\User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
         return $oUserModel->wasAdmin();
-    }
-}
-
-if (!function_exists('isSuperuser')) {
-    function isSuperuser($mUser = null)
-    {
-        /** @var Model\User $oUserModel */
-        $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
-        return $oUserModel->isSuperuser($mUser);
     }
 }
 
