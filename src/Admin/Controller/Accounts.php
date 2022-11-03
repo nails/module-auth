@@ -230,11 +230,7 @@ class Accounts extends DefaultController
                          * - active user has changeUserGroup permission
                          * - if target user is a superuser active user must also be a superuser
                          */
-                        return (
-                                ($oUser->id === activeUser('id') && userHasPermission(Permission\Users\Group\ChangeSelf::class))
-                                || ($oUser->id !== activeUser('id') && userHasPermission(Permission\Users\Group\Change::class))
-                            )
-                            && $this->activeUserCanEditSuperUser($oUser);
+                        return userHasPermission(Permission\Users\Group\Change::class) && $this->activeUserCanEditSuperUser($oUser);
                     },
                 ],
             ]
