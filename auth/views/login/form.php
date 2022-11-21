@@ -40,7 +40,7 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
                 }
 
                 ?>
-                <hr/>
+                <hr />
                 <p class="text-center">
                     <?php
                     switch (Config::get('APP_NATIVE_LOGIN_USING')) {
@@ -141,7 +141,7 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
             <?php
             if (appSetting('user_registration_enabled', 'auth')) {
                 ?>
-                <hr/>
+                <hr />
                 <p class="text-center">
                     Not got an account?
                 </p>
