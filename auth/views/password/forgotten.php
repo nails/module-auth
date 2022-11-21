@@ -1,5 +1,6 @@
 <?php
 
+use Nails\Captcha;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\View;
 use Nails\Factory;
@@ -63,13 +64,16 @@ $oView = Factory::service('View');
             <?php
 
             if (appSetting('user_password_reset_captcha_enabled', 'auth')) {
+
+                $sFieldKey = 'g-recaptcha-response';
+
                 ?>
                 <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
                     <?php
-                    /** @var \Nails\Captcha\Service\Captcha $oCaptchaService */
-                    $oCaptchaService = \Nails\Factory::service('Captcha', Nails\Captcha\Constants::MODULE_SLUG);
+                    /** @var Captcha\Service\Captcha $oCaptchaService */
+                    $oCaptchaService = Factory::service('Captcha', Captcha\Constants::MODULE_SLUG);
                     echo $oCaptchaService->generate()->getHtml();
-                    echo form_error('g-recaptcha-response', '<p class="form__error">', '</p>');
+                    echo form_error($sFieldKey, '<p class="form__error">', '</p>');
                     ?>
                 </div>
                 <?php

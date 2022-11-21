@@ -1,5 +1,6 @@
 <?php
 
+use Nails\Captcha;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\View;
 use Nails\Config;
@@ -122,8 +123,8 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
                 ?>
                 <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
                     <?php
-                    /** @var \Nails\Captcha\Service\Captcha $oCaptchaService */
-                    $oCaptchaService = Factory::service('Captcha', Nails\Captcha\Constants::MODULE_SLUG);
+                    /** @var Captcha\Service\Captcha $oCaptchaService */
+                    $oCaptchaService = Factory::service('Captcha', Captcha\Constants::MODULE_SLUG);
                     echo $oCaptchaService->generate()->getHtml();
                     echo form_error($sFieldKey, '<p class="form__error">', '</p>');
                     ?>
