@@ -267,7 +267,7 @@ class Authentication
 
         /** @var DateTime $oNow */
         $oNow     = Factory::factory('DateTime');
-        $oExpires = new DateTime($oUser->failed_login_expires);
+        $oExpires = new DateTime($oUser->failed_login_expires ?? '');
 
         return $oUser->failed_login_count >= static::LOCKOUT_THRESHOLD && $oNow < $oExpires;
     }
