@@ -41,7 +41,7 @@ class Group extends Entity
     {
         parent::__construct($mObj);
 
-        $this->acl            = json_decode($this->acl) ?? [];
-        $this->password_rules = json_decode($this->password_rules) ?? [];
+        $this->acl            = json_decode($this->acl ?? '[]') ?? [];
+        $this->password_rules = json_decode($this->password_rules ?? '[]') ?? [];
     }
 }
