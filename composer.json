@@ -34,7 +34,7 @@
         "nails/module-console": "dev-develop",
         "hybridauth/hybridauth": "~3.0",
         "sonata-project/google-authenticator": "~2.3.0",
-        "wikimedia/common-passwords": "^v0.4",
+        "wikimedia/common-passwords": "^v0.5",
         "ext-json": "*"
     },
     "require-dev": {
