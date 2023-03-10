@@ -578,7 +578,7 @@ class User extends Base
      *
      * @return bool
      */
-    public function bIsRemembered(): bool
+    public function isRemembered(): bool
     {
         //  Deja vu?
         if (!is_null($this->bIsRemembered)) {
@@ -599,6 +599,20 @@ class User extends Base
         $this->bIsRemembered = count($cookie) == 2;
 
         return $this->bIsRemembered;
+    }
+
+    // --------------------------------------------------------------------------
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Maintain backwards compatability
+     * @deprecated Use ->isRemebered()
+     */
+    public function bIsRemembered(): bool
+    {
+        deprecatedError(__METHOD__, static::class . '::isRemebered()');
+        return $this->bIsRemembered();
     }
 
     // --------------------------------------------------------------------------
@@ -1368,7 +1382,7 @@ class User extends Base
             //  If there's a remember me cookie then update that too, but only if the password
             //  or email address has changed
 
-            if ((isset($aData['email']) || !empty($bPasswordUpdated)) && $this->bIsRemembered()) {
+            if ((isset($aData['email']) || !empty($bPasswordUpdated)) && $this->isRemembered()) {
                 $this->setRememberCookie();
             }
         }
