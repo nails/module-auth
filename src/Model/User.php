@@ -149,9 +149,9 @@ class User extends Base
     /**
      * Whether the active user is to be remembered
      *
-     * @var bool
+     * @var bool|null
      */
-    protected $bIsRemembered = false;
+    protected $bIsRemembered = null;
 
     /**
      * Whether the active user is logged in or not
