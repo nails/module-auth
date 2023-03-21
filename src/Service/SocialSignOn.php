@@ -561,7 +561,7 @@ class SocialSignOn
         $aRestore  = [];
 
         foreach ($aSessions as $oSession) {
-            $aSessionData = json_decode($oSession->session_data, JSON_OBJECT_AS_ARRAY);
+            $aSessionData = json_decode((string) $oSession->session_data, JSON_OBJECT_AS_ARRAY);
             $oAdapter     = $this->oHybridAuth->getAdapter($oSession->provider);
             $oAdapter->setAccessToken(['access_token' => getFromArray('token', $aSessionData)]);
         }
