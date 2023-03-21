@@ -607,6 +607,7 @@ class User extends Base
 
     /**
      * Maintain backwards compatability
+     *
      * @deprecated Use ->isRemebered()
      */
     public function bIsRemembered(): bool
