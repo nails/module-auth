@@ -3074,7 +3074,7 @@ class User extends Base
 
         // --------------------------------------------------------------------------
 
-        $oObj->group_acl = json_decode($oObj->group_acl);
+        $oObj->group_acl = json_decode((string) $oObj->group_acl);
 
         //  If the user has an ACL set then we'll need to extract and merge that
         if ($oObj->user_acl) {
