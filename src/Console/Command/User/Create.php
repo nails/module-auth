@@ -198,7 +198,7 @@ class Create extends Base
         $sConfigFile = $_SERVER['HOME'] . '/.nails';
         if (file_exists($sConfigFile)) {
             $sJson = file_get_contents($sConfigFile);
-            $oJson = json_decode($sJson);
+            $oJson = json_decode((string) $sJson);
             if (!empty($oJson->{Constants::MODULE_SLUG}->default_user)) {
                 $oDefault = $oJson->{Constants::MODULE_SLUG}->default_user;
             }

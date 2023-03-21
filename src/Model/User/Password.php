@@ -320,7 +320,7 @@ class Password extends Base
         }
 
         //  Decode the password rules
-        $oGroupPwRules = json_decode($oResult->row()->password_rules);
+        $oGroupPwRules = json_decode((string) $oResult->row()->password_rules);
 
         if (empty($oGroupPwRules->expiresAfter)) {
             return false;
@@ -482,7 +482,7 @@ class Password extends Base
         }
 
         //  Decode the password rules
-        $oGroupPwRules = json_decode($oResult->row()->password_rules);
+        $oGroupPwRules = json_decode((string) $oResult->row()->password_rules);
 
         return empty($oGroupPwRules->expiresAfter) ? null : $oGroupPwRules->expiresAfter;
     }
@@ -685,7 +685,7 @@ class Password extends Base
             return [];
         }
 
-        $oPwRules = json_decode($oResult->row()->password_rules);
+        $oPwRules = json_decode((string) $oResult->row()->password_rules);
 
         $aOut = [
             'min'          => !empty($oPwRules->min) ? $oPwRules->min : null,
