@@ -2425,7 +2425,7 @@ class User extends Base
                     $oEmail->to($iId);
 
                     //  If this user is created by an admin then take note of that.
-                    if ($this->isAdmin() && $this->activeUser('id') != $iId) {
+                    if (isAdmin() && $this->activeUser('id') != $iId) {
                         $oEmail->data('admin', [
                             'id'         => $this->activeUser('id'),
                             'first_name' => $this->activeUser('first_name'),
