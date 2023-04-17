@@ -593,7 +593,7 @@ class User extends Base
          * is, obviously, not gonna detect a spoof.
          */
 
-        $cookie = get_cookie(static::REMEMBER_ME_COOKIE);
+        $cookie = (string) get_cookie(static::REMEMBER_ME_COOKIE);
         $cookie = explode('|', $cookie);
 
         $this->bIsRemembered = count($cookie) == 2;
