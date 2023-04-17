@@ -1024,7 +1024,7 @@ class Password extends Base
      */
     protected function parseToken(?string $sToken): array
     {
-        $aToken    = array_pad(explode(':', $sToken), 3, null);
+        $aToken    = array_pad(explode(':', (string) $sToken), 3, null);
         $aToken[0] = (int) $aToken[0];
         $aToken[1] = (string) $aToken[1];
         $aToken[2] = (int) $aToken[2];
