@@ -153,7 +153,7 @@ class Accounts extends DefaultController
         //  Remove isModal parameter
         $aUrl   = parse_url($sReturn);
         $sPath  = getFromArray('path', $aUrl);
-        $sQuery = getFromArray('query', $aUrl);
+        $sQuery = (string) getFromArray('query', $aUrl);
         parse_str($sQuery, $aQuery);
         unset($aQuery['isModal']);
         $sQuery  = http_build_query($aQuery);
