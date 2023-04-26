@@ -25,10 +25,27 @@ class Migration15 extends Base
      */
     public function execute()
     {
-        $this->query('ALTER TABLE `{{NAILS_DB_PREFIX}}user_group` CHANGE `password_rules` `password_rules` JSON NULL;');
-        $this->query('ALTER TABLE `{{NAILS_DB_PREFIX}}user_group` CHANGE `acl` `acl` JSON NULL;');
-        $this->query('ALTER TABLE `{{NAILS_DB_PREFIX}}user` CHANGE `user_acl` `user_acl` JSON NULL;');
-        $this->query('ALTER TABLE `{{NAILS_DB_PREFIX}}user_event` CHANGE `data` `data` JSON NULL;');
-        $this->query('ALTER TABLE `{{NAILS_DB_PREFIX}}user_meta_admin` CHANGE `nav_state` `nav_state` JSON NULL;');
+        $aMap = [
+            '{{NAILS_DB_PREFIX}}user_group'      => [
+                'password_rules',
+                'acl',
+            ],
+            '{{NAILS_DB_PREFIX}}user'            => [
+                'user_acl',
+            ],
+            '{{NAILS_DB_PREFIX}}user_event'      => [
+                'data',
+            ],
+            '{{NAILS_DB_PREFIX}}user_meta_admin' => [
+                'nav_state',
+            ],
+        ];
+
+        foreach ($aMap as $sTable => $aColumns) {
+            foreach ($aColumns as $sColumn) {
+                $this->query('UPDATE `' . $sTable . '` SET `' . $sColumn . '` = NULL WHERE `' . $sColumn . '` = "";');
+                $this->query('ALTER TABLE `' . $sTable . '` CHANGE `' . $sColumn . '` `' . $sColumn . '` JSON NULL;');
+            }
+        }
     }
 }
