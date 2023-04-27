@@ -29,9 +29,9 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "nails/common": "dev-develop",
-        "nails/module-captcha": "dev-develop",
-        "nails/module-console": "dev-develop",
+        "nails/common": "dev-feature/pre-new-admin",
+        "nails/module-captcha": "dev-feature/pre-new-admin",
+        "nails/module-console": "dev-feature/pre-new-admin",
         "hybridauth/hybridauth": "~3.0",
         "sonata-project/google-authenticator": "~2.3.0",
         "wikimedia/common-passwords": "^v0.4",
