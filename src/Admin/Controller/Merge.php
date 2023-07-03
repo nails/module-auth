@@ -48,6 +48,8 @@ class Merge extends Base
                 ->setIcon('fa-users')
                 ->addAction('Merge Users');
         }
+
+        return $oNavGroup ?? null;
     }
 
     // --------------------------------------------------------------------------

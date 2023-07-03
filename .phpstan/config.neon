@@ -4,3 +4,15 @@ parameters:
         - ../helpers
         - ../src
         - ../tests
+    bootstrapFiles:
+        - constants.php
+        - classes/App/Controller/Base.php
+    scanFiles:
+        - ../vendor/nails/common/src/Common/CodeIgniter/Core/Common.php
+        - ../vendor/codeigniter/framework/system/database/drivers/mysqli/mysqli_result.php
+    scanDirectories:
+        - ../vendor/codeigniter/framework/system/core
+        - ../vendor/codeigniter/framework/system/helpers
+        - ../vendor/nails/common/helpers
+        - ../vendor/nails/module-admin/helpers
+        - ../vendor/nails/module-cdn/helpers

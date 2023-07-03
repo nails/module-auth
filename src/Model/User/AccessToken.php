@@ -131,7 +131,7 @@ class AccessToken extends Base
                     ));
                     return false;
 
-                } elseif (!s_callable($this->aScopeHandler[$sScope])) {
+                } elseif (!is_callable($this->aScopeHandler[$sScope])) {
 
                     $this->setError(sprintf(
                         'Handler for "%s" is not a valid token scope callback.',

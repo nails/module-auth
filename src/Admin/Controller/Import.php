@@ -758,7 +758,7 @@ class Import extends Base
         }
 
         if (array_key_exists('username', $aDatum) && $oUserModel->getByEmail($aDatum['username'])) {
-            return truel;
+            return true;
         }
 
         return false;

@@ -7,7 +7,7 @@
 
 namespace Nails\Auth\Database\Migration;
 
-use Nails\Admin\Admin\Permission;
+use Nails\Auth\Admin\Permission;
 use Nails\Common\Traits;
 use Nails\Common\Interfaces;
 
