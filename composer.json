@@ -30,8 +30,12 @@
     "prefer-stable": true,
     "require": {
         "nails/common": "dev-feature/pre-new-admin",
+        "nails/module-admin": "dev-feature/pre-new-admin",
+        "nails/module-api": "dev-feature/pre-new-admin",
         "nails/module-captcha": "dev-feature/pre-new-admin",
         "nails/module-console": "dev-feature/pre-new-admin",
+        "nails/module-email": "dev-feature/pre-new-admin",
+        "nails/module-form-builder": "dev-feature/pre-new-admin",
         "hybridauth/hybridauth": "~3.0",
         "sonata-project/google-authenticator": "~2.3.0",
         "wikimedia/common-passwords": "^v0.4",
@@ -43,7 +47,7 @@
     },
     "scripts": {
         "test": "./vendor/bin/phpunit",
-        "analyse": "./vendor/bin/phpstan analyse -c .phpstan/config.neon"
+        "analyse": "./vendor/bin/phpstan analyse -c .phpstan/config.neon --memory-limit=256M"
     },
     "autoload": {
         "psr-4": {

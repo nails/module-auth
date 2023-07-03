@@ -15,7 +15,7 @@ namespace Nails\Auth\Service;
 use App\Auth\Model\User;
 use DateInterval;
 use DateTime;
-use Google\Authenticator\GoogleAuthenticator;
+use Sonata\GoogleAuthenticator\GoogleAuthenticator;
 use Nails\Auth\Constants;
 use Nails\Auth\Exception\AuthException;
 use Nails\Auth\Exception\Login\InvalidCredentialsException;
