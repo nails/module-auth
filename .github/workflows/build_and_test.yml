@@ -4,6 +4,8 @@ jobs:
     test:
         name: build_and_test
         runs-on: ubuntu-latest
+        env:
+          COMPOSER_ROOT_VERSION: dev-develop
         steps:
             -   name: Checkout code
                 uses: actions/checkout@v2
