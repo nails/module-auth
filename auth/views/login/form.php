@@ -117,16 +117,12 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
             <?php
 
             if (appSetting('user_login_captcha_enabled', 'auth')) {
-
-                $sFieldKey = 'g-recaptcha-response';
-
                 ?>
-                <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
+                <div class="form__group">
                     <?php
                     /** @var Captcha\Service\Captcha $oCaptchaService */
                     $oCaptchaService = Factory::service('Captcha', Captcha\Constants::MODULE_SLUG);
                     echo $oCaptchaService->generate()->getHtml();
-                    echo form_error($sFieldKey, '<p class="form__error">', '</p>');
                     ?>
                 </div>
                 <?php

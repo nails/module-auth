@@ -47,7 +47,6 @@ class PasswordForgotten extends Base
      * Reset password form
      *
      * @return  void
-     *
      * @throws FactoryException
      */
     public function index()
@@ -95,20 +94,17 @@ class PasswordForgotten extends Base
 
                 $oFormValidation
                     ->buildValidator([
-                        'identifier'           => reset($aRules),
-                        'g-recaptcha-response' => [
-                            function ($sToken) use ($oCaptchaService) {
-                                if (appSetting('user_password_reset_captcha_enabled', 'auth')) {
-                                    if (!$oCaptchaService->verify($sToken)) {
-                                        throw new \Nails\Common\Exception\ValidationException(
-                                            'You failed the captcha test.'
-                                        );
-                                    }
-                                }
-                            },
-                        ],
+                        'identifier' => reset($aRules),
                     ])
                     ->run();
+
+                if (appSetting('user_password_reset_captcha_enabled', 'auth')) {
+                    if (!$oCaptchaService->verify()) {
+                        throw new \Nails\Common\Exception\ValidationException(
+                            'You failed the captcha test.'
+                        );
+                    }
+                }
 
                 // --------------------------------------------------------------------------
 
@@ -395,7 +391,7 @@ class PasswordForgotten extends Base
                             $this->oUserFeedback->error('Sorry, that code failed to validate. Please try again. ' . $oAuthService->lastError());
                         }
                     }
-                    
+
                     $this->oMetaData->setTitles(['Please enter the code from your device']);
 
                     $this->loadStyles(\Nails\Config::get('NAILS_APP_PATH') . 'application/modules/auth/views/mfa/device/ask.php');

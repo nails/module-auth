@@ -130,7 +130,7 @@ class Login extends Base
 
                 $oFormValidation
                     ->buildValidator([
-                        'identifier'           => array_values(array_filter([
+                        'identifier' => array_values(array_filter([
                             \Nails\Config::get('APP_NATIVE_LOGIN_USING') === 'EMAIL' ? [
                                 $oFormValidation::RULE_REQUIRED,
                                 $oFormValidation::RULE_VALID_EMAIL,
@@ -138,21 +138,18 @@ class Login extends Base
                             \Nails\Config::get('APP_NATIVE_LOGIN_USING') === 'USERNAME' ? [$oFormValidation::RULE_REQUIRED] : null,
                             \Nails\Config::get('APP_NATIVE_LOGIN_USING') === 'BOTH' ? [$oFormValidation::RULE_REQUIRED] : null,
                         ]))[0],
-                        'password'             => [$oFormValidation::RULE_REQUIRED],
-                        'remember'             => [],
-                        'g-recaptcha-response' => [
-                            function ($sToken) use ($oCaptchaService) {
-                                if (appSetting('user_login_captcha_enabled', 'auth')) {
-                                    if (!$oCaptchaService->verify($sToken)) {
-                                        throw new ValidationException(
-                                            lang('auth_login_captcha_fail')
-                                        );
-                                    }
-                                }
-                            },
-                        ],
+                        'password'   => [$oFormValidation::RULE_REQUIRED],
+                        'remember'   => [],
                     ])
                     ->run();
+
+                if (appSetting('user_login_captcha_enabled', 'auth')) {
+                    if (!$oCaptchaService->verify()) {
+                        throw new ValidationException(
+                            lang('auth_login_captcha_fail')
+                        );
+                    }
+                }
 
                 $bRemember = (bool) $oInput->post('remember');
 
@@ -285,7 +282,6 @@ class Login extends Base
      *
      * @throws AuthException
      * @throws FactoryException
-     *
      * @todo (Pablo - 2019-12-10) - Verify this still works
      */
     protected function handleMfa(Resource\User $oUser, bool $bRemember = false): void
@@ -465,7 +461,10 @@ class Login extends Base
                         $oUser->last_ip,
                     ]));
                 } else {
-                    $this->oUserFeedback->success(lang('auth_login_ok_welcome', [$oUser->first_name, $oUser->last_login]));
+                    $this->oUserFeedback->success(lang('auth_login_ok_welcome', [
+                        $oUser->first_name,
+                        $oUser->last_login,
+                    ]));
                 }
 
             } else {
@@ -507,7 +506,6 @@ class Login extends Base
      * @param string $sProvider The provider to use
      *
      * @throws FactoryException
-     *
      * @todo (Pablo - 2019-12-10) - Verify this still works
      */
     protected function socialSignon($sProvider): void
