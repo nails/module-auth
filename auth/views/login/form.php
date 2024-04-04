@@ -117,12 +117,11 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
 
             if (appSetting('user_login_captcha_enabled', 'auth')) {
                 ?>
-                <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
+                <div class="form__group">
                     <?php
                     /** @var \Nails\Captcha\Service\Captcha $oCaptchaService */
                     $oCaptchaService = Factory::service('Captcha', Nails\Captcha\Constants::MODULE_SLUG);
                     echo $oCaptchaService->generate()->getHtml();
-                    echo form_error('g-recaptcha-response', '<p class="form__error">', '</p>');
                     ?>
                 </div>
                 <?php

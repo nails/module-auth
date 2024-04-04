@@ -90,17 +90,17 @@ class Register extends Base
 
                 $oFormValidation
                     ->buildValidator([
-                        'first_name'           => [$oFormValidation::RULE_REQUIRED],
-                        'last_name'            => [$oFormValidation::RULE_REQUIRED],
-                        'password'             => [$oFormValidation::RULE_REQUIRED],
-                        'email'                => in_array(Config::get('APP_NATIVE_LOGIN_USING'), ['EMAIL', 'BOTH']) ? [
+                        'first_name' => [$oFormValidation::RULE_REQUIRED],
+                        'last_name'  => [$oFormValidation::RULE_REQUIRED],
+                        'password'   => [$oFormValidation::RULE_REQUIRED],
+                        'email'      => in_array(Config::get('APP_NATIVE_LOGIN_USING'), ['EMAIL', 'BOTH']) ? [
                             $oFormValidation::RULE_REQUIRED,
                             $oFormValidation::RULE_VALID_EMAIL,
                             $oFormValidation::rule(
                                 $oFormValidation::RULE_IS_UNIQUE, $oUserEmailModel->getTableName(), 'email'
                             ),
                         ] : [],
-                        'username'             => in_array(Config::get('APP_NATIVE_LOGIN_USING'), [
+                        'username'   => in_array(Config::get('APP_NATIVE_LOGIN_USING'), [
                             'USERNAME',
                             'BOTH',
                         ]) ? [
@@ -109,17 +109,6 @@ class Register extends Base
                                 $oFormValidation::RULE_IS_UNIQUE, $oUserModel->getTableName(), 'username'
                             ),
                         ] : [],
-                        'g-recaptcha-response' => [
-                            function ($sToken) use ($oCaptchaService) {
-                                if (appSetting('user_registration_captcha_enabled', 'auth')) {
-                                    if (!$oCaptchaService->verify($sToken)) {
-                                        throw new \Nails\Common\Exception\ValidationException(
-                                            lang('auth_register_captcha_fail')
-                                        );
-                                    }
-                                }
-                            },
-                        ],
                     ])
                     ->setMessages([
                         $oFormValidation::RULE_IS_UNIQUE => implode('', [
@@ -135,6 +124,14 @@ class Register extends Base
                         ]),
                     ])
                     ->run();
+
+                if (appSetting('user_registration_captcha_enabled', 'auth')) {
+                    if (!$oCaptchaService->verify()) {
+                        throw new \Nails\Common\Exception\ValidationException(
+                            lang('auth_register_captcha_fail')
+                        );
+                    }
+                }
 
                 // --------------------------------------------------------------------------
 

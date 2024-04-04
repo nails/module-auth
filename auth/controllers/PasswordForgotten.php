@@ -95,20 +95,17 @@ class PasswordForgotten extends Base
 
                 $oFormValidation
                     ->buildValidator([
-                        'identifier'           => reset($aRules),
-                        'g-recaptcha-response' => [
-                            function ($sToken) use ($oCaptchaService) {
-                                if (appSetting('user_password_reset_captcha_enabled', 'auth')) {
-                                    if (!$oCaptchaService->verify($sToken)) {
-                                        throw new \Nails\Common\Exception\ValidationException(
-                                            'You failed the captcha test.'
-                                        );
-                                    }
-                                }
-                            },
-                        ],
+                        'identifier' => reset($aRules),
                     ])
                     ->run();
+
+                if (appSetting('user_password_reset_captcha_enabled', 'auth')) {
+                    if (!$oCaptchaService->verify()) {
+                        throw new \Nails\Common\Exception\ValidationException(
+                            'You failed the captcha test.'
+                        );
+                    }
+                }
 
                 // --------------------------------------------------------------------------
 
