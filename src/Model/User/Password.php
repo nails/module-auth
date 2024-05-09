@@ -529,18 +529,18 @@ class Password extends Base
      * Create a password hash, checks to ensure a password is strong enough according
      * to the password rules defined by the app.
      *
-     * @param Resource\User $oUser     The user who's rules to fetch
-     * @param string        $sPassword The raw, unencrypted password
+     * @param Resource\User|Resource\User\Group $oUserOrGroup     The user who's rules to fetch
+     * @param string                            $sPassword The raw, unencrypted password
      *
      * @return stdClass
      * @throws NailsException
      */
-    public function generateHash(Resource\User $oUser, $sPassword): stdClass
+    public function generateHash(Resource\User|Resource\User\Group $oUserOrGroup, $sPassword): stdClass
     {
         if (empty($sPassword)) {
             throw new NailsException('No password to hash.');
 
-        } elseif (!$this->isAcceptable($oUser, $sPassword)) {
+        } elseif (!$this->isAcceptable($oUserOrGroup, $sPassword)) {
             throw new NailsException('Password does not meet requirements.');
 
         } else {
