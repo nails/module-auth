@@ -901,7 +901,7 @@ class Password extends Base
         $oUser = $oUserModel
             ->skipCache()
             ->getFirst([
-                new Like('forgotten_password_code', ':' . $sCode . ':')
+                new Like('forgotten_password_code', ':' . $sCode . ':'),
             ]);
 
         if (empty($oUser)) {
