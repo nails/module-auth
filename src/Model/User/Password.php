@@ -22,6 +22,11 @@ use Nails\Auth\Resource;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
+use Nails\Common\Helper\Model\Like;
+use Nails\Common\Helper\Model\Limit;
+use Nails\Common\Helper\Model\Select;
+use Nails\Common\Helper\Model\Sort;
+use Nails\Common\Helper\Model\Where;
 use Nails\Common\Model\Base;
 use Nails\Common\Service\Database;
 use Nails\Common\Service\Input;
@@ -115,6 +120,8 @@ class Password extends Base
     {
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
+        /** @var User\Password\History $oUserPasswordHistoryModel */
+        $oUserPasswordHistoryModel = Factory::model('UserPasswordHistory', Constants::MODULE_SLUG);
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
         /** @var Input $oInput */
@@ -122,6 +129,7 @@ class Password extends Base
 
         // --------------------------------------------------------------------------
 
+        /** @var Resource\User $oUser */
         $oUser = $oUserModel->getById($iUserId);
         if (empty($oUser)) {
             $this->setError('Invalid user ID.');
@@ -129,7 +137,7 @@ class Password extends Base
         }
 
         try {
-            $oHash = $this->generateHash($oUser->group_id, $sPassword);
+            $oHash = $this->generateHash($oUser, $sPassword);
         } catch (NailsException $e) {
             $this->setError($e->getMessage());
             return false;
@@ -154,6 +162,22 @@ class Password extends Base
         if (!$oDb->update($oUserModel->getTableName())) {
             $this->setError('Failed to update user record.');
             return false;
+        }
+
+        // --------------------------------------------------------------------------
+
+        //  Record the old password details
+        $aPwRules = $this->getRules($oUser->group_id);
+        if (!empty($aPwRules['disallowPrevious'])) {
+            $oUserPasswordHistoryModel
+                ->create([
+                    'user_id'         => $oUser->id,
+                    'password'        => $oUser->password,
+                    'password_engine' => $oUser->password_engine,
+                    'salt'            => $oUser->salt,
+                ]);
+            $oUserPasswordHistoryModel
+                ->purge($oUser, $aPwRules['disallowPrevious']);
         }
 
         // --------------------------------------------------------------------------
@@ -368,16 +392,20 @@ class Password extends Base
     /**
      * Determines whether a password is acceptable for a user group
      *
-     * @param int    $iGroupId  The user group
-     * @param string $sPassword The raw, unencrypted password
+     * @param Resource\User|Resource\User\Group $oUserOrGroup The user (or user group) to test
+     * @param string                            $sPassword    The raw, unencrypted password
      *
      * @return bool
      * @throws FactoryException
      */
-    public function isAcceptable(int $iGroupId, string $sPassword): bool
+    public function isAcceptable(Resource\User|Resource\User\Group $oUserOrGroup, string $sPassword): bool
     {
         //  Check password satisfies password rules
-        $aPwRules = $this->getRules($iGroupId);
+        $aPwRules = $this->getRules(
+            $oUserOrGroup instanceof Resource\User
+                ? $oUserOrGroup->group_id
+                : $oUserOrGroup->id
+        );
 
         //  Long enough?
         if (!empty($aPwRules['min']) && strlen($sPassword) < $aPwRules['min']) {
@@ -448,6 +476,14 @@ class Password extends Base
             }
         }
 
+        //  Not a previous password
+        if ($oUserOrGroup instanceof Resource\User) {
+            if ($this->isPreviousPassword($oUserOrGroup, $sPassword, (int) $aPwRules['disallowPrevious'])) {
+                $this->setError('Cannot re-use a previous password.');
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -493,18 +529,18 @@ class Password extends Base
      * Create a password hash, checks to ensure a password is strong enough according
      * to the password rules defined by the app.
      *
-     * @param int    $iGroupId  The group who's rules to fetch
-     * @param string $sPassword The raw, unencrypted password
+     * @param Resource\User $oUser     The user who's rules to fetch
+     * @param string        $sPassword The raw, unencrypted password
      *
      * @return stdClass
      * @throws NailsException
      */
-    public function generateHash($iGroupId, $sPassword): stdClass
+    public function generateHash(Resource\User $oUser, $sPassword): stdClass
     {
         if (empty($sPassword)) {
             throw new NailsException('No password to hash.');
 
-        } elseif (!$this->isAcceptable($iGroupId, $sPassword)) {
+        } elseif (!$this->isAcceptable($oUser, $sPassword)) {
             throw new NailsException('Password does not meet requirements.');
 
         } else {
@@ -688,12 +724,13 @@ class Password extends Base
         $oPwRules = json_decode((string) $oResult->row()->password_rules);
 
         $aOut = [
-            'min'          => !empty($oPwRules->min) ? $oPwRules->min : null,
-            'max'          => !empty($oPwRules->max) ? $oPwRules->max : null,
-            'expiresAfter' => !empty($oPwRules->expiresAfter) ? $oPwRules->expiresAfter : null,
-            'requirements' => !empty($oPwRules->requirements) ? $oPwRules->requirements : [],
-            'banned'       => !empty($oPwRules->banned) ? $oPwRules->banned : [],
-            'block_common' => !empty($oPwRules->block_common),
+            'min'              => !empty($oPwRules->min) ? $oPwRules->min : null,
+            'max'              => !empty($oPwRules->max) ? $oPwRules->max : null,
+            'expiresAfter'     => !empty($oPwRules->expiresAfter) ? $oPwRules->expiresAfter : null,
+            'disallowPrevious' => !empty($oPwRules->disallowPrevious) ? $oPwRules->disallowPrevious : null,
+            'requirements'     => !empty($oPwRules->requirements) ? $oPwRules->requirements : [],
+            'banned'           => !empty($oPwRules->banned) ? $oPwRules->banned : [],
+            'block_common'     => !empty($oPwRules->block_common),
         ];
 
         $this->setCache($sCacheKey, $aOut);
@@ -766,6 +803,10 @@ class Password extends Base
                         break;
                 }
             }
+        }
+
+        if (!empty($aRules['disallowPrevious'])) {
+            $aOut[] = 'Must not be one of your ' . $aRules['disallowPrevious'] . ' previous passwords';
         }
 
         return $aOut;
@@ -856,20 +897,17 @@ class Password extends Base
         /** @var User\Email $oUserModel */
         $oUserEmailModel = Factory::model('UserEmail', Constants::MODULE_SLUG);
 
-        $oDb->select('u.id, u.group_id, u.forgotten_password_code, e.email, u.username');
-        $oDb->join($oUserEmailModel->getTableName() . ' e', 'e.user_id = u.id AND e.is_primary = 1');
-        $oDb->like('forgotten_password_code', ':' . $sCode . ':');
-        $oResult = $oDb->get($oUserModel->getTableName() . ' u');
+        /** @var Resource\User $oUser */
+        $oUser = $oUserModel
+            ->skipCache()
+            ->getFirst([
+                new Like('forgotten_password_code', ':' . $sCode . ':')
+            ]);
 
-        // --------------------------------------------------------------------------
-
-        if ($oResult->num_rows() != 1) {
+        if (empty($oUser)) {
             return false;
         }
 
-        // --------------------------------------------------------------------------
-
-        $oUser = $oResult->row();
         [$iTimeExpires, $sKey, $iDebounce] = $this->parseToken($oUser->forgotten_password_code);
 
         // --------------------------------------------------------------------------
@@ -910,7 +948,7 @@ class Password extends Base
                         throw new NailsException('Generated password was empty.');
                     }
 
-                    $oHash = $this->generateHash($oUser->group_id, $aOut['password']);
+                    $oHash = $this->generateHash($oUser, $aOut['password']);
 
                 } catch (NailsException $e) {
                     $this->setError($e->getMessage());
@@ -1034,6 +1072,75 @@ class Password extends Base
     // --------------------------------------------------------------------------
 
     /**
+     * Determines if the supplied password is the same as the previous N passwords
+     *
+     * @param Resource\User $oUser
+     * @param string        $sPassword
+     * @param int           $iNumToCheck
+     *
+     * @return bool
+     */
+    protected function isPreviousPassword(Resource\User $oUser, string $sPassword, int $iNumToCheck): bool
+    {
+        if (empty($iNumToCheck)) {
+            return false;
+        }
+
+        /** @var User $oUserModel */
+        $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
+        /** @var User\Password\History $oUserPasswordHistoryModel */
+        $oUserPasswordHistoryModel = Factory::model('UserPasswordHistory', Constants::MODULE_SLUG);
+
+        $aPreviousPasswords = array_merge(
+            [
+                //  Current password
+                (object) [
+                    'password'        => $oUser->password,
+                    'password_engine' => $oUser->password_engine,
+                    'salt'            => $oUser->salt,
+                ],
+            ],
+            //  Previous passwords
+            array_map(
+                fn(Resource\User\Password\History $oItem) => (object) [
+                    'password'        => $oItem->password,
+                    'password_engine' => $oItem->password_engine,
+                    'salt'            => $oItem->salt,
+                ],
+                $oUserPasswordHistoryModel
+                    ->getAll([
+                        new Select(['password', 'password_engine', 'salt']),
+                        new Where('user_id', $oUser->id),
+                        new Sort('created', Sort::DESC),
+                        new Limit($iNumToCheck - 1),
+                    ])
+            )
+        );
+
+        foreach ($aPreviousPasswords as $oPreviousPassword) {
+
+            if (empty($this->aPasswordEngines[$oPreviousPassword->password_engine])) {
+                //  Engine does not exist any more so we cannot reliably check
+                continue;
+            }
+
+            $sHash = $this->generatePasswordHash(
+                $sPassword,
+                $oPreviousPassword->salt,
+                $this->aPasswordEngines[$oPreviousPassword->password_engine]
+            );
+
+            if ($sHash === $oPreviousPassword->password) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Formats an array of permissions into a JSON encoded string suitable for the database
      *
      * @param array $aRules An array of rules to set
@@ -1052,8 +1159,11 @@ class Password extends Base
         $aOut['min'] = !empty($aRules['min']) ? (int) $aRules['min'] : null;
         $aOut['max'] = !empty($aRules['max']) ? (int) $aRules['max'] : null;
 
-        //  Expiration
+        //  Expiratio
         $aOut['expiresAfter'] = !empty($aRules['expires_after']) ? (int) $aRules['expires_after'] : null;
+
+        // Disallow repetition
+        $aOut['disallowPrevious'] = !empty($aRules['disallow_previous']) ? (int) $aRules['disallow_previous'] : null;
 
         //  Requirements
         $aOut['requirements'] = [];

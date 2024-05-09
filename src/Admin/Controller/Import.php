@@ -380,7 +380,7 @@ class Import extends Base
                 }
 
                 if (!empty($aDatum['password'])) {
-                    if (!$oPasswordModel->isAcceptable($aDatum['group_id'] ?: $oGroupModel->getDefaultGroupId(), $aDatum['password'])) {
+                    if (!$oPasswordModel->isAcceptable($oGroupModel->getById($aDatum['group_id'] ?: $oGroupModel->getDefaultGroupId()), $aDatum['password'])) {
                         throw new ValidationException(
                             'Password is not acceptable.',
                         );

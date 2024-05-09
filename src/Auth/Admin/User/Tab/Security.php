@@ -116,7 +116,7 @@ class Security implements Tab
         if (!empty($oInput->post('password'))) {
             $aRules['password'] = [
                 function ($sPassword) use ($oUser, $oUserPasswordModel) {
-                    if (!$oUserPasswordModel->isAcceptable($oUser->group_id, $sPassword)) {
+                    if (!$oUserPasswordModel->isAcceptable($oUser, $sPassword)) {
                         throw new ValidationException('Password does not meet requirements.');
                     }
                 },
