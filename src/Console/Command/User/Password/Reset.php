@@ -100,7 +100,7 @@ class Reset extends Base
         }
 
         if (!empty($sPassword)) {
-            if (!$oUserPasswordModel->isAcceptable($oUser->group_id, $sPassword)) {
+            if (!$oUserPasswordModel->isAcceptable($oUser, $sPassword)) {
                 throw new PasswordNotAcceptableException(
                     '"' . $sPassword . '" is not an acceptable password. ' .
                     $oUserPasswordModel->getRulesAsString($oUser->group_id)

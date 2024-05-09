@@ -110,6 +110,15 @@ $oInput = Factory::service('Input');
                     'info'        => 'If this is undefined, or set to 0, then there is no expiration policy',
                 ]);
 
+                echo form_field_number([
+                    'key'         => 'pw[disallow_previous]',
+                    'label'       => 'Disallow Previous',
+                    'default'     => isset($item->password_rules->disallowPrevious) ? $item->password_rules->disallowPrevious : '',
+                    'required'    => false,
+                    'placeholder' => 'Number of previous passwords to disallow',
+                    'info'        => 'When choosing a new password, disallow using a previous password (up to this number of times). If this is undefined, or set to 0, then there is no restriction',
+                ]);
+
                 echo form_field_checkbox([
                     'key'      => 'pw[requirements][]',
                     'label'    => 'Requirements',

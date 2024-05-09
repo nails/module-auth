@@ -166,10 +166,15 @@ class PasswordReset extends Base
                     /** @var FormValidation $oFormValidation */
                     $oFormValidation = Factory::service('FormValidation');
                     $oFormValidation
-                        ->buildValidator([
-                            'new_password' => ['required', 'matches[confirm_pass]'],
-                            'confirm_pass' => ['required'],
-                        ])
+                        ->buildValidator(
+                            [
+                                'new_password' => ['required', 'matches[confirm_pass]'],
+                                'confirm_pass' => ['required'],
+                            ],
+                            [
+                                'matches' => 'Passwords do not match',
+                            ]
+                        )
                         ->run();
 
                     //  Validated, update user and login.

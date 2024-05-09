@@ -2246,6 +2246,7 @@ class User extends Base
             $aUserData['group_id'] = $data['group_id'];
         }
 
+        /** @var Resource\User\Group $oGroup */
         $oGroup = $oUserGroupModel->getById($aUserData['group_id']);
 
         if (empty($oGroup)) {
@@ -2268,7 +2269,7 @@ class User extends Base
             if (empty($data['password'])) {
                 $oPassword = $oUserPasswordModel->generateNullHash();
             } else {
-                $oPassword = $oUserPasswordModel->generateHash($aUserData['group_id'], $data['password']);
+                $oPassword = $oUserPasswordModel->generateHash($oGroup, $data['password']);
             }
 
         } catch (NailsException $e) {
