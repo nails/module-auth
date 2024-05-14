@@ -90,7 +90,7 @@ class Login extends Base
 
         //  Specify a default title for this page
         $this->data['page']->title = lang('auth_title_login');
-        $this->oMetaData->setDescription('Log in to your ' . \Nails\Config::get('APP_NAME') . ' account');
+        $this->oMetaData->setDescription('Log in to your ' . \Nails\Factory::service('MetaData')->getAppName() . ' account');
     }
 
     // --------------------------------------------------------------------------
@@ -610,7 +610,7 @@ class Login extends Base
 
                 $this->oUserFeedback->error(lang(
                     'auth_social_account_in_use',
-                    [$provider['label'], \Nails\Config::get('APP_NAME')]
+                    [$provider['label'], \Nails\Factory::service('MetaData')->getAppName()]
                 ));
 
                 if ($this->data['return_to']) {
