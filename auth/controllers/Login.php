@@ -555,16 +555,16 @@ class Login extends Base
             }
 
             if ($oUri->segment(4) == 'register') {
-                $sRedirectUrl = 'auth/register';
+                $oUrl = registerUrl(false);
             } else {
-                $sRedirectUrl = 'auth/login';
+                $oUrl = loginUrl(false);
             }
 
             if ($this->data['return_to']) {
-                $sRedirectUrl .= '?return_to=' . urlencode($this->data['return_to']);
+                $oUrl->setReturnTo($this->data['return_to'] ?? '');
             }
 
-            redirect($sRedirectUrl);
+            redirect((string) $oUrl);
         }
 
         $oUser = $oSocial->getUserByProviderId($provider['slug'], $socialUser->identifier);
@@ -643,13 +643,12 @@ class Login extends Base
 
                 if (!$this->handleLogin($oUser)) {
 
-                    $sRedirectUrl = 'auth/login';
-
+                    $oUrl = loginUrl(false);
                     if ($this->data['return_to']) {
-                        $sRedirectUrl .= '?return_to=' . urlencode($this->data['return_to']);
+                        $oUrl->setReturnTo($this->data['return_to']);
                     }
 
-                    redirect($sRedirectUrl);
+                    redirect((string) $oUrl);
                 }
             }
 
@@ -931,13 +930,12 @@ class Login extends Base
                     //  Oh dear, something went wrong
                     $this->oUserFeedback->error('Sorry, something went wrong and your account could not be created.');
 
-                    $sRedirectUrl = 'auth/login';
-
+                    $oUrl = loginUrl(false);
                     if ($this->data['return_to']) {
-                        $sRedirectUrl .= '?return_to=' . urlencode($this->data['return_to']);
+                        $oUrl->setReturnTo($this->data['return_to']);
                     }
 
-                    redirect($sRedirectUrl);
+                    redirect((string) $oUrl);
                 }
 
             } else {
@@ -945,13 +943,12 @@ class Login extends Base
                 //  How unfortunate, registration is disabled. Redirect back to the login page
                 $this->oUserFeedback->error(lang('auth_social_register_disabled'));
 
-                $sRedirectUrl = 'auth/login';
-
+                $oUrl = loginUrl(false);
                 if ($this->data['return_to']) {
-                    $sRedirectUrl .= '?return_to=' . urlencode($this->data['return_to']);
+                    $oUrl->setReturnTo($this->data['return_to']);
                 }
 
-                redirect($sRedirectUrl);
+                redirect((string) $oUrl);
             }
         }
     }
@@ -1055,7 +1052,7 @@ class Login extends Base
         $oUri = Factory::service('Uri');
 
         $this->data['required_data'] = $aRequiredData;
-        $this->data['form_url']      = 'auth/login/' . $sProvider;
+        $this->data['form_url']      = loginUrl(false) . '/' . $sProvider;
 
         if ($oUri->segment(4) == 'register') {
             $this->data['form_url'] .= '/register';

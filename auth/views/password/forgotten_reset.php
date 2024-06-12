@@ -28,7 +28,7 @@ $oView = Factory::service('View');
                 </p>
             </div>
             <p>
-                <?=anchor('auth/login?identity=' . urlencode($user->identity), lang('auth_forgot_action_proceed'), 'class="btn btn--block btn--primary"')?>
+                <?=anchor(loginUrl(false) . '?identity=' . urlencode($user->identity), lang('auth_forgot_action_proceed'), 'class="btn btn--block btn--primary"')?>
             </p>
         </div>
     </div>

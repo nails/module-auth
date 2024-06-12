@@ -21,7 +21,7 @@
 </p>
 {{/password}}
 <p>
-    <a href="{{siteUrl('auth/login')}}" class="btn">
+    <a href="{{loginUrl(false)}}" class="btn">
         Click here to log in
     </a>
 </p>

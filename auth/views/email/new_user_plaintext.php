@@ -13,4 +13,4 @@ Your password is shown below. {{#temp_pw}}You will be asked to set this to somet
 
 You can log in using the link below:
 
-{{siteUrl('auth/login')}}
+{{loginUrl(false)}}
