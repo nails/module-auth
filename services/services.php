@@ -114,6 +114,20 @@ return [
         'EmailVerifyEmail'       => function (): Factory\Email\VerifyEmail {
             return new Factory\Email\VerifyEmail();
         },
+        'LoginUrl'               => function (): Factory\LoginUrl {
+            if (class_exists('\App\Auth\Factory\LoginUrl')) {
+                return new \App\Auth\Factory\LoginUrl();
+            } else {
+                return new Factory\LoginUrl();
+            }
+        },
+        'RegisterUrl'            => function (): Factory\RegisterUrl {
+            if (class_exists('\App\Auth\Factory\RegisterUrl')) {
+                return new \App\Auth\Factory\RegisterUrl();
+            } else {
+                return new Factory\RegisterUrl();
+            }
+        },
     ],
     'resources' => [
         'User'                => function ($mObj): Resource\User {

@@ -26,14 +26,14 @@ $oView = Factory::service('View');
 
                 foreach ($social_signon_providers as $aProvider) {
                     echo anchor(
-                        'auth/login/' . $aProvider['slug'],
+                        loginUrl(false) . '/' . $aProvider['slug'],
                         $aProvider['label'],
                         'class="btn btn--block btn--primary"'
                     );
                 }
 
                 ?>
-                <hr/>
+                <hr />
                 <p class="text-center">
                     <?php
                     switch (\Nails\Config::get('APP_NATIVE_LOGIN_USING')) {
@@ -54,7 +54,7 @@ $oView = Factory::service('View');
                 <?php
             }
 
-            echo form_open(siteUrl('auth/register'), 'class="form form-horizontal"');
+            echo form_open(registerUrl(false), 'class="form form-horizontal"');
 
             // --------------------------------------------------------------------------
 
@@ -171,12 +171,12 @@ $oView = Factory::service('View');
                 </button>
             </p>
             <?=form_close()?>
-            <hr/>
+            <hr />
             <p class="text-center">
                 Already got an account?
             </p>
             <p>
-                <?=anchor('auth/login', 'Sign in now', 'class="btn btn--block"')?>
+                <?=anchor(loginUrl(false), 'Sign in now', 'class="btn btn--block"')?>
             </p>
         </div>
     </div>

@@ -79,7 +79,7 @@ $oView = Factory::service('View');
                 <button type="submit" class="btn btn--block btn--primary">
                     <?=lang('auth_forgot_action_reset')?>
                 </button>
-                <?=anchor('auth/login', 'Log In', 'class="btn btn--block btn--link"')?>
+                <?=anchor(loginUrl(false), 'Log In', 'class="btn btn--block btn--link"')?>
             </p>
         </div>
         <?=form_close()?>

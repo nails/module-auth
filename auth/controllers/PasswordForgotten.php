@@ -177,7 +177,7 @@ class PasswordForgotten extends Base
                 }
 
                 $this->oUserFeedback->success(lang('auth_forgot_success'));
-                redirect('auth/login');
+                redirect(loginUrl(false));
 
             } catch (Exception $e) {
                 $this->oUserFeedback->error($e->getMessage());

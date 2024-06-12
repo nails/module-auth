@@ -18,7 +18,7 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
         <h1 class="panel__header text-center">
             Welcome
         </h1>
-        <?=form_open(siteUrl('auth/login' . $sReturnTo))?>
+        <?=form_open(loginUrl(false) . $sReturnTo)?>
         <div class="panel__body">
             <?php
 
@@ -33,14 +33,14 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
 
                 foreach ($social_signon_providers as $aProvider) {
                     echo anchor(
-                        'auth/login/' . $aProvider['slug'] . $sReturnTo,
+                        loginUrl(false) . '/' . $aProvider['slug'] . $sReturnTo,
                         $aProvider['label'],
                         'class="btn btn--block btn--primary"'
                     );
                 }
 
                 ?>
-                <hr/>
+                <hr />
                 <p class="text-center">
                     <?php
                     switch (Config::get('APP_NATIVE_LOGIN_USING')) {
@@ -137,12 +137,12 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
             <?php
             if (appSetting('user_registration_enabled', 'auth')) {
                 ?>
-                <hr/>
+                <hr />
                 <p class="text-center">
                     Not got an account?
                 </p>
                 <p class="text-center">
-                    <?=anchor('auth/register', 'Register now', 'class="btn btn--block"')?>
+                    <?=anchor(registerUrl(false), 'Register now', 'class="btn btn--block"')?>
                 </p>
                 <?php
             }
