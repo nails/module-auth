@@ -59,14 +59,14 @@ abstract class AuthUrl
 
     // --------------------------------------------------------------------------
 
-    public function getReturnTo(): string
+    public function getReturnTo(): ?string
     {
         return $this->returnTo;
     }
 
     // --------------------------------------------------------------------------
 
-    public function setReturnTo(string $returnTo): self
+    public function setReturnTo(?string $returnTo): self
     {
         $this->returnTo = $returnTo;
         return $this;
