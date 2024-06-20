@@ -66,8 +66,7 @@
                     "UserPassword"
                 ],
                 "helpers": [
-                    "loginUrl",
-                    "registerUrl",
+                    "authUrls",
                     "user"
                 ]
             },
