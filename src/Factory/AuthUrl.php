@@ -5,9 +5,9 @@ namespace Nails\Auth\Factory;
 use Nails\Common\Service\Input;
 use Nails\Factory;
 
-class LoginUrl
+abstract class AuthUrl
 {
-    protected string $path     = 'auth/login';
+    protected string $path;
     protected string $returnTo = '';
 
     public function __construct(bool $autoReturnTo = true)

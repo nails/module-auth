@@ -102,6 +102,20 @@ return [
         },
     ],
     'factories' => [
+        'AuthUrlLogin'           => function (bool $autoReturnTo = true): Factory\AuthUrl\Login {
+            if (class_exists('\App\Auth\Factory\AuthUrl\Login')) {
+                return new \App\Auth\Factory\AuthUrl\Login($autoReturnTo);
+            } else {
+                return new Factory\AuthUrl\Login($autoReturnTo);
+            }
+        },
+        'AuthUrlRegister'        => function (bool $autoReturnTo = true): Factory\AuthUrl\Register {
+            if (class_exists('\App\Auth\Factory\AuthUrl\Register')) {
+                return new \App\Auth\Factory\AuthUrl\Register($autoReturnTo);
+            } else {
+                return new Factory\AuthUrl\Register($autoReturnTo);
+            }
+        },
         'EmailForgottenPassword' => function (): Factory\Email\ForgottenPassword {
             return new Factory\Email\ForgottenPassword();
         },
@@ -113,20 +127,6 @@ return [
         },
         'EmailVerifyEmail'       => function (): Factory\Email\VerifyEmail {
             return new Factory\Email\VerifyEmail();
-        },
-        'LoginUrl'               => function (): Factory\LoginUrl {
-            if (class_exists('\App\Auth\Factory\LoginUrl')) {
-                return new \App\Auth\Factory\LoginUrl();
-            } else {
-                return new Factory\LoginUrl();
-            }
-        },
-        'RegisterUrl'            => function (): Factory\RegisterUrl {
-            if (class_exists('\App\Auth\Factory\RegisterUrl')) {
-                return new \App\Auth\Factory\RegisterUrl();
-            } else {
-                return new Factory\RegisterUrl();
-            }
         },
     ],
     'resources' => [
