@@ -102,18 +102,18 @@ return [
         },
     ],
     'factories' => [
-        'AuthUrlLogin'           => function (?string $returnTo = ''): Factory\AuthUrl\Login {
+        'AuthUrlLogin'           => function (?string $returnTo = '', array $query = []): Factory\AuthUrl\Login {
             if (class_exists('\App\Auth\Factory\AuthUrl\Login')) {
-                return new \App\Auth\Factory\AuthUrl\Login($returnTo);
+                return new \App\Auth\Factory\AuthUrl\Login($returnTo, $query);
             } else {
-                return new Factory\AuthUrl\Login($returnTo);
+                return new Factory\AuthUrl\Login($returnTo, $query);
             }
         },
-        'AuthUrlRegister'        => function (?string $returnTo = ''): Factory\AuthUrl\Register {
+        'AuthUrlRegister'        => function (?string $returnTo = '', array $query = []): Factory\AuthUrl\Register {
             if (class_exists('\App\Auth\Factory\AuthUrl\Register')) {
-                return new \App\Auth\Factory\AuthUrl\Register($returnTo);
+                return new \App\Auth\Factory\AuthUrl\Register($returnTo, $query);
             } else {
-                return new Factory\AuthUrl\Register($returnTo);
+                return new Factory\AuthUrl\Register($returnTo, $query);
             }
         },
         'EmailForgottenPassword' => function (): Factory\Email\ForgottenPassword {
