@@ -69,14 +69,7 @@ abstract class BaseMfa extends Base
 
         if (!$this->mfaUser) {
             $this->oUserFeedback->error(lang('auth_twofactor_token_unverified'));
-
-            $oUrl = loginUrl(false);
-
-            if ($this->returnTo) {
-                loginUrl(false)->setReturnTo($this->returnTo);
-            }
-
-            redirect((string) $oUrl);
+            redirect(loginUrl($this->returnTo));
         }
 
         $sSalt             = $oUri->segment(5);
@@ -104,19 +97,7 @@ abstract class BaseMfa extends Base
         if (!$oAuthService->mfaTokenValidate($this->mfaUser->id, $sSalt, $sToken, $sIpAddress)) {
 
             $this->oUserFeedback->error(lang('auth_twofactor_token_unverified'));
-
-            $aQuery = array_filter([
-                'return_to' => $this->returnTo,
-                'remember'  => $this->remember,
-            ]);
-
-            if ($aQuery) {
-                $sQuery = '?' . http_build_query($aQuery);
-            } else {
-                $sQuery = '';
-            }
-
-            redirect(loginUrl(false) . $sQuery);
+            redirect(loginUrl($this->returnTo, ['remember' => $this->remember]));
 
         } else {
 

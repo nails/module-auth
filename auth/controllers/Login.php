@@ -555,13 +555,9 @@ class Login extends Base
             }
 
             if ($oUri->segment(4) == 'register') {
-                $oUrl = registerUrl(false);
+                $oUrl = registerUrl($this->data['return_to'] ?? '');
             } else {
-                $oUrl = loginUrl(false);
-            }
-
-            if ($this->data['return_to']) {
-                $oUrl->setReturnTo($this->data['return_to'] ?? '');
+                $oUrl = loginUrl($this->data['return_to'] ?? '');
             }
 
             redirect((string) $oUrl);
@@ -642,13 +638,7 @@ class Login extends Base
                 $oSocial->saveSession($oUser->id);
 
                 if (!$this->handleLogin($oUser)) {
-
-                    $oUrl = loginUrl(false);
-                    if ($this->data['return_to']) {
-                        $oUrl->setReturnTo($this->data['return_to']);
-                    }
-
-                    redirect((string) $oUrl);
+                    redirect(loginUrl($this->returnTo ?: false));
                 }
             }
 
@@ -929,26 +919,14 @@ class Login extends Base
 
                     //  Oh dear, something went wrong
                     $this->oUserFeedback->error('Sorry, something went wrong and your account could not be created.');
-
-                    $oUrl = loginUrl(false);
-                    if ($this->data['return_to']) {
-                        $oUrl->setReturnTo($this->data['return_to']);
-                    }
-
-                    redirect((string) $oUrl);
+                    redirect(loginUrl($this->returnTo ?: false));
                 }
 
             } else {
 
                 //  How unfortunate, registration is disabled. Redirect back to the login page
                 $this->oUserFeedback->error(lang('auth_social_register_disabled'));
-
-                $oUrl = loginUrl(false);
-                if ($this->data['return_to']) {
-                    $oUrl->setReturnTo($this->data['return_to']);
-                }
-
-                redirect((string) $oUrl);
+                redirect(loginUrl($this->returnTo ?: false));
             }
         }
     }
@@ -1052,7 +1030,7 @@ class Login extends Base
         $oUri = Factory::service('Uri');
 
         $this->data['required_data'] = $aRequiredData;
-        $this->data['form_url']      = loginUrl(false) . '/' . $sProvider;
+        $this->data['form_url']      = loginUrl(null) . '/' . $sProvider;
 
         if ($oUri->segment(4) == 'register') {
             $this->data['form_url'] .= '/register';

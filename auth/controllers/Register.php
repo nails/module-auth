@@ -164,7 +164,7 @@ class Register extends Base
                 //  Log the user in
                 if (!$oUserModel->setLoginData($oUser->id)) {
                     //  Login failed for some reason, send them to the login page to try again
-                    redirect(loginUrl(false));
+                    redirect(loginUrl(null));
 
                 } else {
                     $this->oUserFeedback->success(lang('auth_register_flashdata_welcome', $oUser->first_name));
