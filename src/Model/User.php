@@ -2128,7 +2128,7 @@ class User extends Base
             if (empty($aData['password'])) {
                 $oPassword = $oUserPasswordModel->generateNullHash();
             } else {
-                $oPassword = $oUserPasswordModel->generateHash($oGroup, $data['password']);
+                $oPassword = $oUserPasswordModel->generateHash($oGroup, $aData['password']);
             }
 
         } catch (NailsException $e) {
