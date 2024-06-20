@@ -74,7 +74,7 @@ abstract class AuthUrl
 
     // --------------------------------------------------------------------------
 
-    public function getQuery(): string
+    public function getQuery(): array
     {
         return $this->query;
     }
