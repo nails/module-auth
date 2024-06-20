@@ -18,7 +18,7 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
         <h1 class="panel__header text-center">
             Welcome
         </h1>
-        <?=form_open(loginUrl(false) . $sReturnTo)?>
+        <?=form_open(loginUrl($return_to))?>
         <div class="panel__body">
             <?php
 
@@ -33,7 +33,7 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
 
                 foreach ($social_signon_providers as $aProvider) {
                     echo anchor(
-                        loginUrl(false) . '/' . $aProvider['slug'] . $sReturnTo,
+                        loginUrl(null) . '/' . $aProvider['slug'] . $sReturnTo,
                         $aProvider['label'],
                         'class="btn btn--block btn--primary"'
                     );
@@ -142,7 +142,7 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
                     Not got an account?
                 </p>
                 <p class="text-center">
-                    <?=anchor(registerUrl(false), 'Register now', 'class="btn btn--block"')?>
+                    <?=anchor(registerUrl(null), 'Register now', 'class="btn btn--block"')?>
                 </p>
                 <?php
             }

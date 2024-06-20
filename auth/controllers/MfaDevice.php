@@ -120,16 +120,8 @@ class MfaDevice extends BaseMfa
         );
 
         if (!$this->data['secret']) {
-
             $this->oUserFeedback->error('<strong>Sorry,</strong> it has not been possible to get an MFA device set up for this user. ' . $oAuthService->lastError());
-
-            $oUrl = loginUrl(false);
-
-            if ($this->returnTo) {
-                $oUrl->setReturnTo($this->returnTo);
-            }
-
-            redirect((string) $oUrl);
+            redirect(loginUrl($this->returnTo ?: false));
         }
 
         // --------------------------------------------------------------------------

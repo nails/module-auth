@@ -26,7 +26,7 @@ $oView = Factory::service('View');
 
                 foreach ($social_signon_providers as $aProvider) {
                     echo anchor(
-                        loginUrl(false) . '/' . $aProvider['slug'],
+                        loginUrl(null) . '/' . $aProvider['slug'],
                         $aProvider['label'],
                         'class="btn btn--block btn--primary"'
                     );
@@ -54,7 +54,7 @@ $oView = Factory::service('View');
                 <?php
             }
 
-            echo form_open(registerUrl(false), 'class="form form-horizontal"');
+            echo form_open(registerUrl(null), 'class="form form-horizontal"');
 
             // --------------------------------------------------------------------------
 
@@ -176,7 +176,7 @@ $oView = Factory::service('View');
                 Already got an account?
             </p>
             <p>
-                <?=anchor(loginUrl(false), 'Sign in now', 'class="btn btn--block"')?>
+                <?=anchor(loginUrl(null), 'Sign in now', 'class="btn btn--block"')?>
             </p>
         </div>
     </div>

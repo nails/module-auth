@@ -259,7 +259,7 @@ class PasswordReset extends Base
                         }
 
                     } else {
-                        $this->oUserFeedback->error(lang('auth_forgot_reset_badlogin', loginUrl(false)));
+                        $this->oUserFeedback->error(lang('auth_forgot_reset_badlogin', loginUrl(null)));
                     }
 
                 } catch (\Nails\Common\Exception\ValidationException $e) {
