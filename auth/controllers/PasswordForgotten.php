@@ -165,7 +165,7 @@ class PasswordForgotten extends Base
 
                     } catch (\Exception $e) {
                         if (!$bAlwaysSucceed) {
-                            throw new NailsException(lang('auth_forgot_email_fail'), null, $e);
+                            throw new NailsException(lang('auth_forgot_email_fail'), 0, $e);
                         }
                     }
 
