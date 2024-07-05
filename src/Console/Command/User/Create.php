@@ -5,8 +5,9 @@ namespace Nails\Auth\Console\Command\User;
 use Exception;
 use Nails\Admin\Admin\Permission\SuperUser;
 use Nails\Auth\Constants;
+use Nails\Auth\Model\User\Group;
 use Nails\Common\Exception\NailsException;
-use Nails\Config;
+use Nails\Common\Service\PDODatabase;
 use Nails\Console\Command\Base;
 use Nails\Environment;
 use Nails\Factory;
@@ -93,6 +94,7 @@ class Create extends Base
         // --------------------------------------------------------------------------
 
         //  Detect super group ID
+        /** @var PDODatabase $oDb */
         $oDb = Factory::service('PDODatabase');
 
         //  If any DB credentials have been passed then connect using those
@@ -105,12 +107,23 @@ class Create extends Base
             $oDb->connect($sDbHost, $sDbUser, $sDbPass, $sDbName);
         }
 
-        $oResult = $oDb->query(
-            'SELECT id, label FROM `' . Config::get('NAILS_DB_PREFIX') . 'user_group` WHERE `acl` LIKE \'%"' . SuperUser::class . '"%\' LIMIT 1'
+        /** @var Group $oUserGroupModel */
+        $oUserGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
+        $sUserGroupTable = $oUserGroupModel->getTableName();
+        $sSuperUserClass = addslashes(json_encode(SuperUser::class));
+
+        $oResult = $oDb->query(<<<EOT
+            SELECT id, label
+            FROM `$sUserGroupTable`
+            WHERE
+                JSON_CONTAINS(`acl`, '$sSuperUserClass', '$') = 1
+        EOT
         );
+
         if (!$oResult->rowCount()) {
             throw new NailsException('Could not find a group with superuser permissions.');
         }
+
         $oGroup = $oResult->fetchObject();
 
         // --------------------------------------------------------------------------
