@@ -41,18 +41,4 @@ class Blocker extends Base
      * @var string
      */
     const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
-
-    /**
-     * Disable setting of created_by and modified_by columns
-     *
-     * @var bool
-     */
-    const AUTO_SET_USER = false;
-
-    /**
-     * Disable setting of created and modified columns
-     *
-     * @var bool
-     */
-    const AUTO_SET_TIMESTAMP = false;
 }
