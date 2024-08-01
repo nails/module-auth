@@ -523,10 +523,6 @@ class Accounts extends DefaultController
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
 
-        if ($oUri->segment(5) != activeUser('id') && !userHasPermission('admin:auth:accounts:editOthers')) {
-            unauthorised();
-        }
-
         // --------------------------------------------------------------------------
 
         $oUser = $oUserModel->getById($oUri->segment(5));
