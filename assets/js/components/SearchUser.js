@@ -57,6 +57,7 @@ class SearchUser {
 
                 $element
                     .addClass('processed')
+                    .css('width', '100%')
                     .select2({
                         placeholder: config.placeholder,
                         minimumInputLength: config.minimumInputLength,
