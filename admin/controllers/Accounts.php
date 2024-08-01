@@ -553,7 +553,9 @@ class Accounts extends DefaultController
                 ->whichImplement(Tab::class);
 
             foreach ($aClasses as $sClass) {
-                $aTabs[$sClass] = new $sClass();
+                if ($sClass::isEnabled($oUser)) {
+                    $aTabs[$sClass] = new $sClass();
+                }
             }
         }
 
