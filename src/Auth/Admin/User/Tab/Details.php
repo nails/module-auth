@@ -33,6 +33,13 @@ class Details implements Tab
 
     // --------------------------------------------------------------------------
 
+    public static function isEnabled(User $user): bool
+    {
+        return true;
+    }
+
+    // --------------------------------------------------------------------------
+
     /**
      * Return the order in which the tabs should render
      *
