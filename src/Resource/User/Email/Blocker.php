@@ -9,17 +9,11 @@ use Nails\Common\Resource;
  *
  * @package Nails\Auth\Resource\User\Email
  */
-class Blocker extends Resource
+class Blocker extends Resource\Entity
 {
-    /** @var int */
-    public $id;
-
     /** @var int */
     public $user_id;
 
     /** @var string */
     public $type;
-
-    /** @var \Nails\Common\Resource\DateTime */
-    public $created;
 }
