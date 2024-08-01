@@ -32,8 +32,8 @@ class Migration18 extends Base
         $this->query('UPDATE `{{NAILS_DB_PREFIX}}user_email_blocker` SET `modified_by` = `user_id`;');
         $this->query('UPDATE `{{NAILS_DB_PREFIX}}user_email_blocker` SET `modified` = `created`;');
         $this->query('ALTER TABLE `{{NAILS_DB_PREFIX}}user_email_blocker` CHANGE `modified` `modified` DATETIME  NOT NULL;');
-        $this->query('ALTER TABLE `{{NAILS_DVB_PREFIX}}user_email_blocker` ADD FOREIGN KEY (`created_by`) REFERENCES `{{NAILS_DVB_PREFIX}}user` (`id`) ON DELETE SET NULL;');
-        $this->query('ALTER TABLE `{{NAILS_DVB_PREFIX}}user_email_blocker` ADD FOREIGN KEY (`modified_by`) REFERENCES `{{NAILS_DVB_PREFIX}}user` (`id`) ON DELETE SET NULL;');
+        $this->query('ALTER TABLE `{{NAILS_DB_PREFIX}}user_email_blocker` ADD FOREIGN KEY (`created_by`) REFERENCES `{{NAILS_DB_PREFIX}}user` (`id`) ON DELETE SET NULL;');
+        $this->query('ALTER TABLE `{{NAILS_DB_PREFIX}}user_email_blocker` ADD FOREIGN KEY (`modified_by`) REFERENCES `{{NAILS_DB_PREFIX}}user` (`id`) ON DELETE SET NULL;');
 
     }
 }
