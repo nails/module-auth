@@ -509,10 +509,6 @@ class Accounts extends DefaultController
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
 
-        if ($oUri->segment(5) != activeUser('id') && !userHasPermission(Permission\Users\Edit::class)) {
-            unauthorised();
-        }
-
         // --------------------------------------------------------------------------
 
         /** @var \Nails\Auth\Resource\User $oUser */
