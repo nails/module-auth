@@ -676,9 +676,8 @@ class Accounts extends DefaultController
 
             //  Update admin changelog
             $this->oChangeLogModel->add(
-                'deleted',
-                'a',
-                'user',
+                $this->oChangeLogModel::OPERATION_DELETE,
+                get_class($oUser),
                 $iUserId,
                 '#' . number_format($iUserId) . ' ' . $oUser->name
             );
@@ -851,9 +850,8 @@ class Accounts extends DefaultController
 
         //  Update admin changelog
         $this->oChangeLogModel->add(
-            'suspended',
-            'a',
-            'user',
+            $this->oChangeLogModel::OPERATION_EDIT,
+            get_class($oUser),
             $iUserId,
             '#' . number_format($iUserId) . ' ' . $oUser->name,
             static::url('edit/' . $iUserId),
@@ -928,9 +926,8 @@ class Accounts extends DefaultController
 
         //  Update admin changelog
         $this->oChangeLogModel->add(
-            'unsuspended',
-            'a',
-            'user',
+            $this->oChangeLogModel::OPERATION_EDIT,
+            get_class($oUser),
             $iUserId,
             '#' . number_format($iUserId) . ' ' . $oUser->name,
             static::url('edit/' . $iUserId),
