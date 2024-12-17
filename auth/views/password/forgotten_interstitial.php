@@ -6,7 +6,7 @@
             </a>
         </p>
     </noscript>
-    <script type="text/javascript">
+    <?=scriptOpen()?>
     window.location.href = '<?=current_url()?>/process';
-    </script>
+    <?=scriptClose()?>
 </div>
