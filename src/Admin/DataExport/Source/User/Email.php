@@ -52,6 +52,18 @@ class Email implements Source
     // --------------------------------------------------------------------------
 
     /**
+     * Returns the source's extended description, HTML allowed, optional
+     *
+     * @return string
+     */
+    public function getDescriptionExtended(): string
+    {
+        return '';
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Returns an array of additional options for the export
      *
      * @return array
