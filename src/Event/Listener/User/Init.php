@@ -81,12 +81,13 @@ class Init extends Subscription
      */
     protected function setTimezone(): self
     {
-        /** @var DateTime $oDateTimeService */
-        $oDateTimeService = Factory::service('DateTime');
-        $oDateTimeService
-            ->setUserTimezone(
-                activeUser('timezone') ?: $oDateTimeService->getTimezoneDefault()
-            );
+        $sTimezone = activeUser('datetime_format_time');
+
+        if ($sTimezone) {
+            /** @var DateTime $oDateTimeService */
+            $oDateTimeService = Factory::service('DateTime');
+            $oDateTimeService->setUserTimezone($sTimezone);
+        }
 
         return $this;
     }
@@ -101,12 +102,13 @@ class Init extends Subscription
      */
     protected function setDateFormat(): self
     {
-        /** @var DateTime $oDateTimeService */
-        $oDateTimeService = Factory::service('DateTime');
-        $oDateTimeService
-            ->setUserDateFormat(
-                activeUser('datetime_format_date') ?: $oDateTimeService->getDateFormatDefaultSlug()
-            );
+        $sDateFormat = activeUser('datetime_format_date');
+
+        if ($sDateFormat) {
+            /** @var DateTime $oDateTimeService */
+            $oDateTimeService = Factory::service('DateTime');
+            $oDateTimeService->setUserDateFormat($sDateFormat);
+        }
 
         return $this;
     }
@@ -121,12 +123,13 @@ class Init extends Subscription
      */
     protected function setTimeFormat(): self
     {
-        /** @var DateTime $oDateTimeService */
-        $oDateTimeService = Factory::service('DateTime');
-        $oDateTimeService
-            ->setUserTimeFormat(
-                activeUser('datetime_format_time') ?: $oDateTimeService->getTimeFormatDefaultSlug()
-            );
+        $sTimeFormat = activeUser('datetime_format_time');
+
+        if ($sTimeFormat) {
+            /** @var DateTime $oDateTimeService */
+            $oDateTimeService = Factory::service('DateTime');
+            $oDateTimeService->setUserTimeFormat($sTimeFormat);
+        }
 
         return $this;
     }
