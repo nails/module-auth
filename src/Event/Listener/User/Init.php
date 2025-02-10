@@ -81,7 +81,7 @@ class Init extends Subscription
      */
     protected function setTimezone(): self
     {
-        $sTimezone = activeUser('datetime_format_time');
+        $sTimezone = activeUser('timezone');
 
         if ($sTimezone) {
             /** @var DateTime $oDateTimeService */
