@@ -9,7 +9,7 @@ use Nails\Factory;
 
 class ProfileImg extends ObjectIsInColumn
 {
-    protected function getModel(): Base
+    public function getModel(): Base
     {
         return Factory::model('User', Constants::MODULE_SLUG);
     }
