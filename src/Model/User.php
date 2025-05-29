@@ -1096,7 +1096,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function update($iUserId = null, array $aData = null): bool
+    public function update($iUserId = null, ?array $aData = null): bool
     {
         /** @var \DateTime $oDate */
         $oDate   = Factory::factory('DateTime');
@@ -1482,7 +1482,7 @@ class User extends Base
      */
     public function emailAdd(
         string $sEmail,
-        int $iUserId = null,
+        ?int $iUserId = null,
         bool $bIsPrimary = false,
         bool $bIsVerified = false,
         bool $bSendEmail = true,
@@ -1721,7 +1721,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function emailDelete($mEmailId, int $iUserId = null, bool $bTriggerEvent = true)
+    public function emailDelete($mEmailId, ?int $iUserId = null, bool $bTriggerEvent = true)
     {
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
@@ -1860,7 +1860,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function emailMakePrimary($mIdEmail, int $iUserId = null, bool $bTriggerEvent = true): bool
+    public function emailMakePrimary($mIdEmail, ?int $iUserId = null, bool $bTriggerEvent = true): bool
     {
         //  Fetch email
         /** @var Database $oDb */

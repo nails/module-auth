@@ -169,7 +169,7 @@ class Meta implements Tab
      * @return Field[]
      * @throws FactoryException
      */
-    protected function getFieldsForGroup(int $iGroupId = null): array
+    protected function getFieldsForGroup(?int $iGroupId = null): array
     {
         /** @var \Nails\Auth\Model\User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
