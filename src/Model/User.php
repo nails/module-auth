@@ -82,6 +82,10 @@ class User extends Base
      */
     const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
 
+    const FIELD_CLASSES = [
+        'profile_img' => ['ModelFieldObject', \Nails\Cdn\Constants::MODULE_SLUG],
+    ];
+
     /**
      * The default column to sort on
      *
@@ -2891,7 +2895,6 @@ class User extends Base
         $aFields = parent::describeFields($sTable);
 
         $aFields['profile_img']
-            ->setType('cdn_object_picker')
             ->setLabel('Profile Image');
 
         $aFields['timezone']
