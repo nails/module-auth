@@ -26,6 +26,7 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
 use Nails\Common\Factory\Model\Field;
+use Nails\Common\Helper\Form;
 use Nails\Common\Model\Base;
 use Nails\Common\Service\Cookie;
 use Nails\Common\Service\Database;
@@ -2898,14 +2899,14 @@ class User extends Base
             ->setLabel('Profile Image');
 
         $aFields['timezone']
-            ->setType('dropdown')
+            ->setType(Form::FIELD_DROPDOWN)
             ->setOptions($oDateTimeService->getAllTimezoneFlat())
             ->addValidation('in_list[' . implode(',', array_keys($aFields['timezone']->options)) . ']')
             ->setDefault($oDateTimeService->getTimezoneDefault())
             ->setClass('select2');
 
         $aFields['datetime_format_date']
-            ->setType('dropdown')
+            ->setType(Form::FIELD_DROPDOWN)
             ->setLabel('Date Format')
             ->setOptions($oDateTimeService->getAllDateFormatFlat())
             ->addValidation('in_list[' . implode(',', array_keys($aFields['datetime_format_date']->options)) . ']')
@@ -2913,7 +2914,7 @@ class User extends Base
             ->setClass('select2');
 
         $aFields['datetime_format_time']
-            ->setType('dropdown')
+            ->setType(Form::FIELD_DROPDOWN)
             ->setLabel('Time Format')
             ->setOptions($oDateTimeService->getAllTimeFormatFlat())
             ->addValidation('in_list[' . implode(',', array_keys($aFields['datetime_format_time']->options)) . ']')
