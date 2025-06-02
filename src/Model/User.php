@@ -85,6 +85,10 @@ class User extends Base
      */
     const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
 
+    const FIELD_CLASSES = [
+        'profile_img' => ['ModelFieldObject', \Nails\Cdn\Constants::MODULE_SLUG],
+    ];
+
     /**
      * The default column to sort on
      *
@@ -2751,64 +2755,63 @@ class User extends Base
      */
     public function describeFields($sTable = null)
     {
-        $aFields = parent::describeFields($sTable);
-
-        //  Data types
-        $aFields['profile_img']->setType(\Nails\Cdn\Helper\Form::FIELD_OBJECT_PICKER);
-        $aFields['timezone']->setType(Form::FIELD_DROPDOWN);
-        $aFields['datetime_format_date']->setType(Form::FIELD_DROPDOWN);
-        $aFields['datetime_format_time']->setType(Form::FIELD_DROPDOWN);
-
-        //  Labels
-        $aFields['first_name']->setLabel('First Name');
-        $aFields['last_name']->setLabel('Surname');
-        $aFields['profile_img']->setLabel('Profile Image');
-        $aFields['dob']->setLabel('Date of Birth');
-        $aFields['datetime_format_date']->setLabel('Date Format');
-        $aFields['datetime_format_time']->setLabel('Time Format');
-        $aFields['ip_address']->setLabel('Registration IP');
-        $aFields['last_ip']->setLabel('Last IP');
-        $aFields['last_update']->setLabel('Modified');
-        $aFields['referral']->setLabel('Referral Code');
-
-        //  Validation rules
-        $aRules = [
-            'required' => [
-                'first_name',
-                'last_name',
-            ],
-        ];
-
-        foreach ($aRules as $sRule => $aProperties) {
-            foreach ($aProperties as $sProperty) {
-                $aFields[$sProperty]->addValidation($sRule);
-            }
-        }
-
-        //  Notes
-        $aFields['username']->setInfo('Username can only contain alpha numeric characters, underscores, periods and dashes (no spaces).');
-
-        //  Dropdown values
         /** @var DateTime $oDateTimeService */
         $oDateTimeService = Factory::service('DateTime');
-        $aFields['timezone']->setOptions($oDateTimeService->getAllTimezoneFlat());
-        $aFields['datetime_format_date']->setOptions($oDateTimeService->getAllDateFormatFlat());
-        $aFields['datetime_format_time']->setOptions($oDateTimeService->getAllTimeFormatFlat());
 
-        //  Dropdown validation
-        $aFields['timezone']->addValidation('in_list[' . implode(',', array_keys($aFields['timezone']->options)) . ']');
-        $aFields['datetime_format_date']->addValidation('in_list[' . implode(',', array_keys($aFields['datetime_format_date']->options)) . ']');
-        $aFields['datetime_format_time']->addValidation('in_list[' . implode(',', array_keys($aFields['datetime_format_time']->options)) . ']');
+        $aFields = parent::describeFields($sTable);
 
-        //  Defaults
-        $aFields['timezone']->setDefault($oDateTimeService->getTimezoneDefault());
-        $aFields['datetime_format_date']->setDefault($oDateTimeService->getDateFormatDefaultSlug());
-        $aFields['datetime_format_time']->setDefault($oDateTimeService->gettimeFormatDefaultSlug());
+        $aFields['profile_img']
+            ->setLabel('Profile Image');
 
-        //  Misc
-        $aFields['timezone']->setClass('select2');
-        $aFields['datetime_format_date']->setClass('select2');
-        $aFields['datetime_format_time']->setClass('select2');
+        $aFields['timezone']
+            ->setType(Form::FIELD_DROPDOWN)
+            ->setOptions($oDateTimeService->getAllTimezoneFlat())
+            ->addValidation('in_list[' . implode(',', array_keys($aFields['timezone']->options)) . ']')
+            ->setDefault($oDateTimeService->getTimezoneDefault())
+            ->setClass('select2');
+
+        $aFields['datetime_format_date']
+            ->setType(Form::FIELD_DROPDOWN)
+            ->setLabel('Date Format')
+            ->setOptions($oDateTimeService->getAllDateFormatFlat())
+            ->addValidation('in_list[' . implode(',', array_keys($aFields['datetime_format_date']->options)) . ']')
+            ->setDefault($oDateTimeService->getDateFormatDefaultSlug())
+            ->setClass('select2');
+
+        $aFields['datetime_format_time']
+            ->setType(Form::FIELD_DROPDOWN)
+            ->setLabel('Time Format')
+            ->setOptions($oDateTimeService->getAllTimeFormatFlat())
+            ->addValidation('in_list[' . implode(',', array_keys($aFields['datetime_format_time']->options)) . ']')
+            ->setDefault($oDateTimeService->gettimeFormatDefaultSlug())
+            ->setClass('select2');
+
+        //  Labels
+        $aFields['first_name']
+            ->setLabel('First Name')
+            ->setIsRequired(true);
+
+        $aFields['last_name']
+            ->setLabel('Surname')
+            ->setIsRequired(true);
+
+        $aFields['dob']
+            ->setLabel('Date of Birth');
+
+        $aFields['ip_address']
+            ->setLabel('Registration IP');
+
+        $aFields['last_ip']
+            ->setLabel('Last IP');
+
+        $aFields['last_update']
+            ->setLabel('Modified');
+
+        $aFields['referral']
+            ->setLabel('Referral Code');
+
+        $aFields['username']
+            ->setInfo('Username can only contain alpha numeric characters, underscores, periods and dashes (no spaces).');
 
         return $aFields;
     }
