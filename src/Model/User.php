@@ -42,7 +42,6 @@ use Nails\Environment;
 use Nails\Factory;
 use Nails\Testing;
 use ReflectionException;
-use stdClass;
 
 /**
  * Class User
@@ -2886,64 +2885,64 @@ class User extends Base
      */
     public function describeFields($sTable = null)
     {
+        /** @var DateTime $oDateTimeService */
+        $oDateTimeService = Factory::service('DateTime');
+
         $aFields = parent::describeFields($sTable);
 
-        //  Data types
-        $aFields['profile_img']->type          = 'cdn_object_picker';
-        $aFields['timezone']->type             = 'dropdown';
-        $aFields['datetime_format_date']->type = 'dropdown';
-        $aFields['datetime_format_time']->type = 'dropdown';
+        $aFields['profile_img']
+            ->setType('cdn_object_picker')
+            ->setLabel('Profile Image');
+
+        $aFields['timezone']
+            ->setType('dropdown')
+            ->setOptions($oDateTimeService->getAllTimezoneFlat())
+            ->addValidation('in_list[' . implode(',', array_keys($aFields['timezone']->options)) . ']')
+            ->setDefault($oDateTimeService->getTimezoneDefault())
+            ->setClass('select2');
+
+        $aFields['datetime_format_date']
+            ->setType('dropdown')
+            ->setLabel('Date Format')
+            ->setOptions($oDateTimeService->getAllDateFormatFlat())
+            ->addValidation('in_list[' . implode(',', array_keys($aFields['datetime_format_date']->options)) . ']')
+            ->setDefault($oDateTimeService->getDateFormatDefaultSlug())
+            ->setClass('select2');
+
+        $aFields['datetime_format_time']
+            ->setType('dropdown')
+            ->setLabel('Time Format')
+            ->setOptions($oDateTimeService->getAllTimeFormatFlat())
+            ->addValidation('in_list[' . implode(',', array_keys($aFields['datetime_format_time']->options)) . ']')
+            ->setDefault($oDateTimeService->gettimeFormatDefaultSlug())
+            ->setClass('select2');
 
         //  Labels
-        $aFields['first_name']->label           = 'First Name';
-        $aFields['last_name']->label            = 'Surname';
-        $aFields['profile_img']->label          = 'Profile Image';
-        $aFields['dob']->label                  = 'Date of Birth';
-        $aFields['datetime_format_date']->label = 'Date Format';
-        $aFields['datetime_format_time']->label = 'Time Format';
-        $aFields['ip_address']->label           = 'Registration IP';
-        $aFields['last_ip']->label              = 'Last IP';
-        $aFields['last_update']->label          = 'Modified';
-        $aFields['referral']->label             = 'Referral Code';
+        $aFields['first_name']
+            ->setLabel('First Name')
+            ->setIsRequired(true);
 
-        //  Validation rules
-        $aRules = [
-            'required' => [
-                'first_name',
-                'last_name',
-            ],
-        ];
+        $aFields['last_name']
+            ->setLabel('Surname')
+            ->setIsRequired(true);
 
-        foreach ($aRules as $sRule => $aProperties) {
-            foreach ($aProperties as $sProperty) {
-                $aFields[$sProperty]->validation[] = $sRule;
-            }
-        }
+        $aFields['dob']
+            ->setLabel('Date of Birth');
 
-        //  Notes
-        $aFields['username']->info = 'Username can only contain alpha numeric characters, underscores, periods and dashes (no spaces).';
+        $aFields['ip_address']
+            ->setLabel('Registration IP');
 
-        //  Dropdown values
-        /** @var DateTime $oDateTimeService */
-        $oDateTimeService                         = Factory::service('DateTime');
-        $aFields['timezone']->options             = $oDateTimeService->getAllTimezoneFlat();
-        $aFields['datetime_format_date']->options = $oDateTimeService->getAllDateFormatFlat();
-        $aFields['datetime_format_time']->options = $oDateTimeService->getAllTimeFormatFlat();
+        $aFields['last_ip']
+            ->setLabel('Last IP');
 
-        //  Dropdown validation
-        $aFields['timezone']->validation[]             = 'in_list[' . implode(',', array_keys($aFields['timezone']->options)) . ']';
-        $aFields['datetime_format_date']->validation[] = 'in_list[' . implode(',', array_keys($aFields['datetime_format_date']->options)) . ']';
-        $aFields['datetime_format_time']->validation[] = 'in_list[' . implode(',', array_keys($aFields['datetime_format_time']->options)) . ']';
+        $aFields['last_update']
+            ->setLabel('Modified');
 
-        //  Defaults
-        $aFields['timezone']->default             = $oDateTimeService->getTimezoneDefault();
-        $aFields['datetime_format_date']->default = $oDateTimeService->getDateFormatDefaultSlug();
-        $aFields['datetime_format_time']->default = $oDateTimeService->gettimeFormatDefaultSlug();
+        $aFields['referral']
+            ->setLabel('Referral Code');
 
-        //  Misc
-        $aFields['timezone']->class             = 'select2';
-        $aFields['datetime_format_date']->class = 'select2';
-        $aFields['datetime_format_time']->class = 'select2';
+        $aFields['username']
+            ->setInfo('Username can only contain alpha numeric characters, underscores, periods and dashes (no spaces).');
 
         return $aFields;
     }
@@ -3052,7 +3051,6 @@ class User extends Base
 
     /**
      * Formats a single object
-     *
      * The getAll() method iterates over each returned item with this method so as to
      * correctly format the output. Use this to cast ints and bools and/or organise data into objects.
      *
