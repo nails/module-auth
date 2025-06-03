@@ -172,7 +172,7 @@ class User extends Entity
      * @return string
      * @throws FactoryException
      */
-    public function getLoginUrl(string $sForwardTo = null, string $sReturnTo = null): string
+    public function getLoginUrl(?string $sForwardTo = null, ?string $sReturnTo = null): string
     {
         return \Nails\Auth\Helper\User::compileLoginUrl(
             $this->id_md5,

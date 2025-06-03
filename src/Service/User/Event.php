@@ -69,9 +69,9 @@ class Event
     public function create(
         string $sType,
         $mData = null,
-        int $iRef = null,
-        int $iCreatedBy = null,
-        string $sCreated = null
+        ?int $iRef = null,
+        ?int $iCreatedBy = null,
+        ?string $sCreated = null
     ): int {
 
         /**

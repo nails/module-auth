@@ -109,9 +109,9 @@ if (!function_exists('createUserEvent')) {
     function createUserEvent(
         string $sType,
         $mData = null,
-        int $iRef = null,
-        int $iCreatedBy = null,
-        string $sCreated = null
+        ?int $iRef = null,
+        ?int $iCreatedBy = null,
+        ?string $sCreated = null
     ): int {
         /** @var \Nails\Auth\Service\User\Event $oUserEventService */
         $oUserEventService = Factory::service('UserEvent', Constants::MODULE_SLUG);

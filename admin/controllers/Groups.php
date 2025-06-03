@@ -50,7 +50,7 @@ class Groups extends DefaultController
      *
      * @return void
      */
-    protected function loadEditViewData(Resource $oItem = null): void
+    protected function loadEditViewData(?Resource $oItem = null): void
     {
         parent::loadEditViewData($oItem);
 
