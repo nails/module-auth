@@ -588,7 +588,7 @@ class User extends Base
 
         return $this->bIsRemembered;
     }
-    
+
     // --------------------------------------------------------------------------
 
     /**
@@ -1243,7 +1243,7 @@ class User extends Base
      *
      * @return int
      */
-    protected function getUserId(int $iUserId = null)
+    protected function getUserId(?int $iUserId = null)
     {
         if (!empty($iUserId)) {
             $iUid = $iUserId;
@@ -1481,7 +1481,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function emailAddSendVerify($mEmailId, int $iUserId = null): bool
+    public function emailAddSendVerify($mEmailId, ?int $iUserId = null): bool
     {
         if (!Config::get('NAILS_AUTH_EMAIL_VERIFY_ON_ADD', true)) {
             return true;
@@ -1568,7 +1568,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function emailDelete($mEmailId, int $iUserId = null, bool $bTriggerEvent = true): bool
+    public function emailDelete($mEmailId, ?int $iUserId = null, bool $bTriggerEvent = true): bool
     {
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
@@ -1708,7 +1708,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function emailMakePrimary($mIdEmail, int $iUserId = null, bool $bTriggerEvent = true): bool
+    public function emailMakePrimary($mIdEmail, ?int $iUserId = null, bool $bTriggerEvent = true): bool
     {
         //  Fetch email
         /** @var Database $oDb */
@@ -1864,7 +1864,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function setRememberCookie(int $iId = null, string $sPassword = null, string $sEmail = null): bool
+    public function setRememberCookie(?int $iId = null, ?string $sPassword = null, ?string $sEmail = null): bool
     {
         //  Is remember me functionality enabled?
         /** @var \Nails\Common\Service\Config $oConfig */
@@ -2497,7 +2497,7 @@ class User extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function isValidUsername(string $sUsername, bool $bCheckDb = false, int $iIgnoreUserId = null): bool
+    public function isValidUsername(string $sUsername, bool $bCheckDb = false, ?int $iIgnoreUserId = null): bool
     {
         /**
          * Check username doesn't contain invalid characters - we're actively looking

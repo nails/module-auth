@@ -301,7 +301,7 @@ class Password extends Base
     protected function generatePasswordHash(
         ?string $sPassword,
         ?string $sSalt,
-        PasswordEngine $oPasswordEngine = null
+        ?PasswordEngine $oPasswordEngine = null
     ): string {
         $oPasswordEngine = $oPasswordEngine ?? $this->aPasswordEngines[static::DEFAULT_PASSWORD_ENGINE];
         return $oPasswordEngine->hash($sPassword, $sSalt);
