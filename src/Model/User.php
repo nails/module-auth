@@ -1322,7 +1322,7 @@ class User extends Base
      */
     public function emailAdd(
         string $sEmail,
-        int $iUserId = null,
+        ?int $iUserId = null,
         bool $bIsPrimary = false,
         bool $bIsVerified = false,
         bool $bSendEmail = true,
