@@ -16,6 +16,6 @@ class Sha1 implements PasswordEngine
      */
     public function hash(?string $sPassword, ?string $sSalt): string
     {
-        return sha1(sha1($sPassword) . $sSalt);
+        return sha1(sha1($sPassword ?? '') . $sSalt);
     }
 }
