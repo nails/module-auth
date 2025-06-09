@@ -119,14 +119,14 @@ class All implements Source
 
         $aResult = $oDb->query('
             SHOW TABLES
-            FROM `' . Config::get('DB_DATABASE') . '`
+            FROM `' . $oDb->getDatabase() . '`
             WHERE
-                `Tables_in_' . Config::get('DB_DATABASE') . '` LIKE "' . Config::get('NAILS_DB_PREFIX') . 'user_meta_%"
-                OR `Tables_in_' . Config::get('DB_DATABASE') . '` LIKE "' . Config::get('APP_DB_PREFIX') . 'user_meta_%"
+                `Tables_in_' . $oDb->getDatabase() . '` LIKE "' . Config::get('NAILS_DB_PREFIX') . 'user_meta_%"
+                OR `Tables_in_' . $oDb->getDatabase() . '` LIKE "' . Config::get('APP_DB_PREFIX') . 'user_meta_%"
         ')->result();
 
         foreach ($aResult as $oTable) {
-            $aTables[] = $oTable->{'Tables_in_' . Config::get('DB_DATABASE')};
+            $aTables[] = $oTable->{'Tables_in_' . $oDb->getDatabase()};
         }
 
         $aOut = [];

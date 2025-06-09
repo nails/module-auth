@@ -2656,7 +2656,7 @@ class User extends Base
         $aResult = $oDb
             ->select(['TABLE_NAME', 'COLUMN_NAME'])
             ->from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
-            ->where('REFERENCED_TABLE_SCHEMA', $oDb->getDbDatabase())
+            ->where('REFERENCED_TABLE_SCHEMA', $oDb->getDatabase())
             ->where('REFERENCED_TABLE_NAME', $this->getTableName())
             ->where('REFERENCED_COLUMN_NAME', $this->getColumnId())
             ->where_not_in('TABLE_NAME', $aExclude)
