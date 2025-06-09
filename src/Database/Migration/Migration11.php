@@ -50,7 +50,7 @@ class Migration11 extends Base
                 COUNT(*)
             FROM `information_schema`.`TABLES`
             WHERE
-                `TABLE_SCHEMA` = "' . Config::get('DB_DATABASE') . '"
+                `TABLE_SCHEMA` = "' . $this->oDb->getDatabase() . '"
                 AND `TABLE_TYPE` = "BASE TABLE"
                 AND `TABLE_NAME` = "{{NAILS_DB_PREFIX}}event";
         ');
