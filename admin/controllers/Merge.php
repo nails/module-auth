@@ -34,10 +34,9 @@ class Merge extends BaseAdmin
     /**
      * Announces this controller's navGroups
      *
-     * @return stdClass
      * @throws FactoryException
      */
-    public static function announce()
+    public static function announce(): Nav|array|null
     {
         if (userHasPermission('admin:auth:merge:users')) {
             /** @var Nav $oNavGroup */
@@ -47,6 +46,8 @@ class Merge extends BaseAdmin
                 ->setIcon('fa-users')
                 ->addAction('Merge Users');
         }
+
+        return $oNavGroup ?? null;
     }
 
     // --------------------------------------------------------------------------
