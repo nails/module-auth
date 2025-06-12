@@ -35,10 +35,9 @@ class Merge extends Base
     /**
      * Announces this controller's navGroups
      *
-     * @return stdClass
      * @throws FactoryException
      */
-    public static function announce()
+    public static function announce(): Nav|array|null
     {
         if (userHasPermission(Permission\Users\Merge::class)) {
             /** @var Nav $oNavGroup */

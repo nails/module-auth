@@ -36,7 +36,7 @@ use stdClass;
  */
 class Import extends Base
 {
-    public static function announce()
+    public static function announce(): Nav|array|null
     {
         return null;
     }

@@ -88,10 +88,9 @@ class Accounts extends DefaultController
     /**
      * Announces this controller's navGroups
      *
-     * @return Nav
      * @throws FactoryException
      */
-    public static function announce()
+    public static function announce(): Nav|array|null
     {
         /** @var Nav $oNavGroup */
         $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
