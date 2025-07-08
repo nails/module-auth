@@ -15,12 +15,12 @@ use Nails\Auth\Controller\Base;
 use Nails\Factory;
 
 /**
- * Class Override
+ * Class SessionOverride
  */
-class Override extends Base
+class SessionOverride extends Base
 {
     /**
-     * Override constructor.
+     * SessionOverride constructor.
      */
     public function __construct()
     {
