@@ -23,6 +23,7 @@ class Routes implements RouteGenerator
     public static function generate()
     {
         return [
+            'auth/override/login_as/(.+)/(.+)'          => 'auth/sessionOverride/login_as',
             'auth/password/forgotten(/(.+))?'           => 'auth/PasswordForgotten/$2',
             'auth/password/reset/(\d+)/(.+)'            => 'auth/PasswordReset/$1/$2',
             'auth/mfa/device/(\d+)/(.+)/(.+)(/(.+))?'   => 'auth/MfaDevice',
