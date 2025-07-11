@@ -1,7 +1,10 @@
 <?php
 
+use Nails\Captcha\Constants;
+use Nails\Captcha\Service\Captcha;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\View;
+use Nails\Config;
 use Nails\Factory;
 
 /** @var Input $oInput */
@@ -10,15 +13,17 @@ $oInput = Factory::service('Input');
 $oView = Factory::service('View');
 
 ?>
-<div class="nails-auth forgotten-password u-center-screen">
+<div class="nails-auth forgotten-password center-screen">
     <div class="panel">
-        <h1 class="panel__header text-center">
-            Password Reset
-        </h1>
-        <?=form_open('auth/password/forgotten')?>
+        <div class="panel__header">
+            <h1 class="panel__title text-center">
+                Password Reset
+            </h1>
+        </div>
         <div class="panel__body">
             <?php
 
+            echo form_open('auth/password/forgotten', 'class="form"');
             $oView->load('auth/_components/alerts');
 
             ?>
@@ -27,7 +32,7 @@ $oView = Factory::service('View');
             </p>
             <?php
 
-            switch (\Nails\Config::get('APP_NATIVE_LOGIN_USING')) {
+            switch (Config::get('APP_NATIVE_LOGIN_USING')) {
 
                 case 'EMAIL':
 
@@ -52,13 +57,13 @@ $oView = Factory::service('View');
             }
 
             $sFieldKey  = 'identifier';
-            $sFieldAttr = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+            $sFieldAttr = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
             ?>
-            <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+            <div class="form__group">
+                <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                 <?=$sFieldType($sFieldKey, set_value($sFieldKey, $oInput->get('email')), $sFieldAttr)?>
-                <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
             </div>
             <?php
 
@@ -66,8 +71,8 @@ $oView = Factory::service('View');
                 ?>
                 <div class="form__group">
                     <?php
-                    /** @var \Nails\Captcha\Service\Captcha $oCaptchaService */
-                    $oCaptchaService = \Nails\Factory::service('Captcha', Nails\Captcha\Constants::MODULE_SLUG);
+                    /** @var Captcha $oCaptchaService */
+                    $oCaptchaService = Factory::service('Captcha', Constants::MODULE_SLUG);
                     echo $oCaptchaService->generate()->getHtml();
                     ?>
                 </div>
@@ -75,13 +80,13 @@ $oView = Factory::service('View');
             }
 
             ?>
-            <p>
+            <div class="form__actions">
                 <button type="submit" class="btn btn--block btn--primary">
                     <?=lang('auth_forgot_action_reset')?>
                 </button>
                 <?=anchor(loginUrl(null), 'Log In', 'class="btn btn--block btn--link"')?>
-            </p>
+            </div>
+            <?=form_close()?>
         </div>
-        <?=form_close()?>
     </div>
 </div>

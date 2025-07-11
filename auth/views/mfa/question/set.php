@@ -14,17 +14,18 @@ $aQuery = array_filter([
 $sQuery = !empty($aQuery) ? '?' . http_build_query($aQuery) : '';
 
 ?>
-<div class="nails-auth mfa mfa--question mfa--question--setup u-center-screen">
+<div class="nails-auth mfa mfa--question mfa--question--setup center-screen">
     <div class="panel">
-        <h1 class="panel__header text-center">
-            Set up Two Factor Authentication
-        </h1>
+        <div class="panel__header">
+            <h1 class="panel__title text-center">
+                Set up Two Factor Authentication
+            </h1>
+        </div>
         <div class="panel__body">
             <?php
 
+            echo form_open('auth/mfa/question/' . $user_id . '/' . $token['salt'] . '/' . $token['token'] . $sQuery, 'class="form"');
             $oView->load('auth/_components/alerts');
-
-            echo form_open('auth/mfa/question/' . $user_id . '/' . $token['salt'] . '/' . $token['token'] . $sQuery);
 
             if ($num_questions) {
                 ?>
@@ -47,23 +48,23 @@ $sQuery = !empty($aQuery) ? '?' . http_build_query($aQuery) : '';
                     $aFieldOptions = array_merge(['Please Choose...'], $questions);
 
                     ?>
-                    <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                        <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
-                        <?=form_dropdown($sFieldKey, $aFieldOptions, set_value($sFieldKey), 'id="input-' . $sFieldKey . '"')?>
-                        <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                    <div class="form__group">
+                        <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+                        <?=form_dropdown($sFieldKey, $aFieldOptions, set_value($sFieldKey), 'id="input-' . $sFieldKey . '" class="form__control form__control--select"')?>
+                        <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                     </div>
                     <?php
 
                     $sFieldKey         = 'question[' . $i . '][answer]';
                     $sFieldLabel       = 'Answer ' . ($i + 1);
                     $sFieldPlaceholder = 'Type your answer here';
-                    $sFieldAttr        = 'id="input-' . $sFieldKey . '" autocomplete="off" placeholder="' . $sFieldPlaceholder . '"';
+                    $sFieldAttr        = 'id="input-' . $sFieldKey . '" autocomplete="off" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
                     ?>
-                    <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                        <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+                    <div class="form__group">
+                        <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                         <?=form_text($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                        <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                        <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                     </div>
                     <?php
                 }
@@ -89,36 +90,36 @@ $sQuery = !empty($aQuery) ? '?' . http_build_query($aQuery) : '';
                     $sFieldKey         = 'custom_question[' . $i . '][question]';
                     $sFieldLabel       = 'Question ' . ($i + 1);
                     $sFieldPlaceholder = 'Type your question here';
-                    $sFieldAttr        = 'id="input-' . $sFieldKey . '" autocomplete="off" placeholder="' . $sFieldPlaceholder . '"';
+                    $sFieldAttr        = 'id="input-' . $sFieldKey . '" autocomplete="off" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
                     ?>
-                    <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                        <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+                    <div class="form__group">
+                        <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                         <?=form_text($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                        <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                        <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                     </div>
                     <?php
 
                     $sFieldKey         = 'custom_question[' . $i . '][answer]';
                     $sFieldLabel       = 'Answer ' . ($i + 1);
                     $sFieldPlaceholder = 'Type your answer here';
-                    $sFieldAttr        = 'id="input-' . $sFieldKey . '" autocomplete="off" placeholder="' . $sFieldPlaceholder . '"';
+                    $sFieldAttr        = 'id="input-' . $sFieldKey . '" autocomplete="off" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
                     ?>
-                    <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                        <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+                    <div class="form__group">
+                        <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                         <?=form_text($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                        <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                        <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                     </div>
                     <?php
                 }
             }
             ?>
-            <p>
+            <div class="form__actions">
                 <button type="submit" class="btn btn--block btn--primary">
                     Save questions &amp; Sign in
                 </button>
-            </p>
+            </div>
             <?=form_close()?>
         </div>
     </div>

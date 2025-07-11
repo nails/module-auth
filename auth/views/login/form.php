@@ -1,5 +1,7 @@
 <?php
 
+use Nails\Captcha\Constants;
+use Nails\Captcha\Service\Captcha;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\View;
 use Nails\Config;
@@ -13,15 +15,17 @@ $oView = Factory::service('View');
 $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
 
 ?>
-<div class="nails-auth login u-center-screen">
+<div class="nails-auth login container center-screen">
     <div class="panel">
-        <h1 class="panel__header text-center">
-            Welcome
-        </h1>
-        <?=form_open(loginUrl($return_to))?>
+        <div class="panel__header">
+            <h1 class="panel__title text-center">
+                Welcome
+            </h1>
+        </div>
         <div class="panel__body">
             <?php
 
+            echo form_open(loginUrl($return_to), 'class="form"');
             $oView->load('auth/_components/alerts');
 
             if ($social_signon_enabled) {
@@ -40,7 +44,7 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
                 }
 
                 ?>
-                <hr />
+                <hr/>
                 <p class="text-center">
                     <?php
                     switch (Config::get('APP_NATIVE_LOGIN_USING')) {
@@ -83,35 +87,31 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
             }
 
             $sFieldKey   = 'identifier';
-            $sFieldAttr  = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+            $sFieldAttr  = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
             $sFieldValue = set_value($sFieldKey, $oInput->get('identity'), false);
 
             ?>
-            <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+            <div class="form__group">
+                <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                 <?=$FieldType($sFieldKey, $sFieldValue, $sFieldAttr)?>
-                <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
             </div>
             <?php
 
             $sFieldKey         = 'password';
             $sFieldLabel       = lang('form_label_password');
             $sFieldPlaceholder = lang('auth_login_password_placeholder');
-            $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+            $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
             ?>
-            <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+            <div class="form__group">
+                <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                 <?=form_password($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
             </div>
-            <div class="form__group form__group--checkbox">
-                <div class="col-sm-offset-3 col-sm-9">
-                    <label>
-                        <input type="checkbox" name="remember" <?=set_checkbox('remember')?>>
-                        Remember me
-                    </label>
-                </div>
+            <div class="form__group form__group--checkbox-compact">
+                <input type="checkbox" id="remember-me" name="remember" <?=set_checkbox('remember')?>>
+                <label for="remember-me">Keep me logged in on this device</label>
             </div>
             <?php
 
@@ -119,8 +119,8 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
                 ?>
                 <div class="form__group">
                     <?php
-                    /** @var \Nails\Captcha\Service\Captcha $oCaptchaService */
-                    $oCaptchaService = Factory::service('Captcha', Nails\Captcha\Constants::MODULE_SLUG);
+                    /** @var Captcha $oCaptchaService */
+                    $oCaptchaService = Factory::service('Captcha', Constants::MODULE_SLUG);
                     echo $oCaptchaService->generate()->getHtml();
                     ?>
                 </div>
@@ -128,26 +128,30 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
             }
 
             ?>
-            <p>
+            <div class="form__actions">
                 <button type="submit" class="btn btn--block btn--primary">
                     Sign in
                 </button>
-                <?=anchor('auth/password/forgotten', 'Forgotten Your Password?', 'class="btn btn--block btn--link"')?>
-            </p>
-            <?php
-            if (appSetting('user_registration_enabled', 'auth')) {
-                ?>
-                <hr />
-                <p class="text-center">
-                    Not got an account?
-                </p>
-                <p class="text-center">
-                    <?=anchor(registerUrl(null), 'Register now', 'class="btn btn--block"')?>
-                </p>
                 <?php
-            }
-            ?>
+
+                echo anchor('auth/password/forgotten', 'Forgotten Your Password?', 'class="btn btn--block btn--link"');
+
+                ?>
+            </div>
+            <?=form_close()?>
         </div>
-        <?=form_close()?>
+        <?php
+
+        if (appSetting('user_registration_enabled', 'auth')) {
+            ?>
+            <div class="panel__footer">
+                <p class="text-center">
+                    Not got an account? <?=anchor(registerUrl(null), 'Register now')?>
+                </p>
+            </div>
+            <?php
+        }
+
+        ?>
     </div>
 </div>

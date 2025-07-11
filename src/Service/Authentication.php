@@ -12,12 +12,9 @@
 
 namespace Nails\Auth\Service;
 
-use App\Auth\Model\User;
 use DateInterval;
 use DateTime;
-use Sonata\GoogleAuthenticator\GoogleAuthenticator;
 use Nails\Auth\Constants;
-use Nails\Auth\Exception\AuthException;
 use Nails\Auth\Exception\Login\InvalidCredentialsException;
 use Nails\Auth\Exception\Login\IsLockedOutException;
 use Nails\Auth\Exception\Login\IsSuspendedException;
@@ -34,7 +31,6 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
 use Nails\Common\Helper\Url;
-use Nails\Common\Model\Base;
 use Nails\Common\Service\Config;
 use Nails\Common\Service\Database;
 use Nails\Common\Service\Encrypt;
@@ -43,6 +39,8 @@ use Nails\Common\Traits\ErrorHandling;
 use Nails\Environment;
 use Nails\Factory;
 use ReflectionException;
+use Sonata\GoogleAuthenticator\GoogleAuthenticator;
+use Sonata\GoogleAuthenticator\GoogleQrUrl;
 use stdClass;
 
 /**
@@ -749,10 +747,10 @@ class Authentication
         $sUsername = empty($sUsername) ? preg_replace('/[^a-z]/', '', strtolower($oUser->first_name . $oUser->last_name)) : $sUsername;
         $sUsername = empty($sUsername) ? preg_replace('/[^a-z]/', '', strtolower($oUser->email)) : $sUsername;
 
+
         return [
             'secret' => $sSecret,
-            //  @todo (Pablo - 2020-03-02) - Refactor deprecated functionality
-            'url'    => $oGoogleAuth->getUrl($sUsername, $sHostname, $sSecret),
+            'url'    => GoogleQrUrl::generate($sUsername . '@' . $sHostname, $sSecret),
         ];
     }
 

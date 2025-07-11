@@ -1,7 +1,11 @@
 <?php
 
-/** @var \Nails\Common\Service\Input $oInput */
-$oInput = \Nails\Factory::service('Input');
+use Nails\Admin\Helper;
+use Nails\Common\Service\Input;
+use Nails\Factory;
+
+/** @var Input $oInput */
+$oInput = Factory::service('Input');
 
 ?>
 <div class="group-settings site">
@@ -12,7 +16,7 @@ $oInput = \Nails\Factory::service('Input');
     <?php
 
     echo form_open();
-    echo \Nails\Admin\Helper::tabs(array_filter([
+    echo Helper::tabs(array_filter([
         !userHasPermission('admin:auth:settings:update:registration') ? null : [
             'label'   => 'Registration',
             'content' => function () {
@@ -156,15 +160,8 @@ $oInput = \Nails\Factory::service('Input');
             },
         ],
     ]));
-    ?>
-    <div class="admin-floating-controls">
-        <button type="submit" class="btn btn-primary">
-            Save Changes
-        </button>
-    </div>
-    <?php
 
-    echo \Nails\Admin\Helper::floatingControls();
+    echo Helper::floatingControls();
     echo form_close()
 
     ?>

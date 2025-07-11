@@ -149,11 +149,12 @@ class MfaQuestion extends BaseMfa
 
                         //  Make sure that we have different questions
                         $aQuestionIndex = [];
-                        $aQuestion      = (array) $oInput->post('question', true);
+                        $aQuestion      = array_filter((array) $oInput->post('question', true));
                         $bError         = false;
 
                         foreach ($aQuestion as $q) {
-                            if (array_search($q['question'], $aQuestionIndex) === false) {
+
+                            if (!in_array($q['question'], $aQuestionIndex)) {
                                 $aQuestionIndex[] = $q['question'];
                             } else {
                                 $bError = true;
@@ -162,7 +163,7 @@ class MfaQuestion extends BaseMfa
                         }
 
                         $aQuestionIndex = [];
-                        $aQuestion      = (array) $oInput->post('custom_question', true);
+                        $aQuestion      = array_filter((array) $oInput->post('custom_question', true));
 
                         foreach ($aQuestion as $q) {
                             if (array_search($q['question'], $aQuestionIndex) === false) {

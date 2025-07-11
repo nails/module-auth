@@ -281,7 +281,6 @@ class Login extends Base
      *
      * @throws AuthException
      * @throws FactoryException
-     * @todo (Pablo - 2019-12-10) - Verify this still works
      */
     protected function handleMfa(Resource\User $oUser, bool $bRemember = false): void
     {

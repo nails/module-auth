@@ -21,42 +21,41 @@ if (isset($login_method) && isset($user_id) && isset($token)) {
 }
 
 ?>
-<div class="nails-auth mfa mfa--question mfa--question--ask u-center-screen">
+<div class="nails-auth mfa mfa--question mfa--question--ask center-screen">
     <div class="panel">
-        <h1 class="panel__header text-center">
-            Two Factor Authentication
-        </h1>
+        <div class="panel__header">
+            <h1 class="panel__title text-center">
+                Two Factor Authentication
+            </h1>
+        </div>
         <div class="panel__body">
             <?php
 
+            echo form_open($sFormUrl, 'class="form"');
             $oView->load('auth/_components/alerts');
 
             ?>
             <p>
                 <?=lang('auth_twofactor_answer_body')?>
             </p>
-            <h4>
-                <strong><?=$question->question?></strong>
-            </h4>
-            <?=form_open($sFormUrl)?>
             <?php
 
             $sFieldKey         = 'answer';
-            $sFieldLabel       = 'Answer';
+            $sFieldLabel       = $question->question;
             $sFieldPlaceholder = 'Type your answer here';
-            $sFieldAttr        = 'id="input-' . $sFieldKey . '" autocomplete="off" placeholder="' . $sFieldPlaceholder . '"';
+            $sFieldAttr        = 'id="input-' . $sFieldKey . '" autocomplete="off" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
             ?>
-            <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+            <div class="form__group">
+                <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                 <?=form_text($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
             </div>
-            <p>
+            <div class="form__actions">
                 <button type="submit" class="btn btn--block btn--primary">
                     Verify answer &amp; Sign in
                 </button>
-            </p>
+            </div>
             <?=form_close()?>
         </div>
     </div>

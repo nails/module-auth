@@ -186,7 +186,7 @@ abstract class BaseMfa extends Base
 
         //  Delete the token we generated, it's no needed, eh!
         /** @var Authentication $oAuthService */
-        $oAuthService = Factory::model('Authentication', Constants::MODULE_SLUG);
+        $oAuthService = Factory::service('Authentication', Constants::MODULE_SLUG);
         $oAuthService->mfaTokenDelete($this->data['token']['id']);
 
         // --------------------------------------------------------------------------
