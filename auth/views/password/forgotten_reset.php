@@ -7,15 +7,17 @@ use Nails\Factory;
 $oView = Factory::service('View');
 
 ?>
-<div class="nails-auth forgotten-password u-center-screen">
+<div class="nails-auth forgotten-password center-screen">
     <div class="panel">
-        <h1 class="panel__header text-center">
-            Password Reset
-        </h1>
-        <?=form_open('auth/password/forgotten')?>
+        <div class="panel__header">
+            <h1 class="panel__title text-center">
+                Password Reset
+            </h1>
+        </div>
         <div class="panel__body">
             <?php
 
+            echo form_open('auth/password/forgotten', 'class="form"');
             $oView->load('auth/_components/alerts');
 
             ?>
@@ -30,6 +32,7 @@ $oView = Factory::service('View');
             <p>
                 <?=anchor(loginUrl(null, ['identity' => $user->identity]), lang('auth_forgot_action_proceed'), 'class="btn btn--block btn--primary"')?>
             </p>
+            <?=form_close()?>
         </div>
     </div>
 </div>

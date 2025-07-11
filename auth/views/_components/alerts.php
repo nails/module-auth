@@ -20,9 +20,9 @@ foreach ($aAlerts as $aAlert) {
 
     if (!empty($sMessage)) {
         ?>
-        <div class="alert alert--<?=$sClass?>">
+        <p class="alert alert--<?=$sClass?>">
             <?=$sMessage?>
-        </div>
+        </p>
         <?php
     }
 }

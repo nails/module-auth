@@ -1,21 +1,24 @@
 <?php
 
 use Nails\Common\Service\View;
+use Nails\Config;
 use Nails\Factory;
 
 /** @var View $oView */
 $oView = Factory::service('View');
 
 ?>
-<div class="nails-auth login social u-center-screen">
+<div class="nails-auth login social center-screen">
     <div class="panel">
-        <h1 class="panel__header text-center">
-            Welcome
-        </h1>
-        <?=form_open($form_url)?>
+        <div class="panel__header">
+            <h1 class="panel__title text-center">
+                Welcome
+            </h1>
+        </div>
         <div class="panel__body">
             <?php
 
+            echo form_open($form_url, 'class="form"');
             $oView->load('auth/_components/alerts');
 
             ?>
@@ -23,7 +26,7 @@ $oView = Factory::service('View');
                 <?=lang('auth_register_extra_message')?>
             </p>
             <?php
-            if (\Nails\Config::get('APP_NATIVE_LOGIN_USING') == 'EMAIL' || \Nails\Config::get('APP_NATIVE_LOGIN_USING') != 'USERNAME') {
+            if (Config::get('APP_NATIVE_LOGIN_USING') == 'EMAIL' || Config::get('APP_NATIVE_LOGIN_USING') != 'USERNAME') {
                 if (isset($required_data['email'])) {
 
                     $sFieldKey         = 'email';
@@ -31,19 +34,19 @@ $oView = Factory::service('View');
                     $sFieldLabel       = lang('form_label_email');
                     $sFieldPlaceholder = lang('auth_register_email_placeholder');
                     $sDefault          = $required_data['email'];
-                    $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+                    $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
                     ?>
-                    <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                        <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+                    <div class="form__group">
+                        <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                         <?=$FieldType($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                        <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                        <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                     </div>
                     <?php
                 }
             }
 
-            if (\Nails\Config::get('APP_NATIVE_LOGIN_USING') == 'USERNAME' || \Nails\Config::get('APP_NATIVE_LOGIN_USING') != 'EMAIL') {
+            if (Config::get('APP_NATIVE_LOGIN_USING') == 'USERNAME' || Config::get('APP_NATIVE_LOGIN_USING') != 'EMAIL') {
 
                 if (isset($required_data['username'])) {
 
@@ -52,13 +55,13 @@ $oView = Factory::service('View');
                     $sFieldLabel       = lang('form_label_username');
                     $sFieldPlaceholder = lang('auth_register_username_placeholder');
                     $sDefault          = $required_data['username'];
-                    $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+                    $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
                     ?>
-                    <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                        <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+                    <div class="form__group">
+                        <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                         <?=$FieldType($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                        <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                        <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                     </div>
                     <?php
 
@@ -73,13 +76,13 @@ $oView = Factory::service('View');
                 $sFieldLabel       = lang('form_label_first_name');
                 $sFieldPlaceholder = lang('auth_register_first_name_placeholder');
                 $sDefault          = !empty($required_data['first_name']) ? $required_data['first_name'] : '';
-                $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+                $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
                 ?>
-                <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                    <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+                <div class="form__group">
+                    <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                     <?=$FieldType($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                    <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                    <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                 </div>
                 <?php
 
@@ -90,24 +93,24 @@ $oView = Factory::service('View');
                 $sFieldLabel       = lang('form_label_last_name');
                 $sFieldPlaceholder = lang('auth_register_last_name_placeholder');
                 $sDefault          = !empty($required_data['last_name']) ? $required_data['last_name'] : '';
-                $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+                $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
                 ?>
-                <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                    <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+                <div class="form__group">
+                    <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                     <?=$FieldType($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                    <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                    <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                 </div>
                 <?php
 
             }
             ?>
-            <p>
+            <div class="form__actions">
                 <button type="submit" class="btn btn--block btn--primary">
                     <?=lang('action_continue')?>
                 </button>
-            </p>
+            </div>
+            <?=form_close()?>
         </div>
-        <?=form_close()?>
     </div>
 </div>

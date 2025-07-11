@@ -1,14 +1,18 @@
 <?php
 
-/** @var \Nails\Common\Service\Input $oInput */
-$oInput = \Nails\Factory::service('Input');
+use Nails\Admin\Helper;
+use Nails\Common\Service\Input;
+use Nails\Factory;
+
+/** @var Input $oInput */
+$oInput = Factory::service('Input');
 
 ?>
 <div class="group-settings site">
     <?php
 
     echo form_open();
-    echo \Nails\Admin\Helper::tabs(array_filter([
+    echo Helper::tabs(array_filter([
         !userHasPermission(\Nails\Auth\Admin\Permission\Settings\Registration::class) ? null : [
             'label'   => 'Registration',
             'content' => function () {
@@ -150,7 +154,8 @@ $oInput = \Nails\Factory::service('Input');
             },
         ],
     ]));
-    echo \Nails\Admin\Helper::floatingControls();
+
+    echo Helper::floatingControls();
     echo form_close()
 
     ?>

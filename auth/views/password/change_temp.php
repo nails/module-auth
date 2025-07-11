@@ -7,11 +7,13 @@ use Nails\Factory;
 $oView = Factory::service('View');
 
 ?>
-<div class="nails-auth reset-password u-center-screen">
+<div class="nails-auth reset-password center-screen">
     <div class="panel">
-        <h1 class="panel__header text-center">
-            Reset Password
-        </h1>
+        <div class="panel__header">
+            <h1 class="panel__title text-center">
+                Reset Password
+            </h1>
+        </div>
         <?php
 
         $aQuery = [];
@@ -26,15 +28,12 @@ $oView = Factory::service('View');
 
         $sQuery = $aQuery ? '?' . http_build_query($aQuery) : '';
 
-        echo form_open(
-            $resetUrl . $sQuery,
-            'class="form form-horizontal"'
-        );
 
         ?>
         <div class="panel__body">
             <?php
 
+            echo form_open($resetUrl . $sQuery, 'class="form form-horizontal"');
             $oView->load('auth/_components/alerts');
 
             if (!empty($mfaQuestion)) {
@@ -42,18 +41,18 @@ $oView = Factory::service('View');
                 $sFieldKey         = 'mfaAnswer';
                 $sFieldLabel       = 'Security Question';
                 $sFieldPlaceholder = 'Type your answer';
-                $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+                $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
                 ?>
-                <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                    <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+                <div class="form__group">
+                    <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                     <p>
                         <strong>
                             <?=$mfaQuestion->question?>
                         </strong>
                     </p>
                     <?=form_password($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                    <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                    <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                 </div>
                 <?php
             }
@@ -65,13 +64,13 @@ $oView = Factory::service('View');
                 $sFieldKey         = 'mfaCode';
                 $sFieldLabel       = 'Security Code';
                 $sFieldPlaceholder = 'Type your code';
-                $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+                $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
                 ?>
-                <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                    <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+                <div class="form__group">
+                    <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                     <?=form_input($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                    <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                    <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                     <p class="form__help">
                         <small>
                             Use your device to generate a single use code.
@@ -86,13 +85,13 @@ $oView = Factory::service('View');
             $sFieldKey         = 'new_password';
             $sFieldLabel       = lang('form_label_password');
             $sFieldPlaceholder = lang('auth_forgot_new_pass_placeholder');
-            $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+            $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
             ?>
-            <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+            <div class="form__group">
+                <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                 <?=form_password($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
                 <?php
                 if (!empty($passwordRules)) {
                     ?>
@@ -110,20 +109,20 @@ $oView = Factory::service('View');
             $sFieldKey         = 'confirm_pass';
             $sFieldLabel       = lang('form_label_password_confirm');
             $sFieldPlaceholder = lang('auth_forgot_new_pass_confirm_placeholder');
-            $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '"';
+            $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
 
             ?>
-            <div class="form__group <?=form_error($sFieldKey) ? 'has-error' : ''?>">
-                <label for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
+            <div class="form__group">
+                <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
                 <?=form_password($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                <?=form_error($sFieldKey, '<p class="form__error">', '</p>')?>
+                <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
             </div>
-            <p>
+            <div class="form__actions">
                 <button type="submit" class="btn btn--block btn--primary">
                     <?=lang('auth_forgot_action_reset_continue')?>
                 </button>
-            </p>
+            </div>
+            <?=form_close()?>
         </div>
-        <?=form_close()?>
     </div>
 </div>
