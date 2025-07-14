@@ -90,12 +90,40 @@
       <path value="$PROJECT_DIR$/vendor/psr/simple-cache" />
       <path value="$PROJECT_DIR$/vendor/phpseclib/phpseclib" />
       <path value="$PROJECT_DIR$/vendor/jeremykendall/php-domain-parser" />
+      <path value="$PROJECT_DIR$/vendor/psr/http-factory" />
+      <path value="$PROJECT_DIR$/vendor/psr/http-client" />
+      <path value="$PROJECT_DIR$/vendor/dragonmantank/cron-expression" />
+      <path value="$PROJECT_DIR$/vendor/wikimedia/common-passwords" />
+      <path value="$PROJECT_DIR$/vendor/masterexploder/phpthumb" />
+      <path value="$PROJECT_DIR$/vendor/graham-campbell/result-type" />
+      <path value="$PROJECT_DIR$/vendor/pocketarc/codeigniter" />
+      <path value="$PROJECT_DIR$/vendor/phpoption/phpoption" />
+      <path value="$PROJECT_DIR$/vendor/pleonasm/bloom-filter" />
+      <path value="$PROJECT_DIR$/vendor/nails/module-captcha" />
+      <path value="$PROJECT_DIR$/vendor/nails/module-cron" />
+      <path value="$PROJECT_DIR$/vendor/nails/module-admin" />
+      <path value="$PROJECT_DIR$/vendor/nails/module-form-builder" />
+      <path value="$PROJECT_DIR$/vendor/nails/module-api" />
+      <path value="$PROJECT_DIR$/vendor/nails/module-cdn" />
+      <path value="$PROJECT_DIR$/vendor/vlucas/phpdotenv" />
+      <path value="$PROJECT_DIR$/vendor/sybio/gif-frame-extractor" />
+      <path value="$PROJECT_DIR$/vendor/sybio/gif-creator" />
+      <path value="$PROJECT_DIR$/vendor/phpstan/phpstan" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-php83" />
+      <path value="$PROJECT_DIR$/vendor/symfony/translation-contracts" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.3">
     <option name="suggestChangeDefaultLanguageLevel" value="false" />
   </component>
+  <component name="PhpStan">
+    <PhpStan_settings>
+      <PhpStanConfiguration tool_path="$PROJECT_DIR$/vendor/bin/phpstan" />
+    </PhpStan_settings>
+  </component>
   <component name="PhpStanOptionsConfiguration">
+    <option name="config" value="$PROJECT_DIR$/.phpstan/config.neon" />
+    <option name="memoryLimit" value="256M" />
     <option name="transferred" value="true" />
   </component>
   <component name="PhpUnit">
