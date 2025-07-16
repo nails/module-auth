@@ -3,9 +3,11 @@
 namespace Nails\Auth\Resource;
 
 use Nails\Common\Exception\FactoryException;
+use Nails\Common\Model\Base;
 use Nails\Common\Resource\Date;
 use Nails\Common\Resource\DateTime;
 use Nails\Common\Resource\Entity;
+use stdClass;
 
 /**
  * Class User
@@ -147,12 +149,10 @@ class User extends Entity
 
     /**
      * User constructor.
-     *
-     * @param array $mObj
      */
-    public function __construct($mObj = [])
+    public function __construct(self|stdClass|array $resource = [], ?Base $model = null)
     {
-        parent::__construct($mObj);
+        parent::__construct($resource, $model);
 
         $this->name = trim(sprintf(
             '%s %s',

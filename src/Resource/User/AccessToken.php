@@ -2,8 +2,10 @@
 
 namespace Nails\Auth\Resource\User;
 
+use Nails\Common\Model\Base;
 use Nails\Common\Resource\DateTime;
 use Nails\Common\Resource\Entity;
+use stdClass;
 
 /**
  * Class AccessToken
@@ -31,13 +33,11 @@ class AccessToken extends Entity
 
     /**
      * AccessToken constructor.
-     *
-     * @param array $mObj
      */
-    public function __construct($mObj = [])
+    public function __construct(self|stdClass|array $resource = [], ?Base $model = null)
     {
-        $mObj->scope = explode(',', (string) $mObj->scope);
-        parent::__construct($mObj);
+        parent::__construct($resource, $model);
+        $entity->scope = explode(',', (string) $entity->scope);
     }
 
     // --------------------------------------------------------------------------
