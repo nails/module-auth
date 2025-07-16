@@ -414,7 +414,7 @@ class User extends Base
      */
     public function clearActiveUser(): self
     {
-        $this->oActiveUser = Factory::resource(static::RESOURCE_NAME, static::RESOURCE_PROVIDER, (object) []);
+        $this->oActiveUser = Factory::resource(static::RESOURCE_NAME, static::RESOURCE_PROVIDER, (object) [], $this);
         return $this;
     }
 
