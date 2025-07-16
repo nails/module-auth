@@ -2,11 +2,14 @@
 
 namespace Nails\Auth\Resource;
 
+use Nails\Auth\Constants;
+use Nails\Auth\Resource\User\Group;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Model\Base;
 use Nails\Common\Resource\Date;
 use Nails\Common\Resource\DateTime;
 use Nails\Common\Resource\Entity;
+use Nails\Factory;
 use stdClass;
 
 /**
@@ -130,6 +133,9 @@ class User extends Entity
     /** @var DateTime */
     public $email_is_verified_on;
 
+    /** @var Group */
+    public $group;
+
     /** @var string */
     public $group_slug;
 
@@ -180,5 +186,17 @@ class User extends Entity
             $sForwardTo,
             $sReturnTo
         );
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function group(): Group
+    {
+        if (empty($this->group) && !empty($this->group_id)) {
+            $oModel      = Factory::model('UserGroup', Constants::MODULE_SLUG);
+            $this->group = $oModel->getById($this->group_id);
+        }
+
+        return $this->group;
     }
 }
