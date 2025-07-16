@@ -426,12 +426,13 @@ class User extends Base
     /**
      * Clear the active user
      *
-     * @return void
+     * @return $this
      * @throws FactoryException
      */
     public function clearActiveUser()
     {
-        $this->oActiveUser = Factory::resource(static::RESOURCE_NAME, static::RESOURCE_PROVIDER, (object) []);
+        $this->oActiveUser = Factory::resource(static::RESOURCE_NAME, static::RESOURCE_PROVIDER, (object) [], $this);
+        return $this;
     }
 
     // --------------------------------------------------------------------------
