@@ -2,7 +2,9 @@
 
 namespace Nails\Auth\Resource\User;
 
+use Nails\Common\Model\Base;
 use Nails\Common\Resource\Entity;
+use stdClass;
 
 /**
  * Class Group
@@ -37,9 +39,9 @@ class Group extends Entity
 
     // --------------------------------------------------------------------------
 
-    public function __construct($mObj = [])
+    public function __construct(self|stdClass|array $resource = [], ?Base $model = null)
     {
-        parent::__construct($mObj);
+        parent::__construct($resource, $model);
 
         $this->acl            = json_decode($this->acl ?? '[]') ?? [];
         $this->password_rules = json_decode($this->password_rules ?? '[]') ?? [];

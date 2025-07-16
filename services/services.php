@@ -87,6 +87,7 @@ return [
             }
         },
         'UserPassword'        => function (): Model\User\Password {
+            //  @todo (Pablo 2025-07-15) - this should be a service
             if (class_exists('\App\Auth\Model\User\Password')) {
                 return new \App\Auth\Model\User\Password();
             } else {
@@ -117,73 +118,90 @@ return [
             }
         },
         'EmailForgottenPassword' => function (): Factory\Email\ForgottenPassword {
-            return new Factory\Email\ForgottenPassword();
+            if (class_exists('\App\Auth\Factory\Email\ForgottenPassword')) {
+                return new \App\Auth\Factory\Email\ForgottenPassword();
+            } else {
+                return new Factory\Email\ForgottenPassword();
+            }
         },
         'EmailNewUser'           => function (): Factory\Email\NewUser {
-            return new Factory\Email\NewUser();
+            if (class_exists('\App\Auth\Factory\Email\NewUser')) {
+                return new \App\Auth\Factory\Email\NewUser();
+            } else {
+                return new Factory\Email\NewUser();
+            }
         },
         'EmailPasswordUpdated'   => function (): Factory\Email\PasswordUpdated {
-            return new Factory\Email\PasswordUpdated();
+            if (class_exists('\App\Auth\Factory\Email\PasswordUpdated')) {
+                return new \App\Auth\Factory\Email\PasswordUpdated();
+            } else {
+                return new Factory\Email\PasswordUpdated();
+            }
         },
         'EmailVerifyEmail'       => function (): Factory\Email\VerifyEmail {
-            return new Factory\Email\VerifyEmail();
+            if (class_exists('\App\Auth\Factory\Email\VerifyEmail')) {
+                return new \App\Auth\Factory\Email\VerifyEmail();
+            } else {
+                return new Factory\Email\VerifyEmail();
+            }
         },
     ],
     'resources' => [
-        'User'                => function ($mObj): Resource\User {
+        'User'                => function ($resource, $model): Resource\User {
             if (class_exists('\App\Auth\Resource\User')) {
-                return new \App\Auth\Resource\User($mObj);
+                return new \App\Auth\Resource\User($resource, $model);
             } else {
-                return new Resource\User($mObj);
+                return new Resource\User($resource, $model);
             }
         },
-        'UserAccessToken'     => function ($mObj): Resource\User\AccessToken {
+        'UserAccessToken'     => function ($resource, $model): Resource\User\AccessToken {
             if (class_exists('\App\Auth\Resource\User\AccessToken')) {
-                return new \App\Auth\Resource\User\AccessToken($mObj);
+                return new \App\Auth\Resource\User\AccessToken($resource, $model);
             } else {
-                return new Resource\User\AccessToken($mObj);
+                return new Resource\User\AccessToken($resource, $model);
             }
         },
-        'UserAdminRecovery'   => function ($mObj): Resource\User\AdminRecovery {
+        'UserAdminRecovery'   => function ($resource, $model = null): Resource\User\AdminRecovery {
+            //  @todo (Pablo 2025-07-15) - this should be a factory
             if (class_exists('\App\Auth\Resource\User\AdminRecovery')) {
-                return new \App\Auth\Resource\User\AdminRecovery($mObj);
+                return new \App\Auth\Resource\User\AdminRecovery($resource);
             } else {
-                return new Resource\User\AdminRecovery($mObj);
+                return new Resource\User\AdminRecovery($resource);
             }
         },
-        'UserEmail'           => function ($mObj): Resource\User\Email {
+        'UserEmail'           => function ($resource, $model): Resource\User\Email {
             if (class_exists('\App\Auth\Resource\User\Email')) {
-                return new \App\Auth\Resource\User\Email($mObj);
+                return new \App\Auth\Resource\User\Email($resource, $model);
             } else {
-                return new Resource\User\Email($mObj);
+                return new Resource\User\Email($resource, $model);
             }
         },
-        'UserEmailBlocker'    => function ($mObj): Resource\User\Email\Blocker {
+        'UserEmailBlocker'    => function ($resource, $model): Resource\User\Email\Blocker {
             if (class_exists('\App\Auth\Resource\User\Email\Blocker')) {
-                return new \App\Auth\Resource\User\Email\Blocker($mObj);
+                return new \App\Auth\Resource\User\Email\Blocker($resource, $model);
             } else {
-                return new Resource\User\Email\Blocker($mObj);
+                return new Resource\User\Email\Blocker($resource, $model);
             }
         },
-        'UserEvent'           => function ($mObj): Resource\User\Event {
+        'UserEvent'           => function ($resource, $model): Resource\User\Event {
             if (class_exists('\App\Auth\Resource\User\Event')) {
-                return new \App\Auth\Resource\User\Event($mObj);
+                return new \App\Auth\Resource\User\Event($resource, $model);
             } else {
-                return new Resource\User\Event($mObj);
+                return new Resource\User\Event($resource, $model);
             }
         },
-        'UserGroup'           => function ($mObj): Resource\User\Group {
+        'UserGroup'           => function ($resource, $model): Resource\User\Group {
             if (class_exists('\App\Auth\Resource\User\Group')) {
-                return new \App\Auth\Resource\User\Group($mObj);
+                return new \App\Auth\Resource\User\Group($resource, $model);
             } else {
-                return new Resource\User\Group($mObj);
+                return new Resource\User\Group($resource, $model);
             }
         },
-        'UserPasswordHistory' => function ($mObj): Resource\User\Password\History {
+        'UserPasswordHistory' => function ($resource, $model): Resource\User\Password\History {
             if (class_exists('\App\Auth\Resource\User\Password\History')) {
-                return new \App\Auth\Resource\User\Password\History($mObj);
+                return new \App\Auth\Resource\User\Password\History($resource, $model);
             } else {
-                return new Resource\User\Password\History($mObj);
+                return new Resource\User\Password\History($resource, $model);
             }
         },
     ],
