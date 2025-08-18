@@ -37,7 +37,7 @@ class AccessToken extends Entity
     public function __construct(self|stdClass|array $resource = [], ?Base $model = null)
     {
         parent::__construct($resource, $model);
-        $entity->scope = explode(',', (string) $entity->scope);
+        $this->scope = explode(',', (string) $this->scope);
     }
 
     // --------------------------------------------------------------------------
