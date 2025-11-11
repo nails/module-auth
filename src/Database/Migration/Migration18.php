@@ -3,6 +3,7 @@
 namespace Nails\Auth\Database\Migration;
 
 use Nails\Common\Console\Migrate\Base;
+use PDO;
 
 class Migration18 extends Base
 {
@@ -116,9 +117,9 @@ class Migration18 extends Base
      */
     protected function getTableColumns($table)
     {
-        $rows = $this->getAll(sprintf('SHOW COLUMNS FROM `%s`', $table)) ?: [];
-        $out  = [];
-        foreach ($rows as $r) {
+        $result = $this->query(sprintf('SHOW COLUMNS FROM `%s`', $table));
+        $out    = [];
+        foreach ($result->fetchAll(PDO::FETCH_ASSOC) as $r) {
             // Expected fields: Field, Type, Null, Key, Default, Extra
             $out[$r['Field']] = $r;
         }
@@ -130,9 +131,12 @@ class Migration18 extends Base
      */
     protected function getTableForeignKeys($table)
     {
-        // INFORMATION_SCHEMA works with resolved database name
-        $db   = $this->getOne('SELECT DATABASE()');
-        $sql  = "
+        $result = $this->query('SELECT DATABASE() as `db`;');
+        $row    = $result->fetch(PDO::FETCH_ASSOC);
+        $db     = $row['db'];
+
+        $statement = $this->prepare(
+            <<<EOT
             SELECT
                 kcu.CONSTRAINT_NAME,
                 kcu.COLUMN_NAME,
@@ -143,8 +147,12 @@ class Migration18 extends Base
                 kcu.TABLE_SCHEMA = ?
                 AND kcu.TABLE_NAME = ?
                 AND kcu.REFERENCED_TABLE_NAME IS NOT NULL
-        ";
-        $rows = $this->getAll($sql, [$db, $table]) ?: [];
+            EOT
+        );
+
+        $statement->execute([$db, $table]);
+
+        $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
         $out  = [];
         foreach ($rows as $r) {
             $out[$r['COLUMN_NAME']][] = $r;
