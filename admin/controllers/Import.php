@@ -12,9 +12,8 @@
 
 namespace Nails\Admin\Auth;
 
-use Error;
-use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
+use Nails\Auth\Cdn\MetaData\SystemKey;
 use Nails\Auth\Constants;
 use Nails\Auth\Controller\BaseAdmin;
 use Nails\Auth\Model\User;
@@ -23,15 +22,10 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
 use Nails\Common\Exception\ValidationException;
-use Nails\Common\Factory\Model\Field;
-use Nails\Common\Service\DateTime;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
-use Nails\Common\Service\View;
-use Nails\Config;
 use Nails\Factory;
 use RuntimeException;
-use stdClass;
 use Throwable;
 
 /**
@@ -444,7 +438,7 @@ class Import extends BaseAdmin
                 'Content-Type' => 'text/csv',
                 'metadata'     => [
                     [
-                        'key'   => sprintf('%s:user-import', Constants::MODULE_SLUG),
+                        'key'   => (new SystemKey\UserImport)->get(),
                         'value' => true,
                     ],
                 ],
@@ -641,11 +635,11 @@ class Import extends BaseAdmin
                 ),
                 'metadata'         => [
                     [
-                        'key'   => sprintf('%s:user-import', Constants::MODULE_SLUG),
+                        'key'   => (new SystemKey\UserImport)->get(),
                         'value' => true,
                     ],
                     [
-                        'key'   => sprintf('%s:imported-from', Constants::MODULE_SLUG),
+                        'key'   => (new SystemKey\ImportedFrom())->get(),
                         'value' => $iObjectId,
                     ],
                 ],
