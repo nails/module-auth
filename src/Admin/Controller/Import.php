@@ -12,10 +12,11 @@
 
 namespace Nails\Auth\Admin\Controller;
 
+use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
-use Nails\Admin\Controller\Base;
 use Nails\Auth\Admin\Permission;
+use Nails\Auth\Cdn\MetaData\SystemKey;
 use Nails\Auth\Constants;
 use Nails\Auth\Model\User;
 use Nails\Cdn;
@@ -451,7 +452,7 @@ class Import extends Base
                 'Content-Type' => 'text/csv',
                 'metadata'     => [
                     [
-                        'key'   => sprintf('%s:user-import', Constants::MODULE_SLUG),
+                        'key'   => (new SystemKey\UserImport)->get(),
                         'value' => true,
                     ],
                 ],
@@ -648,11 +649,11 @@ class Import extends Base
                 ),
                 'metadata'         => [
                     [
-                        'key'   => sprintf('%s:user-import', Constants::MODULE_SLUG),
+                        'key'   => (new SystemKey\UserImport)->get(),
                         'value' => true,
                     ],
                     [
-                        'key'   => sprintf('%s:imported-from', Constants::MODULE_SLUG),
+                        'key'   => (new SystemKey\ImportedFrom)->get(),
                         'value' => $iObjectId,
                     ],
                 ],
