@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This class provides the ability to merge users
+ * This class provides the ability to import users
  *
  * @package     Nails
  * @subpackage  module-auth
@@ -12,46 +12,46 @@
 
 namespace Nails\Auth\Admin\Controller;
 
-use Nails\Admin\Controller\Base;
-use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
+use Nails\Admin\Controller\Base;
+use Nails\Auth\Admin\Permission;
 use Nails\Auth\Constants;
 use Nails\Auth\Model\User;
 use Nails\Cdn;
 use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\ModelException;
+use Nails\Common\Exception\NailsException;
 use Nails\Common\Exception\ValidationException;
-use Nails\Common\Factory\Model\Field;
-use Nails\Common\Service\DateTime;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
-use Nails\Common\Service\View;
-use Nails\Config;
 use Nails\Factory;
-use stdClass;
+use RuntimeException;
+use Throwable;
 
 /**
  * Class Import
  *
- * @package Nails\Admin\Auth
+ * @package Nails\Auth\Admin\Controller
  */
 class Import extends Base
 {
-    public static function announce(): Nav|array|null
-    {
-        return null;
-    }
+    const array IMPORT_BUCKET = [
+        'slug'          => 'import-user',
+        'is_hidden'     => true,
+        'allowed_types' => 'csv',
+    ];
 
     // --------------------------------------------------------------------------
 
     /**
-     * Merge users
+     * Import users from CSV
      *
      * @return void
      * @throws FactoryException
      */
     public function index(): void
     {
-        if (!userHasPermission(\Nails\Auth\Admin\Permission\Users\Create::class)) {
+        if (!userHasPermission(Permission\Users\Create::class)) {
             unauthorised();
         }
 
@@ -59,6 +59,8 @@ class Import extends Base
 
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
+        /** @var \Nails\Auth\Service\User\Import $oImportService */
+        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
 
         if ($oInput->post()) {
             try {
@@ -67,24 +69,33 @@ class Import extends Base
                     $this
                         ->validateUpload()
                         ->renderPreview(
-                            $this->uploadCsv(),
-                            (bool) $oInput::post('skip_existing')
+                            $this->uploadCsv()
                         );
+
                     return;
 
                 } elseif ($oInput->post('action') === 'import') {
                     $this
                         ->validateObject()
-                        ->processImport(
-                            (bool) $oInput::post('skip_existing')
-                        );
+                        ->processImport();
 
                 } else {
                     throw new \Exception('Unrecognised action');
                 }
 
             } catch (ValidationException $e) {
-                $this->oUserFeedback->error($e->getMessage());
+                $this->oUserFeedback->error(
+                    sprintf(
+                        '%s:<div class="alert alert-warning" style="%s">%s</div>',
+                        $e->getMessage(),
+                        implode(';', [
+                            'max-height: 10rem',
+                            'overflow: auto',
+                            'margin-bottom: 0;',
+                        ]),
+                        implode('<br>', $e->getData() ?? [])
+                    )
+                );
 
             } catch (\Exception $e) {
                 $this->oUserFeedback->error($e->getMessage());
@@ -93,9 +104,9 @@ class Import extends Base
 
         // --------------------------------------------------------------------------
 
-        $this
-            ->setTitles(['Import Users'])
-            ->loadView('index');
+        $this->data['page']->title      = 'Import Users';
+        $this->data['additionalFields'] = $oImportService->getAdditionalFields();
+        Helper::loadView('index');
     }
 
     // --------------------------------------------------------------------------
@@ -103,72 +114,38 @@ class Import extends Base
     /**
      * Generates a CSV template to upload
      *
+     * @return void
      * @throws FactoryException
      */
-    public function template()
+    public function template(): void
     {
-        /** @var User $oUserModel */
-        $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
-        $aFields    = $this->getFields();
+        /** @var \Nails\Auth\Service\User\Import $oImportService */
+        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
+
+        $aKeys    = $oImportService->getKeys();
+        $aExample = array_map(
+            fn($key) => rtrim(
+                trim(
+                    sprintf(
+                        '%s: %s',
+                        in_array(FormValidation::RULE_REQUIRED, $oImportService->getValidationRules($key))
+                            ? 'Required'
+                            : 'Optional',
+                        $oImportService->getExample($key)
+                    )
+                ),
+                ':'
+            ),
+            $aKeys
+        );
 
         Helper::loadCsv(
             [
-                array_combine(
-                    array_keys($aFields),
-                    array_keys($aFields)
-                ),
-                array_combine(
-                    array_keys($aFields),
-                    [
-                        sprintf(
-                            '%s: user@example.com',
-                            $aFields['email'] ? 'Required' : 'Optional'
-                        ),
-                        sprintf(
-                            '%s: user_example',
-                            $aFields['username'] ? 'Required' : 'Optional'
-                        ),
-                        'Optional: if not set, default user group is used',
-                        'Optional: automatically generated if not set',
-                        'Required: 1 for yes, 0 for no',
-                        'Required: 1 for yes, 0 for no',
-                        'Optional',
-                        'Optional',
-                        'Optional',
-                        'Optional: Blank, or one of: ' . implode(', ', array_keys($oUserModel->getGenders())),
-                        'Optional: Blank, or date in format YYYY-MM-DD',
-                        'Optional: Blank, or PHP timezone (as documented https://www.php.net/manual/en/timezones.php)',
-                    ]
-                ),
+                array_combine($aKeys, $aKeys),
+                array_combine($aKeys, $aExample),
             ],
-            'import-users.csv',
-            true
+            'import-users.csv'
         );
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Returns CSV fields and whether they are required or not
-     *
-     * @return bool[string]
-     */
-    protected function getFields(): array
-    {
-        return [
-            'email'      => in_array(Config::get('APP_NATIVE_LOGIN_USING'), ['EMAIL', 'BOTH']),
-            'username'   => in_array(Config::get('APP_NATIVE_LOGIN_USING'), ['USERNAME', 'BOTH']),
-            'group_id'   => false,
-            'password'   => false,
-            'temp_pw'    => true,
-            'send_email' => true,
-            'salutation' => false,
-            'first_name' => false,
-            'last_name'  => false,
-            'gender'     => false,
-            'dob'        => false,
-            'timezone'   => false,
-        ];
     }
 
     // --------------------------------------------------------------------------
@@ -178,8 +155,9 @@ class Import extends Base
      *
      * @return $this
      * @throws FactoryException
+     * @throws ModelException
+     * @throws NailsException
      * @throws ValidationException
-     * @throws \Nails\Common\Exception\ModelException
      */
     protected function validateUpload(): self
     {
@@ -207,8 +185,7 @@ class Import extends Base
         }
 
         $this->validateData(
-            $this->parseCsv($aFile['tmp_name']),
-            (bool) $oInput::post('skip_existing')
+            $this->parseCsv($aFile['tmp_name'])
         );
 
         return $this;
@@ -216,6 +193,13 @@ class Import extends Base
 
     // --------------------------------------------------------------------------
 
+    /**
+     * @return $this
+     * @throws FactoryException
+     * @throws ModelException
+     * @throws NailsException
+     * @throws ValidationException
+     */
     protected function validateObject(): self
     {
         /** @var Input $oInput */
@@ -228,25 +212,24 @@ class Import extends Base
         /** @var Cdn\Resource\CdnObject $oObject */
         $oObject = $oObjectModel->getById((int) $oInput->post('object_id'));
         if (empty($oObject)) {
-            throw new ValidationException(
+            throw new RuntimeException(
                 'CDN Object does not exist'
             );
         } elseif ($oObject->file->mime !== 'text/csv') {
-            throw new ValidationException(
+            throw new RuntimeException(
                 'Object is not a CSV'
             );
         }
 
         $sPath = $oCdn->objectLocalPath($oObject->id);
         if (empty($sPath)) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 'Failed to get a local path for CSV file.'
             );
         }
 
         $this->validateData(
-            $this->parseCsv($sPath),
-            (bool) $oInput::post('skip_existing')
+            $this->parseCsv($sPath)
         );
 
         return $this;
@@ -257,39 +240,33 @@ class Import extends Base
     /**
      * Validates the CSV data
      *
-     * @param array $aData         The data to validate
-     * @param bool  $bskipExisting Whether to skip existing users, or to error
+     * @param array $aData The data to validate
      *
      * @return $this
      * @throws FactoryException
      * @throws ValidationException
-     * @throws \Nails\Common\Exception\ModelException
+     * @throws ModelException
+     * @throws NailsException
      */
-    protected function validateData(array $aData, bool $bSkipExisting): self
+    protected function validateData(array $aData): self
     {
-        /** @var User $oUserModel */
-        $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
-        /** @var User\Password $oPasswordModel */
-        $oPasswordModel = Factory::model('UserPassword', Constants::MODULE_SLUG);
-        /** @var User\Group $oGroupModel */
-        $oGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
-        /** @var DateTime $oDateTimeService */
-        $oDateTimeService = Factory::service('DateTime');
+        /** @var \Nails\Auth\Service\User\Import $oImportService */
+        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
+        /** @var FormValidation $oFormValidationService */
+        $oFormValidationService = Factory::service('FormValidation');
 
-        $aGroups = $oGroupModel->getAllFlat();
         $aHeader = array_splice($aData, 0, 1);
         $aHeader = reset($aHeader);
 
+        //  Validate Header Row
         if (empty($aHeader)) {
             throw new ValidationException(
                 'Missing header row'
             );
         }
 
-        $aFields         = $this->getFields();
-        $aRequiredFields = array_keys(array_filter($aFields));
-
-        $aDiff = array_diff($aHeader, array_keys($aFields));
+        $aKeys = $oImportService->getKeys();
+        $aDiff = array_diff($aHeader, $aKeys);
         if (!empty($aDiff)) {
             throw new ValidationException(sprintf(
                 'Header row contains the following invalid values: %s',
@@ -297,160 +274,129 @@ class Import extends Base
             ));
         }
 
-        $aEmails    = [];
-        $aUsernames = [];
+        //  Validate data
+        $aErrors = [];
+        $iLines  = 2;   //  Skip the header
 
-        foreach ($aData as $iIndex => $aDatum) {
+        //  Key the rules by the header's own columns; the CSV need not use every
+        //  key, nor list them in the same order as getKeys()
+        $aValidationRules = array_filter(
+            array_map(
+                fn($sKey) => $oImportService->getValidationRules($sKey),
+                array_combine($aHeader, $aHeader)
+            )
+        );
 
-            $aDatum = array_combine($aHeader, $aDatum);
-            $aDatum = array_map('trim', $aDatum);
+        foreach ($aData as $aDatum) {
 
             try {
 
-                foreach ($aRequiredFields as $sRequiredField) {
-                    if (($aDatum[$sRequiredField] ?? '') === '') {
-                        throw new ValidationException(
-                            sprintf(
-                                'Required field `%s` not set.',
-                                $sRequiredField
-                            )
-                        );
-                    }
-                }
+                $aDatum = array_combine($aHeader, $aDatum);
+                $aDatum = array_map('trim', $aDatum);
 
-                if (!empty($aDatum['email'])) {
-                    if (!filter_var($aDatum['email'], FILTER_VALIDATE_EMAIL)) {
-                        throw new ValidationException(sprintf(
-                            '"%s" is not a valid email address.',
-                            $aDatum['email']
-                        ));
-                    }
-
-                    if (array_key_exists($aDatum['email'], $aEmails)) {
-                        throw new ValidationException(sprintf(
-                            'Email "%s" is a duplicate item in this list, first seen on line %s.',
-                            $aDatum['email'],
-                            $aEmails[$aDatum['email']]
-                        ));
-                    } else {
-                        $aEmails[$aDatum['email']] = $iIndex + 2;
-                    }
-
-                    if (!$bSkipExisting && $oUserModel->getByEmail($aDatum['email'])) {
-                        throw new ValidationException(sprintf(
-                            '"%s" is already a registered email.',
-                            $aDatum['email']
-                        ));
-                    }
-                }
-
-                if (!empty($aDatum['username'])) {
-                    if (!$oUserModel->isValidUsername($aDatum['username'])) {
-                        throw new ValidationException(sprintf(
-                            '"%s" is not a valid username; %s',
-                            $aDatum['username'],
-                            $oUserModel->lastError()
-                        ));
-                    }
-
-                    if (array_key_exists($aDatum['username'], $aUsernames)) {
-                        throw new ValidationException(sprintf(
-                            'Username "%s" is a duplicate item in this list, first seen on line %s.',
-                            $aDatum['username'],
-                            $aUsernames[$aDatum['username']]
-                        ));
-                    } else {
-                        $aUsernames[$aDatum['username']] = $iIndex + 2;
-                    }
-
-                    if (!$bSkipExisting && $oUserModel->getByUsername($aDatum['username'])) {
-                        throw new ValidationException(sprintf(
-                            '"%s" is already a registered username.',
-                            $aDatum['email']
-                        ));
-                    }
-                }
-
-                if (!empty($aDatum['group_id'])) {
-                    if (!array_key_exists($aDatum['group_id'], $aGroups)) {
-                        throw new ValidationException(
-                            'Invalid user group ID.',
-                        );
-                    }
-                }
-
-                if (!empty($aDatum['password'])) {
-                    if (!$oPasswordModel->isAcceptable($oGroupModel->getById($aDatum['group_id'] ?: $oGroupModel->getDefaultGroupId()), $aDatum['password'])) {
-                        throw new ValidationException(
-                            'Password is not acceptable.',
-                        );
-                    }
-                }
-
-                if (!empty($aDatum['temp_pw'])) {
-                    if (!in_array($aDatum['temp_pw'], ['0', '1'])) {
-                        throw new ValidationException(sprintf(
-                            'Invalid value "%s" for field `temp_pw`; must be 0 or 1.',
-                            $aDatum['temp_pw']
-                        ));
-                    }
-                }
-
-                if (!empty($aDatum['send_email'])) {
-                    if (!in_array($aDatum['send_email'], ['0', '1'])) {
-                        throw new ValidationException(sprintf(
-                            'Invalid value "%s" for field `send_temp`; must be 0 or 1.',
-                            $aDatum['send_email']
-                        ));
-                    }
-                }
-
-                if (!empty($aDatum['gender'])) {
-                    if (!in_array($aDatum['gender'], array_keys($oUserModel->getGenders()))) {
-                        throw new ValidationException(sprintf(
-                            'Invalid value "%s" for field `gender`; must be %s.',
-                            $aDatum['gender'],
-                            implode(', ', array_keys($oUserModel->getGenders()))
-                        ));
-                    }
-                }
-
-                if (!empty($aDatum['dob'])) {
-                    try {
-                        $oDate = new \DateTime($aDatum['dob']);
-                        if (empty($oDate) || $oDate->format('Y-m-d') !== $aDatum['dob']) {
-                            throw new \Exception();
-                        }
-                    } catch (\Exception $e) {
-                        throw new ValidationException(sprintf(
-                            'Invalid value "%s" for field `dob`; must be a date in the format YYYY-MM-DD',
-                            $aDatum['dob']
-                        ));
-                    }
-                }
-
-                if (!empty($aDatum['timezone'])) {
-                    if (!in_array($aDatum['timezone'], array_keys($oDateTimeService->getAllTimezoneFlat()))) {
-                        throw new ValidationException(sprintf(
-                            'Invalid value "%s" for field `timezone`; must be a valid PHP timezone.',
-                            $aDatum['timezone'],
-                        ));
-                    }
-                }
-
-            } catch (\Exception $e) {
-                throw new ValidationException(
-                    sprintf(
-                        'Error at line %s: %s <pre style="padding: 1rem;margin-top:0.5rem;">%s</pre>',
-                        $iIndex + 2,
-                        $e->getMessage(),
-                        implode(', ', $aDatum)
+                //  Basic validation
+                $oFormValidationService
+                    ->buildValidator(
+                        aRules: $aValidationRules,
+                        aData: $aDatum
                     )
+                    ->run();
+
+            } catch (ValidationException $e) {
+
+                foreach ($e->getData() as $key => $error) {
+                    $aErrors[] = sprintf(
+                        'Line %d: %s: %s',
+                        $iLines,
+                        $key,
+                        $error
+                    );
+                }
+
+            } catch (Throwable $e) {
+                $aErrors[] = sprintf(
+                    'Error on line %d: %s',
+                    $iLines,
+                    $e->getMessage()
                 );
             }
+
+            $iLines++;
+        }
+
+        //  Duplicate detection cannot live in the per-field rules; those only ever
+        //  see a single value, and the validator abandons a field's remaining rules
+        //  as soon as one of them fails. It's a whole-of-file concern, so handle it
+        //  as one pass over the parsed data.
+        $aErrors = array_merge(
+            $aErrors,
+            $this->detectDuplicates($aHeader, $aData)
+        );
+
+        if (!empty($aErrors)) {
+
+            $message = count($aErrors) === 1
+                ? '1 error was found in the CSV file'
+                : sprintf('%d errors were found in the CSV file', count($aErrors));
+
+            throw (new ValidationException($message))
+                ->setData($aErrors);
         }
 
         return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Detects values which are duplicated within the CSV itself
+     *
+     * @param array $aHeader The CSV's header row
+     * @param array $aData   The CSV's data rows, header removed
+     *
+     * @return string[]
+     * @throws FactoryException
+     */
+    protected function detectDuplicates(array $aHeader, array $aData): array
+    {
+        /** @var \Nails\Auth\Service\User\Import $oImportService */
+        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
+
+        $aErrors = [];
+
+        foreach ($oImportService->getUniqueKeys() as $sKey) {
+
+            $iColumn = array_search($sKey, $aHeader, true);
+            if ($iColumn === false) {
+                continue;
+            }
+
+            $aSeen = [];
+
+            foreach ($aData as $iIndex => $aDatum) {
+
+                $sValue = strtolower(trim($aDatum[$iColumn] ?? ''));
+                if ($sValue === '') {
+                    continue;
+                }
+
+                $iLine = $iIndex + 2;   //  Lines are 1 indexed, and the header is line 1
+
+                if (array_key_exists($sValue, $aSeen)) {
+                    $aErrors[] = sprintf(
+                        'Line %d: %s: "%s" must only appear once; it is also on line %d',
+                        $iLine,
+                        $sKey,
+                        $sValue,
+                        $aSeen[$sValue]
+                    );
+                } else {
+                    $aSeen[$sValue] = $iLine;
+                }
+            }
+        }
+
+        return $aErrors;
     }
 
     // --------------------------------------------------------------------------
@@ -464,30 +410,38 @@ class Import extends Base
      */
     protected function parseCsv(string $sPath): array
     {
-        return array_map('str_getcsv', file($sPath));
+        return array_map(
+            fn($line) => str_getcsv($line, escape: ''),
+            file($sPath)
+        );
     }
 
     // --------------------------------------------------------------------------
 
+    /**
+     * @return Cdn\Resource\CdnObject
+     * @throws FactoryException
+     * @throws ModelException
+     * @throws ValidationException
+     */
     protected function uploadCsv(): Cdn\Resource\CdnObject
     {
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
         /** @var Cdn\Service\Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Cdn\Constants::MODULE_SLUG);
         /** @var Cdn\Model\CdnObject $oObjectModel */
         $oObjectModel = Factory::model('Object', Cdn\Constants::MODULE_SLUG);
 
-        $aFile = $oInput::file('csv');
-
         $oObject = $oCdn->objectCreate(
             'csv',
-            [
-                'slug'      => 'import-user',
-                'is_hidden' => true,
-            ],
+            self::IMPORT_BUCKET,
             [
                 'Content-Type' => 'text/csv',
+                'metadata'     => [
+                    [
+                        'key'   => sprintf('%s:user-import', Constants::MODULE_SLUG),
+                        'value' => true,
+                    ],
+                ],
             ]
         );
 
@@ -498,62 +452,60 @@ class Import extends Base
             ));
         }
 
-        return $oObjectModel->getById($oObject->id);
+        /** @var Cdn\Resource\CdnObject $oObject */
+        $oObject = $oObjectModel->getById($oObject->id);
+        return $oObject;
     }
 
     // --------------------------------------------------------------------------
 
-    protected function renderPreview(Cdn\Resource\CdnObject $oObject, bool $bSkipExisting): void
+    /**
+     * @param Cdn\Resource\CdnObject $oObject
+     *
+     * @return void
+     * @throws FactoryException
+     * @throws NailsException
+     */
+    protected function renderPreview(Cdn\Resource\CdnObject $oObject): void
     {
+        /** @var \Nails\Auth\Service\User\Import $oImportService */
+        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
         /** @var Cdn\Service\Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Cdn\Constants::MODULE_SLUG);
 
         $sPath = $oCdn->objectLocalPath($oObject->id);
         if (empty($sPath)) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 'Failed to get a local path for CSV file'
             );
         }
 
         $aData = $this->parseCsv($sPath);
 
-        $aFields = $this->getFields();
+        $aKeys   = $oImportService->getKeys();
         $aHeader = array_splice($aData, 0, 1);
         $aHeader = reset($aHeader);
 
-        //  Highlight items which will be skipped
         foreach ($aData as &$aDatum) {
-
             $aDatum = array_combine($aHeader, $aDatum);
-
-            if ($bSkipExisting && $this->shouldSkip($aDatum)) {
-
-                $aIdentifiers = array_filter([
-                    array_key_exists('email', $aDatum)
-                        ? 'email "' . $aDatum['email'] . '"'
-                        : null,
-                    array_key_exists('username', $aDatum)
-                        ? 'username "' . $aDatum['username'] . '"'
-                        : null,
-                ]);
-
-                $aDatum = sprintf(
-                    'Item with %s is already registered and will be skipped',
-                    implode(' and ', $aIdentifiers)
-                );
-                continue;
+            foreach ($aKeys as $sField) {
+                if ($aDatum[$sField] === '') {
+                    $aDatum[$sField] = $oImportService->getDefaultValue($sField);
+                }
             }
         }
 
-        $this->data['aFields']       = array_keys($aFields);
-        $this->data['aHeader']       = $aHeader;
-        $this->data['aData']         = $aData;
-        $this->data['oObject']       = $oObject;
-        $this->data['bSkipExisting'] = $bSkipExisting;
+        $this->data['aKeys']       = $aKeys;
+        $this->data['aHeader']     = $aHeader;
+        $this->data['aData']       = $aData;
+        $this->data['oObject']     = $oObject;
+        $this->data['oAdditional'] = (object) $oInput->post('additional');
 
-        $this
-            ->setTitles(['Import Users: Preview (' . count($aData) . ')'])
-            ->loadView('preview');
+        $this->data['page']->title = 'Import Users: Preview (' . count($aData) . ')';
+
+        Helper::loadView('preview');
     }
 
     // --------------------------------------------------------------------------
@@ -561,69 +513,61 @@ class Import extends Base
     /**
      * Process the import
      *
+     * @return void
      * @throws FactoryException
+     * @throws NailsException
      */
-    protected function processImport(bool $bSkipExisting): void
+    protected function processImport(): void
     {
+        /** @var \Nails\Auth\Service\User\Import $oImportService */
+        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
         /** @var Cdn\Service\Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Cdn\Constants::MODULE_SLUG);
         /** @var User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
-        /** @var User\Group $oGroupModel */
-        $oGroupModel = Factory::model('UserGroup', Constants::MODULE_SLUG);
 
-        $iObjectId = (int) $oInput->post('object_id');
-        $sPath     = $oCdn->objectLocalPath((int) $oInput->post('object_id'));
+        $iObjectId   = (int) $oInput->post('object_id');
+        $oAdditional = json_decode($oInput->post('additional'));
+
+        $sPath = $oCdn->objectLocalPath($iObjectId);
         if (empty($sPath)) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 'Failed to get a local path for CSV file.'
             );
         }
 
+        $aKeys    = $oImportService->getKeys();
         $aData    = $this->parseCsv($sPath);
         $aHeader  = array_splice($aData, 0, 1);
         $aHeader  = reset($aHeader);
         $iSuccess = 0;
-        $iSkipped = 0;
         $iError   = 0;
         $aLog     = [];
 
-        foreach ($aData as $iIndex => $aDatum) {
+        foreach ($aData as $aDatum) {
 
-            $aDatum = array_combine($aHeader, $aDatum);
+            $aDatum     = array_combine($aHeader, $aDatum);
+            $bSendEmail = stringToBoolean($aDatum['send_email'] ?? false);
 
-            if ($bSkipExisting && $this->shouldSkip($aDatum)) {
-                $iSkipped++;
-                $aLog[] = array_merge(
-                    $aDatum,
-                    [
-                        'id'      => null,
-                        'status'  => 'SKIPPED',
-                        'message' => 'This item is already registered and was skipped',
-                    ]
-                );
-                continue;
+            $aUserData = [];
+            foreach ($aKeys as $sKey) {
+                $aUserData[$sKey] = $aDatum[$sKey] ?? null;
+                if ($aUserData[$sKey] === '') {
+                    $aUserData[$sKey] = $oImportService->getDefaultValue($sKey);
+                }
             }
 
-            $bSendEmail = (bool) $aDatum['send_email'];
-            $aUserData  = array_filter([
-                'group_id'   => ($aDatum['group_id'] ?? null) ?: $oGroupModel->getDefaultGroupId(),
-                'email'      => trim(($aDatum['email'] ?? null)) ?: null,
-                'username'   => trim(($aDatum['username'] ?? null)) ?: null,
-                'temp_pw'    => (bool) ($aDatum['temp_pw'] ?? true),
-                'salutation' => trim(($aDatum['salutation'] ?? null)) ?: null,
-                'first_name' => trim(($aDatum['first_name'] ?? null)) ?: null,
-                'last_name'  => trim(($aDatum['last_name'] ?? null)) ?: null,
-                'gender'     => trim(($aDatum['gender'] ?? null)) ?: null,
-                'dob'        => trim(($aDatum['dob'] ?? null)) ?: null,
-                'timezone'   => trim(($aDatum['timezone'] ?? null)) ?: null,
-            ]);
+            //  Apply additional fields
+            foreach ($oAdditional as $oProperty => $mValue) {
+                $aUserData[$oProperty] = $oImportService->parseAdditionalFields($oProperty, $mValue);
+            }
 
             try {
 
                 $oUser = $oUserModel->create($aUserData, $bSendEmail);
+
                 if ($oUser) {
                     $iSuccess++;
                     $aLog[] = array_merge(
@@ -646,17 +590,7 @@ class Import extends Base
                     );
                 }
 
-            } catch (\Exception $e) {
-                $iError++;
-                $aLog[] = array_merge(
-                    $aDatum,
-                    [
-                        'id'      => null,
-                        'status'  => 'ERROR',
-                        'message' => $e->getMessage(),
-                    ]
-                );
-            } catch (\Error $e) {
+            } catch (Throwable $e) {
                 $iError++;
                 $aLog[] = array_merge(
                     $aDatum,
@@ -676,27 +610,22 @@ class Import extends Base
                 'status',
                 'message',
             ]
-
         ));
 
-        $aLog = array_map(function ($aItem) {
-
-            $aFields = array_map(function ($sItem) {
-                return str_replace('"', '""', trim($sItem));
-            }, $aItem);
-
-            return '"' . implode('","', $aFields) . '"';
-
-        }, $aLog);
+        //  Convert array to CSV and save to cDN
+        $fp = fopen('php://temp', 'r+');
+        foreach ($aLog as $row) {
+            fputcsv($fp, $row, escape: '');
+        }
+        rewind($fp);
+        $csvLog = stream_get_contents($fp);
+        fclose($fp);
 
         /** @var \DateTime $oNow */
         $oNow = Factory::factory('DateTime');
         $oLog = $oCdn->objectCreate(
-            implode(PHP_EOL, $aLog),
-            [
-                'slug'      => 'import-user',
-                'is_hidden' => true,
-            ],
+            $csvLog,
+            self::IMPORT_BUCKET,
             [
                 'no-md5-check'     => true,
                 'Content-Type'     => 'text/csv',
@@ -704,6 +633,16 @@ class Import extends Base
                     'user-import-log-%s.csv',
                     $oNow->format('Y-m-d_H-i-s')
                 ),
+                'metadata'         => [
+                    [
+                        'key'   => sprintf('%s:user-import', Constants::MODULE_SLUG),
+                        'value' => true,
+                    ],
+                    [
+                        'key'   => sprintf('%s:imported-from', Constants::MODULE_SLUG),
+                        'value' => $iObjectId,
+                    ],
+                ],
             ],
             true
         );
@@ -716,14 +655,6 @@ class Import extends Base
             ));
         }
 
-        if (!empty($iSkipped)) {
-            $this->oUserFeedback->warning(sprintf(
-                '%s user accounts skipped. <a href="%s" style="text-decoration: underline">See log for details.</a>',
-                $iSkipped,
-                cdnServe($oLog->id, true)
-            ));
-        }
-
         if (!empty($iError)) {
             $this->oUserFeedback->error(sprintf(
                 '%s user accounts encountered errors. <a href="%s" style="text-decoration: underline">See log for details.</a>',
@@ -732,35 +663,6 @@ class Import extends Base
             ));
         }
 
-        $oCdn->objectDestroy($iObjectId);
-
         redirect(self::url());
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Returns whether the item should be skipped because it already exists
-     *
-     * @param array $aDatum The datum to check
-     *
-     * @return bool
-     * @throws FactoryException
-     * @throws \Nails\Common\Exception\ModelException
-     */
-    protected function shouldSkip(array $aDatum): bool
-    {
-        /** @var User $oUserModel */
-        $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
-
-        if (array_key_exists('email', $aDatum) && $oUserModel->getByEmail($aDatum['email'])) {
-            return true;
-        }
-
-        if (array_key_exists('username', $aDatum) && $oUserModel->getByEmail($aDatum['username'])) {
-            return true;
-        }
-
-        return false;
     }
 }
