@@ -12,6 +12,7 @@
 
 namespace Nails\Auth\Admin\Controller;
 
+use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
 use Nails\Admin\Controller\Base;
 use Nails\Auth\Admin\Permission;
@@ -40,6 +41,18 @@ class Import extends Base
         'is_hidden'     => true,
         'allowed_types' => 'csv',
     ];
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Announces this controller's navGroups
+     *
+     * @throws FactoryException
+     */
+    public static function announce(): Nav|array|null
+    {
+        return null;
+    }
 
     // --------------------------------------------------------------------------
 
