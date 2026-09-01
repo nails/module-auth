@@ -27,8 +27,8 @@ class User
     public static function compileLoginUrl(
         ?string $sIdMd5,
         ?string $sPasswordMd5,
-        string $sForwardTo = null,
-        string $sReturnTo = null
+        ?string $sForwardTo = null,
+        ?string $sReturnTo = null
     ): string {
 
         /** @var Input $oInput */
