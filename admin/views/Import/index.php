@@ -1,6 +1,7 @@
 <?php
 
 use Nails\Admin\Helper;
+use Nails\Auth\Admin\Controller\Import;
 use Nails\Common\Factory\Model\Field;
 
 /**
@@ -18,7 +19,7 @@ use Nails\Common\Factory\Model\Field;
             'key'    => 'csv',
             'label'  => 'CSV',
             'info'   => anchor(
-                'admin/auth/import/template',
+                Import::url('template'),
                 'Download a template CSV file',
                 'class="btn btn-xs btn-primary"'
             ),
