@@ -35,6 +35,13 @@ return [
                 return new Service\User\Event();
             }
         },
+        'UserImport'      => function (): Service\User\Import {
+            if (class_exists('\App\Auth\Service\User\Import')) {
+                return new \App\Auth\Service\User\Import();
+            } else {
+                return new Service\User\Import();
+            }
+        },
         'UserMeta'       => function (): Service\User\Meta {
             if (class_exists('\App\Auth\Service\User\Meta')) {
                 return new \App\Auth\Service\User\Meta();

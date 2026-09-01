@@ -1,19 +1,33 @@
+<?php
+
+use Nails\Admin\Helper;
+use Nails\Cdn\Resource\CdnObject;
+
+/**
+ * @var string[]  $aKeys
+ * @var array     $aHeader
+ * @var array     $aData
+ * @var CdnObject $oObject
+ * @var stdClass  $oAdditional
+ */
+
+?>
 <div class="module-auth import import--preview">
     <div class="alert alert-warning">
         <strong>Please review the following data</strong>
-        <br>Your CSV has been processed and the following values have been ascertained. Please verify them, and when
-        happy to continue click "Import" below.
+        <br>Your CSV has been processed, and the following values have been ascertained. Please verify them, and when
+        happy to continue, click "Import" below.
     </div>
     <?=form_open()?>
-    <?=form_hidden('object_id', $oObject->id)?>
-    <?=form_hidden('skip_existing', $bSkipExisting)?>
+    <input type="hidden" name="object_id" value="<?=$oObject->id?>">
+    <input type="hidden" name="additional" value="<?=htmlspecialchars(json_encode($oAdditional), ENT_QUOTES)?>">
     <table>
         <thead>
             <tr>
                 <?php
-                foreach ($aFields as $sField) {
+                foreach ($aKeys as $sKey) {
                     ?>
-                    <th><?=$sField?></th>
+                    <th><?=$sKey?></th>
                     <?php
                 }
                 ?>
@@ -24,33 +38,28 @@
             <?php
 
             foreach ($aData as $aDatum) {
-                if (is_string($aDatum)) {
+                echo '<tr>';
+                foreach ($aKeys as $sKey) {
                     ?>
-                    <tr class="danger">
-                        <td colspan="10000">
-                            <?=$aDatum?>
-                        </td>
-                    </tr>
+                    <td><?=$aDatum[$sKey] ?? '<span class="text-muted">&mdash;</span>'?></td>
                     <?php
-                } else {
-                    echo '<tr>';
-                    foreach ($aFields as $sField) {
-                        ?>
-                        <td><?=$aDatum[$sField] ?? '-'?></td>
-                        <?php
-                    }
-                    echo '</tr>';
                 }
+                echo '</tr>';
             }
+
             ?>
         </tbody>
     </table>
-    <?=\Nails\Admin\Helper::floatingControls([
+    <?php
+
+    echo Helper::floatingControls([
         'save' => [
             'text'  => 'Import',
             'name'  => 'action',
             'value' => 'import',
         ],
-    ])?>
+    ]);
+
+    ?>
     <?=form_close()?>
 </div>
