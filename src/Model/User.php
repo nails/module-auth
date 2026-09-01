@@ -2265,7 +2265,7 @@ class User extends Base
 
             // --------------------------------------------------------------------------
 
-            //  Finally add the email address to the user email table
+            //  Add the email address to the user email table
             if (!empty($sEmail)) {
 
                 $sCode = $this->emailAdd($sEmail, $iId, true, !empty($bEmailIsVerified), false, false);
@@ -2326,6 +2326,14 @@ class User extends Base
                     }
                 }
             }
+
+            // --------------------------------------------------------------------------
+
+            //  Finally, propagate any expandable fields
+            $this->autoSaveExpandableFieldsSave(
+                $iId,
+                $this->autoSaveExpandableFieldsExtract($data)
+            );
 
             // --------------------------------------------------------------------------
 
