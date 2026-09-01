@@ -2455,7 +2455,7 @@ class User extends Base
 
                     try {
 
-                        $oEmail->send();
+                        $oEmail->queue();
 
                     } catch (\Exception $e) {
                         throw new NailsException(sprintf(
