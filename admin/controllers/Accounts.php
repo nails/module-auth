@@ -289,7 +289,7 @@ class Accounts extends DefaultController
 
         // --------------------------------------------------------------------------
 
-        get_instance()->lang->load('admin_accounts');
+        Factory::service('Translation')->load('admin_accounts');
         /** @var ChangeLog oChangeLogModel */
         $this->oChangeLogModel = Factory::model('ChangeLog', \Nails\Admin\Constants::MODULE_SLUG);
     }

@@ -151,7 +151,7 @@ class Init extends Subscription
 
             /** @var Authentication $oAuthService */
             $oAuthService = Factory::service('Authentication', Constants::MODULE_SLUG);
-            get_instance()->lang->load('auth/auth');
+            Factory::service('Translation')->load('auth');
 
             $oAuthService->logout();
 
