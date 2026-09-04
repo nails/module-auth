@@ -15,6 +15,7 @@ use Nails\Auth\Controller\Base;
 use Nails\Auth\Model\User\Group;
 use Nails\Auth\Model\User\Password;
 use Nails\Auth\Service\SocialSignOn;
+use Nails\Auth\Validator\User\Identity;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\Session;
@@ -57,8 +58,6 @@ class Register extends Base
     {
         /** @var Session $oSession */
         $oSession = Factory::service('Session');
-        /** @var FormValidation $oFormValidation */
-        $oFormValidation = Factory::service('FormValidation');
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
         /** @var \Nails\Auth\Model\User $oUserModel */
@@ -88,42 +87,13 @@ class Register extends Base
 
             try {
 
-                $oFormValidation
-                    ->buildValidator([
-                        'first_name' => [$oFormValidation::RULE_REQUIRED],
-                        'last_name'  => [$oFormValidation::RULE_REQUIRED],
-                        'password'   => [$oFormValidation::RULE_REQUIRED],
-                        'email'      => in_array(Config::get('APP_NATIVE_LOGIN_USING'), ['EMAIL', 'BOTH']) ? [
-                            $oFormValidation::RULE_REQUIRED,
-                            $oFormValidation::RULE_VALID_EMAIL,
-                            $oFormValidation::rule(
-                                $oFormValidation::RULE_IS_UNIQUE, $oUserEmailModel->getTableName(), 'email'
-                            ),
-                        ] : [],
-                        'username'   => in_array(Config::get('APP_NATIVE_LOGIN_USING'), [
-                            'USERNAME',
-                            'BOTH',
-                        ]) ? [
-                            $oFormValidation::RULE_REQUIRED,
-                            $oFormValidation::rule(
-                                $oFormValidation::RULE_IS_UNIQUE, $oUserModel->getTableName(), 'username'
-                            ),
-                        ] : [],
+                (new Identity())
+                    ->addRules([
+                        'first_name' => [FormValidation::RULE_REQUIRED],
+                        'last_name'  => [FormValidation::RULE_REQUIRED],
+                        'password'   => [FormValidation::RULE_REQUIRED],
                     ])
-                    ->setMessages([
-                        $oFormValidation::RULE_IS_UNIQUE => implode('', [
-                            Config::get('APP_NATIVE_LOGIN_USING') === 'EMAIL'
-                                ? lang('auth_register_email_is_unique', siteUrl('auth/password/forgotten'))
-                                : null,
-                            Config::get('APP_NATIVE_LOGIN_USING') === 'USERNAME'
-                                ? lang('auth_register_username_is_unique', siteUrl('auth/password/forgotten'))
-                                : null,
-                            Config::get('APP_NATIVE_LOGIN_USING') === 'BOTH'
-                                ? lang('auth_register_identity_is_unique', siteUrl('auth/password/forgotten'))
-                                : null,
-                        ]),
-                    ])
-                    ->run();
+                    ->run($oInput->post());
 
                 if (appSetting('user_registration_captcha_enabled', 'auth')) {
                     if (!$oCaptchaService->verify()) {

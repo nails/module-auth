@@ -17,12 +17,12 @@ use Nails\Auth\Factory\Email\ForgottenPassword;
 use Nails\Auth\Model\User;
 use Nails\Auth\Model\User\Password;
 use Nails\Auth\Service\Authentication;
+use Nails\Auth\Validator\User\Identifier;
 use Nails\Common\Exception\Encrypt\DecodeException;
 use Nails\Common\Exception\EnvironmentException;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\NailsException;
 use Nails\Common\Service\Config;
-use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\Uri;
 use Nails\Factory;
@@ -54,8 +54,6 @@ class PasswordForgotten extends Base
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var FormValidation $oFormValidation */
-        $oFormValidation = Factory::service('FormValidation');
         /** @var Config $oConfig */
         $oConfig = Factory::service('Config');
         /** @var Password $oUserPasswordModel */
@@ -87,17 +85,7 @@ class PasswordForgotten extends Base
 
                 // --------------------------------------------------------------------------
 
-                $aRules = array_filter([
-                    \Nails\Config::get('APP_NATIVE_LOGIN_USING') === 'EMAIL' ? ['required', 'valid_email'] : null,
-                    \Nails\Config::get('APP_NATIVE_LOGIN_USING') === 'USERNAME' ? ['required'] : null,
-                    \Nails\Config::get('APP_NATIVE_LOGIN_USING') === 'BOTH' ? ['required'] : null,
-                ]);
-
-                $oFormValidation
-                    ->buildValidator([
-                        'identifier' => reset($aRules),
-                    ])
-                    ->run();
+                (new Identifier())->run($oInput->post());
 
                 if (appSetting('user_password_reset_captcha_enabled', 'auth')) {
                     if (!$oCaptchaService->verify()) {

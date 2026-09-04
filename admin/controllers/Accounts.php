@@ -21,6 +21,7 @@ use Nails\Auth\Interfaces\Admin\User\Tab;
 use Nails\Auth\Model\User;
 use Nails\Auth\Model\User\Group;
 use Nails\Auth\Model\User\Password;
+use Nails\Auth\Validator\User\Identity;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
@@ -379,38 +380,18 @@ class Accounts extends DefaultController
 
         if ($oInput->post()) {
 
-            /** @var FormValidation $oFormValidation */
-            $oFormValidation = Factory::service('FormValidation');
-
-            $aRules = [
-                'group_id'   => [FormValidation::RULE_REQUIRED, FormValidation::RULE_IS_NATURAL_NO_ZERO],
-                'first_name' => [FormValidation::RULE_REQUIRED, FormValidation::rule(FormValidation::RULE_MAX_LENGTH, 150)],
-                'last_name'  => [FormValidation::RULE_REQUIRED, FormValidation::rule(FormValidation::RULE_MAX_LENGTH, 150)],
-                'email'      => [
-                    FormValidation::RULE_REQUIRED,
-                    FormValidation::RULE_VALID_EMAIL,
-                    FormValidation::rule(FormValidation::RULE_IS_UNIQUE, Config::get('NAILS_DB_PREFIX') . 'user_email', 'email'),
-                    FormValidation::rule(FormValidation::RULE_MAX_LENGTH, 255),
-                ],
-            ];
-
-            if (in_array(Config::get('APP_NATIVE_LOGIN_USING'), ['BOTH', 'USERNAME'])) {
-                $aRules['username'] = [
-                    FormValidation::RULE_REQUIRED,
-                    FormValidation::rule(FormValidation::RULE_MAX_LENGTH, 150),
-                    FormValidation::RULE_ALPHA_DASH_PERIOD,
-                    FormValidation::rule(FormValidation::RULE_IS_UNIQUE, Config::get('NAILS_DB_PREFIX') . 'user', 'username'),
-                ];
-            }
-
             try {
 
-                $oFormValidation
-                    ->buildValidator($aRules, [
-                        FormValidation::RULE_IS_NATURAL_NO_ZERO => lang('fv_required'),
-                        FormValidation::RULE_IS_UNIQUE          => lang('fv_email_already_registered'),
+                (new Identity())
+                    ->addRules([
+                        'group_id'   => [FormValidation::RULE_REQUIRED, FormValidation::RULE_IS_NATURAL_NO_ZERO],
+                        'first_name' => [FormValidation::RULE_REQUIRED, FormValidation::rule(FormValidation::RULE_MAX_LENGTH, 150)],
+                        'last_name'  => [FormValidation::RULE_REQUIRED, FormValidation::rule(FormValidation::RULE_MAX_LENGTH, 150)],
                     ])
-                    ->run();
+                    ->setMessages([
+                        FormValidation::RULE_IS_NATURAL_NO_ZERO => lang('fv_required'),
+                    ])
+                    ->run($oInput->post());
 
 
                 //  Success
