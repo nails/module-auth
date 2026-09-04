@@ -947,63 +947,69 @@ class Login extends Base
             /** @var FormValidation $oFormValidation */
             $oFormValidation = Factory::service('FormValidation');
 
+            $aRules = [];
+
             if (isset($aRequiredData['email'])) {
-                $oFormValidation->set_rules('email', 'email', 'trim|required|valid_email|is_unique[' . \Nails\Config::get('NAILS_DB_PREFIX') . 'user_email.email]');
+                $aRules['email'] = [
+                    'trim',
+                    FormValidation::RULE_REQUIRED,
+                    FormValidation::RULE_VALID_EMAIL,
+                    FormValidation::rule(FormValidation::RULE_IS_UNIQUE, \Nails\Config::get('NAILS_DB_PREFIX') . 'user_email', 'email'),
+                ];
             }
 
             if (isset($aRequiredData['username'])) {
-                $oFormValidation->set_rules('username', 'username', 'trim|required|is_unique[' . \Nails\Config::get('NAILS_DB_PREFIX') . 'user.username]');
+                $aRules['username'] = [
+                    'trim',
+                    FormValidation::RULE_REQUIRED,
+                    FormValidation::rule(FormValidation::RULE_IS_UNIQUE, \Nails\Config::get('NAILS_DB_PREFIX') . 'user', 'username'),
+                ];
             }
 
             if (empty($aRequiredData['first_name'])) {
-                $oFormValidation->set_rules('first_name', '', 'trim|required');
+                $aRules['first_name'] = ['trim', FormValidation::RULE_REQUIRED];
             }
 
             if (empty($aRequiredData['last_name'])) {
-                $oFormValidation->set_rules('last_name', '', 'trim|required');
+                $aRules['last_name'] = ['trim', FormValidation::RULE_REQUIRED];
             }
 
-            $oFormValidation->set_message('required', lang('fv_required'));
-            $oFormValidation->set_message('valid_email', lang('fv_valid_email'));
+            $sIsUniqueMessage = match (\Nails\Config::get('APP_NATIVE_LOGIN_USING')) {
+                'EMAIL'    => lang('fv_email_already_registered', siteUrl('auth/password/forgotten')),
+                'USERNAME' => lang('fv_username_already_registered', siteUrl('auth/password/forgotten')),
+                default    => lang('fv_identity_already_registered', siteUrl('auth/password/forgotten')),
+            };
 
-            if (\Nails\Config::get('APP_NATIVE_LOGIN_USING') == 'EMAIL') {
-                $oFormValidation->set_message(
-                    'is_unique',
-                    lang('fv_email_already_registered', siteUrl('auth/password/forgotten'))
-                );
-            } elseif (\Nails\Config::get('APP_NATIVE_LOGIN_USING') == 'USERNAME') {
-                $oFormValidation->set_message(
-                    'is_unique',
-                    lang('fv_username_already_registered', siteUrl('auth/password/forgotten'))
-                );
-            } else {
-                $oFormValidation->set_message(
-                    'is_unique',
-                    lang('fv_identity_already_registered', siteUrl('auth/password/forgotten'))
-                );
-            }
+            try {
 
-            if ($oFormValidation->run()) {
+                $oValidator = $oFormValidation
+                    ->buildValidator($aRules, [
+                        FormValidation::RULE_IS_UNIQUE => $sIsUniqueMessage,
+                    ])
+                    ->setLabels(['email' => 'email', 'username' => 'username'])
+                    ->run();
 
-                //  Valid!Ensure required data is set correctly then allow system to move on.
+                //  Valid! Ensure required data is set correctly then allow system to move on.
+                $aPost = $oValidator->getValidatedData();
+
                 if (isset($aRequiredData['email'])) {
-                    $aRequiredData['email'] = $oInput->post('email');
+                    $aRequiredData['email'] = $aPost['email'] ?? null;
                 }
 
                 if (isset($aRequiredData['username'])) {
-                    $aRequiredData['username'] = $oInput->post('username');
+                    $aRequiredData['username'] = $aPost['username'] ?? null;
                 }
 
                 if (empty($aRequiredData['first_name'])) {
-                    $aRequiredData['first_name'] = $oInput->post('first_name');
+                    $aRequiredData['first_name'] = $aPost['first_name'] ?? null;
                 }
 
                 if (empty($aRequiredData['last_name'])) {
-                    $aRequiredData['last_name'] = $oInput->post('last_name');
+                    $aRequiredData['last_name'] = $aPost['last_name'] ?? null;
                 }
 
-            } else {
-                $this->oUserFeedback->error(lang('fv_there_were_errors'));
+            } catch (ValidationException $e) {
+                $this->oUserFeedback->error($e->getMessage());
                 $this->socialSignOnRequestDataForm($aRequiredData, $provider);
             }
 

@@ -382,29 +382,36 @@ class Accounts extends DefaultController
             /** @var FormValidation $oFormValidation */
             $oFormValidation = Factory::service('FormValidation');
 
-            //  Set rules
-            $oFormValidation->set_rules('group_id', '', 'required|is_natural_no_zero');
-            $oFormValidation->set_rules('password', '', '');
-            $oFormValidation->set_rules('send_activation', '', '');
-            $oFormValidation->set_rules('temp_pw', '', '');
-            $oFormValidation->set_rules('first_name', '', 'required|max_length[150]');
-            $oFormValidation->set_rules('last_name', '', 'required|max_length[150]');
-            $oFormValidation->set_rules('email', '', 'required|valid_email|is_unique[' . Config::get('NAILS_DB_PREFIX') . 'user_email.email]|max_length[255]');
+            $aRules = [
+                'group_id'   => [FormValidation::RULE_REQUIRED, FormValidation::RULE_IS_NATURAL_NO_ZERO],
+                'first_name' => [FormValidation::RULE_REQUIRED, FormValidation::rule(FormValidation::RULE_MAX_LENGTH, 150)],
+                'last_name'  => [FormValidation::RULE_REQUIRED, FormValidation::rule(FormValidation::RULE_MAX_LENGTH, 150)],
+                'email'      => [
+                    FormValidation::RULE_REQUIRED,
+                    FormValidation::RULE_VALID_EMAIL,
+                    FormValidation::rule(FormValidation::RULE_IS_UNIQUE, Config::get('NAILS_DB_PREFIX') . 'user_email', 'email'),
+                    FormValidation::rule(FormValidation::RULE_MAX_LENGTH, 255),
+                ],
+            ];
 
             if (in_array(Config::get('APP_NATIVE_LOGIN_USING'), ['BOTH', 'USERNAME'])) {
-                $oFormValidation->set_rules('username', '', 'required|max_length[150]|alpha_dash_period|is_unique[' . Config::get('NAILS_DB_PREFIX') . 'user.username]');
+                $aRules['username'] = [
+                    FormValidation::RULE_REQUIRED,
+                    FormValidation::rule(FormValidation::RULE_MAX_LENGTH, 150),
+                    FormValidation::RULE_ALPHA_DASH_PERIOD,
+                    FormValidation::rule(FormValidation::RULE_IS_UNIQUE, Config::get('NAILS_DB_PREFIX') . 'user', 'username'),
+                ];
             }
 
-            //  Set messages
-            $oFormValidation->set_message('required', lang('fv_required'));
-            $oFormValidation->set_message('min_length', lang('fv_min_length'));
-            $oFormValidation->set_message('alpha_dash_period', lang('fv_alpha_dash_period'));
-            $oFormValidation->set_message('is_natural_no_zero', lang('fv_required'));
-            $oFormValidation->set_message('valid_email', lang('fv_valid_email'));
-            $oFormValidation->set_message('is_unique', lang('fv_email_already_registered'));
+            try {
 
-            //  Execute
-            if ($oFormValidation->run()) {
+                $oFormValidation
+                    ->buildValidator($aRules, [
+                        FormValidation::RULE_IS_NATURAL_NO_ZERO => lang('fv_required'),
+                        FormValidation::RULE_IS_UNIQUE          => lang('fv_email_already_registered'),
+                    ])
+                    ->run();
+
 
                 //  Success
                 $aData = [
@@ -479,8 +486,8 @@ class Accounts extends DefaultController
                     ));
                 }
 
-            } else {
-                $this->oUserFeedback->error(lang('fv_there_were_errors'));
+            } catch (ValidationException $e) {
+                $this->oUserFeedback->error($e->getMessage());
             }
         }
 
