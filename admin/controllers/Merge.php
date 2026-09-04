@@ -21,6 +21,7 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
+use Nails\Common\Validation\Context;
 use Nails\Factory;
 use stdClass;
 
@@ -104,12 +105,12 @@ class Merge extends BaseAdmin
                         ],
                         'merge_ids' => [
                             $oFormValidation::RULE_REQUIRED,
-                            function ($mInput) use ($oInput) {
+                            function ($mInput, Context $oContext) {
                                 $aMergeIds = explode(',', $mInput);
                                 if (in_array(activeUser('id'), $aMergeIds)) {
                                     throw new ValidationException('You cannot list yourself as a user to merge.');
 
-                                } elseif (in_array($oInput->post('user_id'), $aMergeIds)) {
+                                } elseif (in_array($oContext->getValue('user_id'), $aMergeIds)) {
                                     throw new ValidationException('You cannot merge the target user into itself.');
                                 }
                             },
