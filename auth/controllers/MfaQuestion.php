@@ -15,6 +15,7 @@ use Nails\Auth\Controller\BaseMfa;
 use Nails\Auth\Service\Authentication;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\NailsException;
+use Nails\Common\Exception\ValidationException;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
 use Nails\Factory;
@@ -112,44 +113,35 @@ class MfaQuestion extends BaseMfa
                     /** @var FormValidation $oFormValidation */
                     $oFormValidation = Factory::service('FormValidation');
 
+                    $aRules = [];
+
                     for ($i = 0; $i < $this->data['num_questions']; $i++) {
-
-                        $oFormValidation->set_rules(
-                            'question[' . $i . '][question]',
-                            '',
-                            'required|is_natural_no_zero'
-                        );
-
-                        $oFormValidation->set_rules(
-                            'question[' . $i . '][answer]',
-                            '',
-                            'trim|required'
-                        );
+                        $aRules['question[' . $i . '][question]'] = [
+                            FormValidation::RULE_REQUIRED,
+                            FormValidation::RULE_IS_NATURAL_NO_ZERO,
+                        ];
+                        $aRules['question[' . $i . '][answer]']   = ['trim', FormValidation::RULE_REQUIRED];
                     }
 
                     for ($i = 0; $i < $this->data['num_custom_questions']; $i++) {
-
-                        $oFormValidation->set_rules(
-                            'custom_question[' . $i . '][question]',
-                            '',
-                            'trim|required'
-                        );
-
-                        $oFormValidation->set_rules(
-                            'custom_question[' . $i . '][answer]',
-                            '',
-                            'trim|required'
-                        );
+                        $aRules['custom_question[' . $i . '][question]'] = ['trim', FormValidation::RULE_REQUIRED];
+                        $aRules['custom_question[' . $i . '][answer]']   = ['trim', FormValidation::RULE_REQUIRED];
                     }
 
-                    $oFormValidation->set_message('required', lang('fv_required'));
-                    $oFormValidation->set_message('is_natural_no_zero', lang('fv_required'));
+                    try {
 
-                    if ($oFormValidation->run()) {
+                        $oValidator = $oFormValidation->buildValidator(
+                            $aRules,
+                            [FormValidation::RULE_IS_NATURAL_NO_ZERO => lang('fv_required')]
+                        );
+                        $oValidator->run();
+
+                        //  The validated data carries the trimmed values
+                        $aPost = $oValidator->getValidatedData();
 
                         //  Make sure that we have different questions
                         $aQuestionIndex = [];
-                        $aQuestion      = array_filter((array) $oInput->post('question', true));
+                        $aQuestion      = array_filter((array) ($aPost['question'] ?? []));
                         $bError         = false;
 
                         foreach ($aQuestion as $q) {
@@ -163,7 +155,7 @@ class MfaQuestion extends BaseMfa
                         }
 
                         $aQuestionIndex = [];
-                        $aQuestion      = array_filter((array) $oInput->post('custom_question', true));
+                        $aQuestion      = array_filter((array) ($aPost['custom_question'] ?? []));
 
                         foreach ($aQuestion as $q) {
                             if (array_search($q['question'], $aQuestionIndex) === false) {
@@ -179,9 +171,9 @@ class MfaQuestion extends BaseMfa
                             //  Good arrows. Save questions
                             $aData = [];
 
-                            if ($oInput->post('question', true)) {
+                            if (!empty($aPost['question'])) {
 
-                                foreach ($oInput->post('question', true) as $q) {
+                                foreach ($aPost['question'] as $q) {
 
                                     $oTemp = new stdClass();
 
@@ -196,8 +188,8 @@ class MfaQuestion extends BaseMfa
                                 }
                             }
 
-                            if ($oInput->post('custom_question', true)) {
-                                foreach ((array) $oInput->post('custom_question', true) as $aQuestion) {
+                            if (!empty($aPost['custom_question'])) {
+                                foreach ((array) $aPost['custom_question'] as $aQuestion) {
                                     $aData[] = (object) [
                                         'question' => trim($aQuestion['question']),
                                         'answer'   => $aQuestion['answer'],
@@ -228,8 +220,8 @@ class MfaQuestion extends BaseMfa
                             $this->oUserFeedback->error(lang('auth_twofactor_question_unique'));
                         }
 
-                    } else {
-                        $this->oUserFeedback->error(lang('fv_there_were_errors'));
+                    } catch (ValidationException $e) {
+                        $this->oUserFeedback->error($e->getMessage());
                     }
                 }
 

@@ -11,6 +11,7 @@
  */
 
 use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\ValidationException;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
 use Nails\Factory;
@@ -82,12 +83,14 @@ class MfaDevice extends BaseMfa
             /** @var FormValidation $oFormValidation */
             $oFormValidation = Factory::service('FormValidation');
 
-            $oFormValidation->set_rules('mfa_secret', '', 'required');
-            $oFormValidation->set_rules('mfa_code', '', 'required');
+            try {
 
-            $oFormValidation->set_message('required', lang('fv_required'));
-
-            if ($oFormValidation->run()) {
+                $oFormValidation
+                    ->buildValidator([
+                        'mfa_secret' => [FormValidation::RULE_REQUIRED],
+                        'mfa_code'   => [FormValidation::RULE_REQUIRED],
+                    ])
+                    ->run();
 
                 $sSecret  = $oInput->post('mfa_secret');
                 $sMfaCode = $oInput->post('mfa_code');
@@ -108,8 +111,8 @@ class MfaDevice extends BaseMfa
                     $this->oUserFeedback->error('Sorry, that code failed to validate. Please try again.');
                 }
 
-            } else {
-                $this->oUserFeedback->error(lang('fv_there_were_errors'));
+            } catch (ValidationException $e) {
+                $this->oUserFeedback->error($e->getMessage());
             }
         }
 
@@ -152,10 +155,13 @@ class MfaDevice extends BaseMfa
             /** @var FormValidation $oFormValidation */
             $oFormValidation = Factory::service('FormValidation');
 
-            $oFormValidation->set_rules('mfa_code', '', 'required');
-            $oFormValidation->set_message('required', lang('fv_required'));
+            try {
 
-            if ($oFormValidation->run()) {
+                $oFormValidation
+                    ->buildValidator([
+                        'mfa_code' => [FormValidation::RULE_REQUIRED],
+                    ])
+                    ->run();
 
                 /** @var Authentication $oAuthService */
                 $oAuthService = Factory::service('Authentication', Constants::MODULE_SLUG);
@@ -171,8 +177,8 @@ class MfaDevice extends BaseMfa
                     ));
                 }
 
-            } else {
-                $this->oUserFeedback->error(lang('fv_there_were_errors'));
+            } catch (ValidationException $e) {
+                $this->oUserFeedback->error($e->getMessage());
             }
         }
 
