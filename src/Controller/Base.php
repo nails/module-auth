@@ -28,7 +28,7 @@ abstract class Base extends \App\Controller\Base
         parent::__construct();
         $oConfig = Factory::service('Config');
         $oConfig->load('auth/auth');
-        get_instance()->lang->load('auth/auth');
+        Factory::service('Translation')->load('auth');
     }
 
     // --------------------------------------------------------------------------
