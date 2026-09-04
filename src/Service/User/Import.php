@@ -21,6 +21,7 @@ use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\Model\Field;
 use Nails\Common\Service\DateTime;
 use Nails\Common\Service\FormValidation;
+use Nails\Common\Validation\Context;
 use Nails\Config;
 use Nails\Factory;
 
@@ -85,8 +86,6 @@ class Import
         $oUserPasswordModel = Factory::model('UserPassword', Constants::MODULE_SLUG);
         /** @var DateTime $oDateTimeService */
         $oDateTimeService = Factory::service('DateTime');
-        /** @var FormValidation $oFormValidationService */
-        $oFormValidationService = Factory::service('FormValidation');
 
         return match ($key) {
             'email' => array_filter([
@@ -138,13 +137,13 @@ class Import
                 },
             ],
             'password' => [
-                function ($password) use ($oUserPasswordModel, $oUserGroupModel, $oFormValidationService) {
+                function ($password, Context $oContext) use ($oUserPasswordModel, $oUserGroupModel) {
 
                     if (!$password) {
                         return;
                     }
 
-                    $groupId = $oFormValidationService->validation_data['group_id'] ?? null;
+                    $groupId = $oContext->getValue('group_id');
                     $group   = $oUserGroupModel->getById((int) $groupId) ?? $oUserGroupModel->getDefaultGroup();
 
                     if (!$oUserPasswordModel->isAcceptable($group, $password)) {
