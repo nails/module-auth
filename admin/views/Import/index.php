@@ -6,7 +6,23 @@ use Nails\Common\Factory\Model\Field;
 
 /**
  * @var array<int, string|Closure|Field> $additionalFields
+ * @var bool                             $bTemplateUnusable
  */
+
+/**
+ * The controller has already reported why; offering a form which cannot work
+ * would only invite an upload that is certain to be rejected.
+ */
+if (!empty($bTemplateUnusable)) {
+    ?>
+    <div class="module-auth import">
+        <p class="alert alert-danger">
+            User import is unavailable until the template is corrected.
+        </p>
+    </div>
+    <?php
+    return;
+}
 
 ?>
 <div class="module-auth import">
@@ -29,6 +45,8 @@ use Nails\Common\Factory\Model\Field;
         <p class="alert alert-info">
             <strong>Please note:</strong> The CSV you supply should be in the correct format, as per the template
             which you can download above. Remember to include the header rows describing each column.
+            <br>Every row is validated when you upload; if any of them cannot be imported the file is rejected
+            and nothing is created, so you can correct it and try again.
         </p>
     </fieldset>
     <?php
@@ -66,13 +84,32 @@ use Nails\Common\Factory\Model\Field;
 
     echo Helper::floatingControls([
         'save' => [
-            'text'  => 'Preview',
-            'name'  => 'action',
-            'value' => 'preview',
+            'text' => 'Upload &amp; Preview',
         ],
     ]);
 
     echo form_close();
 
     ?>
+    <div id="user-import-list" class="hidden">
+        <hr>
+        <h2>Recent Imports</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="field field--id">ID</th>
+                        <th class="field field--file">File</th>
+                        <th class="field field--status">Status</th>
+                        <th class="field field--progress">Progress</th>
+                        <th class="field field--requested">Requested</th>
+                        <th class="field field--finished">Finished</th>
+                        <th class="actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="user-import-list-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>

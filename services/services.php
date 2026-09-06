@@ -42,6 +42,34 @@ return [
                 return new Service\User\Import();
             }
         },
+        'UserImportCsv'       => function (): Service\User\Import\Csv {
+            if (class_exists('\App\Auth\Service\User\Import\Csv')) {
+                return new \App\Auth\Service\User\Import\Csv();
+            } else {
+                return new Service\User\Import\Csv();
+            }
+        },
+        'UserImportDispatcher' => function (): Service\User\Import\Dispatcher {
+            if (class_exists('\App\Auth\Service\User\Import\Dispatcher')) {
+                return new \App\Auth\Service\User\Import\Dispatcher();
+            } else {
+                return new Service\User\Import\Dispatcher();
+            }
+        },
+        'UserImportProcessor' => function (): Service\User\Import\Processor {
+            if (class_exists('\App\Auth\Service\User\Import\Processor')) {
+                return new \App\Auth\Service\User\Import\Processor();
+            } else {
+                return new Service\User\Import\Processor();
+            }
+        },
+        'UserImportValidator' => function (): Service\User\Import\Validator {
+            if (class_exists('\App\Auth\Service\User\Import\Validator')) {
+                return new \App\Auth\Service\User\Import\Validator();
+            } else {
+                return new Service\User\Import\Validator();
+            }
+        },
         'UserMeta'       => function (): Service\User\Meta {
             if (class_exists('\App\Auth\Service\User\Meta')) {
                 return new \App\Auth\Service\User\Meta();
@@ -91,6 +119,20 @@ return [
                 return new \App\Auth\Model\User\Group();
             } else {
                 return new Model\User\Group();
+            }
+        },
+        'UserImport'          => function (): Model\User\Import {
+            if (class_exists('\App\Auth\Model\User\Import')) {
+                return new \App\Auth\Model\User\Import();
+            } else {
+                return new Model\User\Import();
+            }
+        },
+        'UserImportItem'      => function (): Model\User\Import\Item {
+            if (class_exists('\App\Auth\Model\User\Import\Item')) {
+                return new \App\Auth\Model\User\Import\Item();
+            } else {
+                return new Model\User\Import\Item();
             }
         },
         'UserPassword'        => function (): Model\User\Password {
@@ -143,6 +185,20 @@ return [
                 return new \App\Auth\Factory\Email\PasswordUpdated();
             } else {
                 return new Factory\Email\PasswordUpdated();
+            }
+        },
+        'EmailUserImportComplete' => function (): Factory\Email\User\Import\Complete {
+            if (class_exists('\App\Auth\Factory\Email\User\Import\Complete')) {
+                return new \App\Auth\Factory\Email\User\Import\Complete();
+            } else {
+                return new Factory\Email\User\Import\Complete();
+            }
+        },
+        'EmailUserImportFailed'  => function (): Factory\Email\User\Import\Failed {
+            if (class_exists('\App\Auth\Factory\Email\User\Import\Failed')) {
+                return new \App\Auth\Factory\Email\User\Import\Failed();
+            } else {
+                return new Factory\Email\User\Import\Failed();
             }
         },
         'EmailVerifyEmail'       => function (): Factory\Email\VerifyEmail {
@@ -202,6 +258,20 @@ return [
                 return new \App\Auth\Resource\User\Group($resource, $model);
             } else {
                 return new Resource\User\Group($resource, $model);
+            }
+        },
+        'UserImport'          => function ($resource, $model): Resource\User\Import {
+            if (class_exists('\App\Auth\Resource\User\Import')) {
+                return new \App\Auth\Resource\User\Import($resource, $model);
+            } else {
+                return new Resource\User\Import($resource, $model);
+            }
+        },
+        'UserImportItem'      => function ($resource, $model): Resource\User\Import\Item {
+            if (class_exists('\App\Auth\Resource\User\Import\Item')) {
+                return new \App\Auth\Resource\User\Import\Item($resource, $model);
+            } else {
+                return new Resource\User\Import\Item($resource, $model);
             }
         },
         'UserPasswordHistory' => function ($resource, $model): Resource\User\Password\History {

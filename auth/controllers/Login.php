@@ -22,6 +22,8 @@ use Nails\Auth\Model\User\Password;
 use Nails\Auth\Resource;
 use Nails\Auth\Service\Authentication;
 use Nails\Auth\Service\SocialSignOn;
+use Nails\Auth\Validator\User\Identifier;
+use Nails\Auth\Validator\User\Identity;
 use Nails\Cdn\Service\Cdn;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
@@ -113,8 +115,6 @@ class Login extends Base
         $oInput = Factory::service('Input');
         /** @var \App\Auth\Model\User $oUserModel */
         $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
-        /** @var FormValidation $oFormValidation */
-        $oFormValidation = Factory::service('FormValidation');
         /** @var Authentication $oAuthService */
         $oAuthService = Factory::service('Authentication', Constants::MODULE_SLUG);
         /** @var SocialSignOn $oSocial */
@@ -128,20 +128,9 @@ class Login extends Base
 
             try {
 
-                $oFormValidation
-                    ->buildValidator([
-                        'identifier' => array_values(array_filter([
-                            \Nails\Config::get('APP_NATIVE_LOGIN_USING') === 'EMAIL' ? [
-                                $oFormValidation::RULE_REQUIRED,
-                                $oFormValidation::RULE_VALID_EMAIL,
-                            ] : null,
-                            \Nails\Config::get('APP_NATIVE_LOGIN_USING') === 'USERNAME' ? [$oFormValidation::RULE_REQUIRED] : null,
-                            \Nails\Config::get('APP_NATIVE_LOGIN_USING') === 'BOTH' ? [$oFormValidation::RULE_REQUIRED] : null,
-                        ]))[0],
-                        'password'   => [$oFormValidation::RULE_REQUIRED],
-                        'remember'   => [],
-                    ])
-                    ->run();
+                (new Identifier())
+                    ->addRules(['password' => [FormValidation::RULE_REQUIRED]])
+                    ->run($oInput->post());
 
                 if (appSetting('user_login_captcha_enabled', 'auth')) {
                     if (!$oCaptchaService->verify()) {
@@ -945,66 +934,53 @@ class Login extends Base
         $oInput = Factory::service('Input');
         if ($oInput->post()) {
 
-            /** @var FormValidation $oFormValidation */
-            $oFormValidation = Factory::service('FormValidation');
+            //  Only capture the identity fields we've been asked for
+            $aRules = [];
 
-            if (isset($aRequiredData['email'])) {
-                $oFormValidation->set_rules('email', 'email', 'trim|required|valid_email|is_unique[' . \Nails\Config::get('NAILS_DB_PREFIX') . 'user_email.email]');
+            if (!isset($aRequiredData['email'])) {
+                $aRules['email'] = [];
             }
 
-            if (isset($aRequiredData['username'])) {
-                $oFormValidation->set_rules('username', 'username', 'trim|required|is_unique[' . \Nails\Config::get('NAILS_DB_PREFIX') . 'user.username]');
+            if (!isset($aRequiredData['username'])) {
+                $aRules['username'] = [];
             }
 
             if (empty($aRequiredData['first_name'])) {
-                $oFormValidation->set_rules('first_name', '', 'trim|required');
+                $aRules['first_name'] = ['trim', FormValidation::RULE_REQUIRED];
             }
 
             if (empty($aRequiredData['last_name'])) {
-                $oFormValidation->set_rules('last_name', '', 'trim|required');
+                $aRules['last_name'] = ['trim', FormValidation::RULE_REQUIRED];
             }
 
-            $oFormValidation->set_message('required', lang('fv_required'));
-            $oFormValidation->set_message('valid_email', lang('fv_valid_email'));
+            try {
 
-            if (\Nails\Config::get('APP_NATIVE_LOGIN_USING') == 'EMAIL') {
-                $oFormValidation->set_message(
-                    'is_unique',
-                    lang('fv_email_already_registered', siteUrl('auth/password/forgotten'))
-                );
-            } elseif (\Nails\Config::get('APP_NATIVE_LOGIN_USING') == 'USERNAME') {
-                $oFormValidation->set_message(
-                    'is_unique',
-                    lang('fv_username_already_registered', siteUrl('auth/password/forgotten'))
-                );
-            } else {
-                $oFormValidation->set_message(
-                    'is_unique',
-                    lang('fv_identity_already_registered', siteUrl('auth/password/forgotten'))
-                );
-            }
+                $oValidator = (new Identity())
+                    ->setRules($aRules)
+                    ->setLabels(['email' => 'email', 'username' => 'username'])
+                    ->run($oInput->post());
 
-            if ($oFormValidation->run()) {
+                //  Valid! Ensure required data is set correctly then allow system to move on.
+                $aPost = $oValidator->getValidatedData();
 
-                //  Valid!Ensure required data is set correctly then allow system to move on.
                 if (isset($aRequiredData['email'])) {
-                    $aRequiredData['email'] = $oInput->post('email');
+                    $aRequiredData['email'] = $aPost['email'] ?? null;
                 }
 
                 if (isset($aRequiredData['username'])) {
-                    $aRequiredData['username'] = $oInput->post('username');
+                    $aRequiredData['username'] = $aPost['username'] ?? null;
                 }
 
                 if (empty($aRequiredData['first_name'])) {
-                    $aRequiredData['first_name'] = $oInput->post('first_name');
+                    $aRequiredData['first_name'] = $aPost['first_name'] ?? null;
                 }
 
                 if (empty($aRequiredData['last_name'])) {
-                    $aRequiredData['last_name'] = $oInput->post('last_name');
+                    $aRequiredData['last_name'] = $aPost['last_name'] ?? null;
                 }
 
-            } else {
-                $this->oUserFeedback->error(lang('fv_there_were_errors'));
+            } catch (ValidationException $e) {
+                $this->oUserFeedback->error($e->getMessage());
                 $this->socialSignOnRequestDataForm($aRequiredData, $provider);
             }
 

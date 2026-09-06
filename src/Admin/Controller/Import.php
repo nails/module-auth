@@ -1,7 +1,15 @@
 <?php
 
 /**
- * This class provides the ability to import users
+ * This class provides the ability to import users from a CSV
+ *
+ * The controller is only responsible for accepting the upload and for
+ * approving a job; everything else — reading the CSV, validating it, and
+ * creating the users — happens in the background, driven by
+ * \Nails\Auth\Service\User\Import\Processor.
+ *
+ * Deletion lives on \Nails\Auth\Api\Controller\Import so that the admin UI can
+ * drive it with fetch() and drop a row from the list without a reload.
  *
  * @package     Nails
  * @subpackage  module-auth
@@ -18,7 +26,14 @@ use Nails\Admin\Helper;
 use Nails\Auth\Admin\Permission;
 use Nails\Auth\Cdn\MetaData\SystemKey;
 use Nails\Auth\Constants;
-use Nails\Auth\Model\User;
+use Nails\Auth\Enum\User\Import\Status;
+use Nails\Auth\Exception\User\Import\TemplateException;
+use Nails\Auth\Model;
+use Nails\Auth\Resource;
+use Nails\Auth\Service\User\Import\Csv;
+use Nails\Auth\Service\User\Import\Dispatcher;
+use Nails\Auth\Service\User\Import\Processor;
+use Nails\Auth\Service\User\Import\Validator;
 use Nails\Cdn;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
@@ -26,9 +41,9 @@ use Nails\Common\Exception\NailsException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
+use Nails\Common\Service\Uri;
 use Nails\Factory;
 use RuntimeException;
-use Throwable;
 
 /**
  * Class Import
@@ -37,11 +52,48 @@ use Throwable;
  */
 class Import extends Base
 {
-    const array IMPORT_BUCKET = [
-        'slug'          => 'import-user',
-        'is_hidden'     => true,
-        'allowed_types' => 'csv',
-    ];
+    /**
+     * The bucket the source CSV and its log are stored in
+     *
+     * @var array
+     */
+    const array IMPORT_BUCKET = Processor::IMPORT_BUCKET;
+
+    /**
+     * The permission required to work with imports
+     *
+     * @var string
+     */
+    const PERMISSION = Permission\Users\Create::class;
+
+    /**
+     * Where the controller lives
+     *
+     * @var string
+     */
+    const URL = 'admin/auth/import';
+
+    /**
+     * The number of per-line errors reported when an upload is rejected
+     *
+     * A wholly malformed file produces one per row; the first few say everything
+     * the thousandth does. Matches Processor::ERROR_SAMPLE_SIZE.
+     *
+     * @var int
+     */
+    const ERROR_SAMPLE_SIZE = Processor::ERROR_SAMPLE_SIZE;
+
+    /**
+     * How long the expiring CDN URL a download hands out is valid for, in seconds
+     *
+     * Shorter than module-admin's ADMIN_DATA_EXPORT_URL_TTL (300, see
+     * Nails\Admin\Service\DataExport::EXPORT_TTL) because the token only has to
+     * survive the 302 hop; a visitor who was not signed in re-enters log() after
+     * logging in and is issued a fresh one.
+     *
+     * @var int
+     */
+    const int URL_TTL = 60;
 
     // --------------------------------------------------------------------------
 
@@ -62,63 +114,69 @@ class Import extends Base
      *
      * @return void
      * @throws FactoryException
+     * @throws ModelException
      */
     public function index(): void
     {
-        if (!userHasPermission(Permission\Users\Create::class)) {
-            unauthorised();
-        }
-
-        // --------------------------------------------------------------------------
+        $this->assertPermission();
+        $this->assertRunning();
 
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
         /** @var \Nails\Auth\Service\User\Import $oImportService */
         $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
 
-        if ($oInput->post()) {
+        try {
+            /**
+             * On GET as well as POST: a template which cannot identify an account
+             * must not be offered for upload in the first place.
+             */
+            $this->assertTemplate();
+
+        } catch (TemplateException $e) {
+            $this->oUserFeedback->error($this->escape($e->getMessage()));
+            $this->data['bTemplateUnusable'] = true;
+        }
+
+        if ($oInput->post() && empty($this->data['bTemplateUnusable'])) {
             try {
 
-                if ($oInput->post('action') === 'preview') {
-                    $this
-                        ->validateUpload()
-                        ->renderPreview(
-                            $this->uploadCsv()
-                        );
-
-                    return;
-
-                } elseif ($oInput->post('action') === 'import') {
-                    $this
-                        ->validateObject()
-                        ->processImport();
-
-                } else {
-                    throw new \Exception('Unrecognised action');
-                }
+                $this->handleUpload();
+                return;
 
             } catch (ValidationException $e) {
-                $this->oUserFeedback->error(
-                    sprintf(
-                        '%s:<div class="alert alert-warning" style="%s">%s</div>',
-                        $e->getMessage(),
+
+                /**
+                 * Escaped on the way in: UserFeedback messages are rendered raw
+                 * so that the markup below survives, and both the message and
+                 * the itemised errors quote cell and header values lifted
+                 * straight out of the uploaded CSV.
+                 */
+                $sMessage = $this->escape($e->getMessage());
+                $aErrors  = $e->getData() ?? [];
+
+                if (!empty($aErrors)) {
+                    $sMessage .= sprintf(
+                        ':<div class="alert alert-warning" style="%s">%s</div>',
                         implode(';', [
                             'max-height: 10rem',
                             'overflow: auto',
                             'margin-bottom: 0;',
                         ]),
-                        implode('<br>', $e->getData() ?? [])
-                    )
-                );
+                        implode('<br>', array_map([$this, 'escape'], $aErrors))
+                    );
+                }
+
+                $this->oUserFeedback->error($sMessage);
 
             } catch (\Exception $e) {
-                $this->oUserFeedback->error($e->getMessage());
+                $this->oUserFeedback->error($this->escape($e->getMessage()));
             }
         }
 
         // --------------------------------------------------------------------------
 
-        $this->data['page']->title      = 'Import Users';
+        $this->data['page']->title      = 'Users &rsaquo; Import';
         $this->data['additionalFields'] = $oImportService->getAdditionalFields();
         Helper::loadView('index');
     }
@@ -133,6 +191,9 @@ class Import extends Base
      */
     public function template(): void
     {
+        $this->assertPermission();
+        $this->assertTemplate();
+
         /** @var \Nails\Auth\Service\User\Import $oImportService */
         $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
 
@@ -165,20 +226,243 @@ class Import extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Validates the CSV file upload
+     * Renders the shell of the preview; the rows themselves are paged in from
+     * the API
      *
-     * @return $this
+     * @return void
+     * @throws FactoryException
+     * @throws ModelException
+     */
+    public function preview(): void
+    {
+        $this->assertPermission();
+        $this->assertRunning();
+
+        $oImport = $this->getImport();
+
+        /** @var \Nails\Auth\Service\User\Import $oImportService */
+        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
+
+        try {
+            $aKeys = $this->getHeader($oImport);
+        } catch (ValidationException $e) {
+            //  The CSV has gone; show the columns we would have expected
+            $this->oUserFeedback->error($this->escape($e->getMessage()));
+            $aKeys = [];
+        }
+
+        $this->data['oImport']     = $oImport;
+        $this->data['bCsvMissing'] = empty($aKeys);
+        $this->data['aRegistered'] = $this->getRegistered($oImport);
+        $this->data['aKeys']       = $aKeys ?: $oImportService->getKeys();
+        $this->data['sApproveUrl'] = static::URL . '/approve/' . $oImport->id;
+        $this->data['sListUrl']    = static::URL;
+        $this->data['page']->title = sprintf(
+            'Users &rsaquo; Import &rsaquo; Preview (#%s &mdash; %s rows)',
+            $oImport->id,
+            $oImport->row_count ?? 0
+        );
+
+        Helper::loadView('preview');
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Approves a draft import and hands it to a runner
+     *
+     * @return void
+     * @throws FactoryException
+     * @throws ModelException
+     */
+    public function approve(): void
+    {
+        $this->assertPermission();
+        $this->assertPost();
+
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Dispatcher $oDispatcher */
+        $oDispatcher = Factory::service('UserImportDispatcher', Constants::MODULE_SLUG);
+        /** @var Validator $oValidator */
+        $oValidator = Factory::service('UserImportValidator', Constants::MODULE_SLUG);
+        /** @var Model\User\Import $oModel */
+        $oModel = Factory::model('UserImport', Constants::MODULE_SLUG);
+
+        $oImport = $this->getImport();
+
+        try {
+
+            if ($oImport->status !== Status::DRAFT) {
+                throw new ValidationException(
+                    'Only draft imports can be approved'
+                );
+            }
+
+            $this->assertTemplate();
+
+            //  The file has been sat in the CDN since it was uploaded; make sure
+            //  it is still there, and still makes sense, before committing to it
+            $oValidator->validateHeader($this->getHeader($oImport));
+
+            /**
+             * Registration is state, so it is re-checked here rather than trusted
+             * from the upload. Without the admin's consent to skip them, a job
+             * with registered rows would reach a runner only to be rejected, so
+             * it is refused now while there is somebody to tell.
+             */
+            $bSkipRegistered = (bool) $oInput->post('skip_registered');
+            $aRegistered     = $this->getRegistered($oImport);
+
+            if (!empty($aRegistered) && !$bSkipRegistered) {
+                $this->assertNoErrors($this->flattenRowErrors($aRegistered));
+            }
+
+            $oModel->update($oImport->id, [
+                'skip_registered' => $bSkipRegistered,
+            ]);
+
+            $oDispatcher->dispatch($oImport);
+
+            $this->oUserFeedback->success(sprintf(
+                'Import #%s has been queued and will begin shortly.',
+                $oImport->id
+            ));
+
+        } catch (\Exception $e) {
+            $this->oUserFeedback->error($this->escape($e->getMessage()));
+        }
+
+        redirect(static::URL);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Redirects to a short-lived URL for the job's source CSV
+     *
+     * @return void
+     * @throws FactoryException
+     * @throws ModelException
+     */
+    public function source(): void
+    {
+        $this->assertPermission();
+        $this->download($this->getImport()->object_id);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Redirects to a short-lived URL for the job's log
+     *
+     * @return void
+     * @throws FactoryException
+     * @throws ModelException
+     */
+    public function log(): void
+    {
+        $this->assertPermission();
+        $this->download($this->getImport()->log_id);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Redirects to a short-lived URL for one of the job's CDN objects
+     *
+     * The source CSV and the log both contain personal data, so neither is ever
+     * linked directly: the URL is minted here, behind the permission check, and
+     * expires. It does end up in the address bar and the Referer of the CDN
+     * request - the same trade module-admin's data export makes - which is why
+     * the TTL is measured in seconds.
+     *
+     * Reading personal data sits behind a create permission because that is the
+     * permission which governs the whole of this controller; the ability to run
+     * an import is the ability to read its file.
+     *
+     * @param int|null $iObjectId The CDN object to hand out
+     *
+     * @return void
+     */
+    protected function download(?int $iObjectId): void
+    {
+        if (empty($iObjectId)) {
+            //  No log was attached, or the object has since been destroyed
+            show404();
+        }
+
+        redirect(cdnExpiringUrl($iObjectId, static::URL_TTL, true));
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Validates the upload, stores it, and records the job
+     *
+     * Nothing is persisted unless the file is usable; a rejected upload leaves
+     * neither a CDN object nor a job behind.
+     *
      * @throws FactoryException
      * @throws ModelException
      * @throws NailsException
      * @throws ValidationException
      */
-    protected function validateUpload(): self
+    protected function handleUpload(): void
+    {
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Csv $oCsv */
+        $oCsv = Factory::service('UserImportCsv', Constants::MODULE_SLUG);
+        /** @var Model\User\Import $oModel */
+        $oModel = Factory::model('UserImport', Constants::MODULE_SLUG);
+
+        $aFile     = $this->validateUpload();
+        $iRowCount = $oCsv->countRows($aFile['tmp_name']);
+        $oObject   = $this->uploadCsv();
+
+        $iId = $oModel->create([
+            'object_id'  => $oObject->id,
+            'additional' => json_encode((object) ($oInput->post('additional') ?: [])),
+            'row_count'  => $iRowCount,
+            'status'     => Status::DRAFT->value,
+        ]);
+
+        if (empty($iId)) {
+            throw new RuntimeException(sprintf(
+                'Failed to record the import; %s',
+                $oModel->lastError()
+            ));
+        }
+
+        redirect(static::URL . '/preview/' . $iId);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Validates the CSV file upload
+     *
+     * Only whole-of-file concerns are checked here — that there is a file, that
+     * it is a CSV, that its header is one we understand, and that it does not
+     * contradict itself. Row level validation is the runner's job.
+     *
+     * @return array The $_FILES entry
+     * @throws FactoryException
+     * @throws ModelException
+     * @throws NailsException
+     * @throws ValidationException
+     */
+    protected function validateUpload(): array
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
         /** @var Cdn\Service\Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Cdn\Constants::MODULE_SLUG);
+        /** @var Csv $oCsv */
+        $oCsv = Factory::service('UserImportCsv', Constants::MODULE_SLUG);
+        /** @var Validator $oValidator */
+        $oValidator = Factory::service('UserImportValidator', Constants::MODULE_SLUG);
 
         $aFile = $oInput::file('csv');
         if (empty($aFile)) {
@@ -198,236 +482,93 @@ class Import extends Base
             );
         }
 
-        $this->validateData(
-            $this->parseCsv($aFile['tmp_name'])
+        $aHeader = $oCsv->getHeader($aFile['tmp_name']);
+
+        $oValidator->validateHeader($aHeader);
+
+        $this->assertNoErrors(
+            $oValidator->detectDuplicates($aFile['tmp_name'])
         );
 
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * @return $this
-     * @throws FactoryException
-     * @throws ModelException
-     * @throws NailsException
-     * @throws ValidationException
-     */
-    protected function validateObject(): self
-    {
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
-        /** @var Cdn\Service\Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', Cdn\Constants::MODULE_SLUG);
-        /** @var Cdn\Model\CdnObject $oObjectModel */
-        $oObjectModel = Factory::model('Object', Cdn\Constants::MODULE_SLUG);
-
-        /** @var Cdn\Resource\CdnObject $oObject */
-        $oObject = $oObjectModel->getById((int) $oInput->post('object_id'));
-        if (empty($oObject)) {
-            throw new RuntimeException(
-                'CDN Object does not exist'
-            );
-        } elseif ($oObject->file->mime !== 'text/csv') {
-            throw new RuntimeException(
-                'Object is not a CSV'
-            );
-        }
-
-        $sPath = $oCdn->objectLocalPath($oObject->id);
-        if (empty($sPath)) {
-            throw new RuntimeException(
-                'Failed to get a local path for CSV file.'
-            );
-        }
-
-        $this->validateData(
-            $this->parseCsv($sPath)
-        );
-
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Validates the CSV data
-     *
-     * @param array $aData The data to validate
-     *
-     * @return $this
-     * @throws FactoryException
-     * @throws ValidationException
-     * @throws ModelException
-     * @throws NailsException
-     */
-    protected function validateData(array $aData): self
-    {
-        /** @var \Nails\Auth\Service\User\Import $oImportService */
-        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
-        /** @var FormValidation $oFormValidationService */
-        $oFormValidationService = Factory::service('FormValidation');
-
-        $aHeader = array_splice($aData, 0, 1);
-        $aHeader = reset($aHeader);
-
-        //  Validate Header Row
-        if (empty($aHeader)) {
-            throw new ValidationException(
-                'Missing header row'
-            );
-        }
-
-        $aKeys = $oImportService->getKeys();
-        $aDiff = array_diff($aHeader, $aKeys);
-        if (!empty($aDiff)) {
-            throw new ValidationException(sprintf(
-                'Header row contains the following invalid values: %s',
-                implode(', ', $aDiff)
-            ));
-        }
-
-        //  Validate data
-        $aErrors = [];
-        $iLines  = 2;   //  Skip the header
-
-        //  Key the rules by the header's own columns; the CSV need not use every
-        //  key, nor list them in the same order as getKeys()
-        $aValidationRules = array_filter(
-            array_map(
-                fn($sKey) => $oImportService->getValidationRules($sKey),
-                array_combine($aHeader, $aHeader)
+        /**
+         * Row validation used to be left entirely to the runner, which meant an
+         * admin could approve - and commit to - a file which could never import.
+         * The rows are streamed, so this holds no more than one at a time, and
+         * the request already reads the whole file twice before reaching here.
+         *
+         * Only "the CSV is wrong" problems are checked. Values which are already
+         * registered are a separate, skippable concern handled at preview; see
+         * Import\Validator::detectRegistered().
+         */
+        $this->assertNoErrors(
+            $this->flattenRowErrors(
+                $oValidator->validateRows($aHeader, $oCsv->readRawRows($aFile['tmp_name']))
             )
         );
 
-        foreach ($aData as $aDatum) {
-
-            try {
-
-                $aDatum = array_combine($aHeader, $aDatum);
-                $aDatum = array_map('trim', $aDatum);
-
-                //  Basic validation
-                $oFormValidationService
-                    ->buildValidator(
-                        aRules: $aValidationRules,
-                        aData: $aDatum
-                    )
-                    ->run();
-
-            } catch (ValidationException $e) {
-
-                foreach ($e->getData() as $key => $error) {
-                    $aErrors[] = sprintf(
-                        'Line %d: %s: %s',
-                        $iLines,
-                        $key,
-                        $error
-                    );
-                }
-
-            } catch (Throwable $e) {
-                $aErrors[] = sprintf(
-                    'Error on line %d: %s',
-                    $iLines,
-                    $e->getMessage()
-                );
-            }
-
-            $iLines++;
-        }
-
-        //  Duplicate detection cannot live in the per-field rules; those only ever
-        //  see a single value, and the validator abandons a field's remaining rules
-        //  as soon as one of them fails. It's a whole-of-file concern, so handle it
-        //  as one pass over the parsed data.
-        $aErrors = array_merge(
-            $aErrors,
-            $this->detectDuplicates($aHeader, $aData)
-        );
-
-        if (!empty($aErrors)) {
-
-            $message = count($aErrors) === 1
-                ? '1 error was found in the CSV file'
-                : sprintf('%d errors were found in the CSV file', count($aErrors));
-
-            throw (new ValidationException($message))
-                ->setData($aErrors);
-        }
-
-        return $this;
+        return $aFile;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Detects values which are duplicated within the CSV itself
+     * Renders per-line errors as flat, prefixed strings
      *
-     * @param array $aHeader The CSV's header row
-     * @param array $aData   The CSV's data rows, header removed
+     * Matches detectDuplicates()'s output so both can go through the same
+     * reporting path.
+     *
+     * @param array<int, string[]> $aErrors Errors keyed by line number
      *
      * @return string[]
-     * @throws FactoryException
      */
-    protected function detectDuplicates(array $aHeader, array $aData): array
+    protected function flattenRowErrors(array $aErrors): array
     {
-        /** @var \Nails\Auth\Service\User\Import $oImportService */
-        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
+        $aOut = [];
 
-        $aErrors = [];
-
-        foreach ($oImportService->getUniqueKeys() as $sKey) {
-
-            $iColumn = array_search($sKey, $aHeader, true);
-            if ($iColumn === false) {
-                continue;
-            }
-
-            $aSeen = [];
-
-            foreach ($aData as $iIndex => $aDatum) {
-
-                $sValue = strtolower(trim($aDatum[$iColumn] ?? ''));
-                if ($sValue === '') {
-                    continue;
-                }
-
-                $iLine = $iIndex + 2;   //  Lines are 1 indexed, and the header is line 1
-
-                if (array_key_exists($sValue, $aSeen)) {
-                    $aErrors[] = sprintf(
-                        'Line %d: %s: "%s" must only appear once; it is also on line %d',
-                        $iLine,
-                        $sKey,
-                        $sValue,
-                        $aSeen[$sValue]
-                    );
-                } else {
-                    $aSeen[$sValue] = $iLine;
-                }
+        foreach ($aErrors as $iLine => $aLineErrors) {
+            foreach ($aLineErrors as $sError) {
+                $aOut[] = sprintf('Line %d: %s', $iLine, $sError);
             }
         }
 
-        return $aErrors;
+        return $aOut;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Parses the CSV file into an array
+     * Rejects the upload if anything was found
      *
-     * @param string $sPath The path to the CSV
+     * The list is capped: a wholly malformed file can produce an error for every
+     * row, and thousands of near-identical lines tell an admin less than the
+     * first few do.
      *
-     * @return array
+     * @param string[] $aErrors
+     *
+     * @throws ValidationException
      */
-    protected function parseCsv(string $sPath): array
+    protected function assertNoErrors(array $aErrors): void
     {
-        return array_map(
-            fn($line) => str_getcsv($line, escape: ''),
-            file($sPath)
-        );
+        if (empty($aErrors)) {
+            return;
+        }
+
+        $iTotal = count($aErrors);
+
+        $sMessage = $iTotal === 1
+            ? '1 error was found in the CSV file'
+            : sprintf('%s errors were found in the CSV file', number_format($iTotal));
+
+        if ($iTotal > static::ERROR_SAMPLE_SIZE) {
+            $aErrors   = array_slice($aErrors, 0, static::ERROR_SAMPLE_SIZE);
+            $aErrors[] = sprintf(
+                '…and %s more',
+                number_format($iTotal - static::ERROR_SAMPLE_SIZE)
+            );
+        }
+
+        throw (new ValidationException($sMessage))
+            ->setData($aErrors);
     }
 
     // --------------------------------------------------------------------------
@@ -447,12 +588,12 @@ class Import extends Base
 
         $oObject = $oCdn->objectCreate(
             'csv',
-            self::IMPORT_BUCKET,
+            static::IMPORT_BUCKET,
             [
                 'Content-Type' => 'text/csv',
                 'metadata'     => [
                     [
-                        'key'   => (new SystemKey\UserImport)->get(),
+                        'key'   => (new SystemKey\UserImport())->get(),
                         'value' => true,
                     ],
                 ],
@@ -474,209 +615,178 @@ class Import extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * @param Cdn\Resource\CdnObject $oObject
+     * Returns the import named by the URL, or 404s
      *
-     * @return void
      * @throws FactoryException
-     * @throws NailsException
+     * @throws ModelException
      */
-    protected function renderPreview(Cdn\Resource\CdnObject $oObject): void
+    protected function getImport(): Resource\User\Import
     {
-        /** @var \Nails\Auth\Service\User\Import $oImportService */
-        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
-        /** @var Cdn\Service\Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', Cdn\Constants::MODULE_SLUG);
+        /** @var Uri $oUri */
+        $oUri = Factory::service('Uri');
+        /** @var Model\User\Import $oModel */
+        $oModel = Factory::model('UserImport', Constants::MODULE_SLUG);
 
-        $sPath = $oCdn->objectLocalPath($oObject->id);
-        if (empty($sPath)) {
-            throw new RuntimeException(
-                'Failed to get a local path for CSV file'
-            );
+        /** @var Resource\User\Import|null $oImport */
+        $oImport = $oModel->getById((int) $oUri->segment(5));
+
+        if (empty($oImport)) {
+            show404();
         }
 
-        $aData = $this->parseCsv($sPath);
-
-        $aKeys   = $oImportService->getKeys();
-        $aHeader = array_splice($aData, 0, 1);
-        $aHeader = reset($aHeader);
-
-        foreach ($aData as &$aDatum) {
-            $aDatum = array_combine($aHeader, $aDatum);
-            foreach ($aKeys as $sField) {
-                if ($aDatum[$sField] === '') {
-                    $aDatum[$sField] = $oImportService->getDefaultValue($sField);
-                }
-            }
-        }
-
-        $this->data['aKeys']       = $aKeys;
-        $this->data['aHeader']     = $aHeader;
-        $this->data['aData']       = $aData;
-        $this->data['oObject']     = $oObject;
-        $this->data['oAdditional'] = (object) $oInput->post('additional');
-
-        $this->data['page']->title = 'Import Users: Preview (' . count($aData) . ')';
-
-        Helper::loadView('preview');
+        return $oImport;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Process the import
+     * Returns the header row of an import's CSV
      *
-     * @return void
+     * @return string[]
      * @throws FactoryException
-     * @throws NailsException
+     * @throws ValidationException
      */
-    protected function processImport(): void
+    protected function getHeader(Resource\User\Import $oImport): array
     {
-        /** @var \Nails\Auth\Service\User\Import $oImportService */
-        $oImportService = Factory::service('UserImport', Constants::MODULE_SLUG);
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
+        /** @var Csv $oCsv */
+        $oCsv = Factory::service('UserImportCsv', Constants::MODULE_SLUG);
+
+        return $oCsv->getHeader($this->getCsvPath($oImport));
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the local path of an import's CSV
+     *
+     * @throws FactoryException
+     * @throws ValidationException If the file is no longer retrievable
+     */
+    protected function getCsvPath(Resource\User\Import $oImport): string
+    {
         /** @var Cdn\Service\Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Cdn\Constants::MODULE_SLUG);
-        /** @var User $oUserModel */
-        $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
 
-        $iObjectId   = (int) $oInput->post('object_id');
-        $oAdditional = json_decode($oInput->post('additional'));
-
-        $sPath = $oCdn->objectLocalPath($iObjectId);
+        $sPath = $oCdn->objectLocalPath($oImport->object_id);
         if (empty($sPath)) {
-            throw new RuntimeException(
-                'Failed to get a local path for CSV file.'
+            throw new ValidationException(
+                'Failed to get a local path for the CSV file'
             );
         }
 
-        $aKeys    = $oImportService->getKeys();
-        $aData    = $this->parseCsv($sPath);
-        $aHeader  = array_splice($aData, 0, 1);
-        $aHeader  = reset($aHeader);
-        $iSuccess = 0;
-        $iError   = 0;
-        $aLog     = [];
+        return $sPath;
+    }
 
-        foreach ($aData as $aDatum) {
+    // --------------------------------------------------------------------------
 
-            $aDatum     = array_combine($aHeader, $aDatum);
-            $bSendEmail = stringToBoolean($aDatum['send_email'] ?? false);
+    /**
+     * @throws FactoryException
+     */
+    /**
+     * Escapes a value destined for a user feedback message
+     *
+     * UserFeedback messages are rendered raw - see module-admin's
+     * page-header.php - and every message this controller reports quotes header
+     * or cell values taken from an uploaded CSV, so they are escaped here rather
+     * than trusted downstream.§
+     */
+    protected function escape(?string $sValue): string
+    {
+        return htmlspecialchars((string) $sValue, ENT_QUOTES, 'UTF-8');
+    }
 
-            $aUserData = [];
-            foreach ($aKeys as $sKey) {
-                $aUserData[$sKey] = $aDatum[$sKey] ?? null;
-                if ($aUserData[$sKey] === '') {
-                    $aUserData[$sKey] = $oImportService->getDefaultValue($sKey);
-                }
-            }
+    // --------------------------------------------------------------------------
 
-            //  Apply additional fields
-            foreach ($oAdditional as $oProperty => $mValue) {
-                $aUserData[$oProperty] = $oImportService->parseAdditionalFields($oProperty, $mValue);
-            }
+    /**
+     * Returns the job's rows whose unique values are already registered
+     *
+     * Recomputed rather than stored: registration is state which can change
+     * between upload and approval, and a stale answer here would either block a
+     * job which is now fine or wave through one which is not.
+     *
+     * Only meaningful before the job runs, so a job which is past DRAFT is not
+     * made to pay for the pass.
+     *
+     * @return array<int, string[]> Errors keyed by line number
+     * @throws FactoryException
+     */
+    protected function getRegistered(Resource\User\Import $oImport): array
+    {
+        /** @var Csv $oCsv */
+        $oCsv = Factory::service('UserImportCsv', Constants::MODULE_SLUG);
+        /** @var Validator $oValidator */
+        $oValidator = Factory::service('UserImportValidator', Constants::MODULE_SLUG);
 
-            try {
-
-                $oUser = $oUserModel->create($aUserData, $bSendEmail);
-
-                if ($oUser) {
-                    $iSuccess++;
-                    $aLog[] = array_merge(
-                        $aDatum,
-                        [
-                            'id'      => $oUser->id,
-                            'status'  => 'SUCCESS',
-                            'message' => '',
-                        ]
-                    );
-                } else {
-                    $iError++;
-                    $aLog[] = array_merge(
-                        $aDatum,
-                        [
-                            'id'      => null,
-                            'status'  => 'ERROR',
-                            'message' => $oUserModel->lastError(),
-                        ]
-                    );
-                }
-
-            } catch (Throwable $e) {
-                $iError++;
-                $aLog[] = array_merge(
-                    $aDatum,
-                    [
-                        'id'      => null,
-                        'status'  => 'ERROR',
-                        'message' => $e->getMessage(),
-                    ]
-                );
-            }
+        if ($oImport->status !== Status::DRAFT) {
+            return [];
         }
 
-        array_unshift($aLog, array_merge(
-            $aHeader,
-            [
-                'id',
-                'status',
-                'message',
-            ]
-        ));
+        try {
+            $sPath = $this->getCsvPath($oImport);
 
-        //  Convert array to CSV and save to cDN
-        $fp = fopen('php://temp', 'r+');
-        foreach ($aLog as $row) {
-            fputcsv($fp, $row, escape: '');
+        } catch (ValidationException $e) {
+            //  The CSV has gone; the caller has already reported that
+            return [];
         }
-        rewind($fp);
-        $csvLog = stream_get_contents($fp);
-        fclose($fp);
 
-        /** @var \DateTime $oNow */
-        $oNow = Factory::factory('DateTime');
-        $oLog = $oCdn->objectCreate(
-            $csvLog,
-            self::IMPORT_BUCKET,
-            [
-                'no-md5-check'     => true,
-                'Content-Type'     => 'text/csv',
-                'filename_display' => sprintf(
-                    'user-import-log-%s.csv',
-                    $oNow->format('Y-m-d_H-i-s')
-                ),
-                'metadata'         => [
-                    [
-                        'key'   => (new SystemKey\UserImport)->get(),
-                        'value' => true,
-                    ],
-                    [
-                        'key'   => (new SystemKey\ImportedFrom)->get(),
-                        'value' => $iObjectId,
-                    ],
-                ],
-            ],
-            true
+        return $oValidator->detectRegistered(
+            $oCsv->getHeader($sPath),
+            $oCsv->readRawRows($sPath)
         );
+    }
 
-        if (!empty($iSuccess)) {
-            $this->oUserFeedback->success(sprintf(
-                '%s user accounts created successfully. <a href="%s" style="text-decoration: underline">See log for details.</a>',
-                $iSuccess,
-                cdnServe($oLog->id, true)
-            ));
+    // --------------------------------------------------------------------------
+
+    /**
+     * Asserts the import template can produce a usable account
+     *
+     * @throws TemplateException
+     * @throws FactoryException
+     */
+    protected function assertTemplate(): void
+    {
+        /** @var Validator $oValidator */
+        $oValidator = Factory::service('UserImportValidator', Constants::MODULE_SLUG);
+
+        $oValidator->validateTemplate();
+    }
+
+    // --------------------------------------------------------------------------
+
+    protected function assertPermission(): void
+    {
+        if (!userHasPermission(static::PERMISSION)) {
+            unauthorised();
         }
+    }
 
-        if (!empty($iError)) {
-            $this->oUserFeedback->error(sprintf(
-                '%s user accounts encountered errors. <a href="%s" style="text-decoration: underline">See log for details.</a>',
-                $iError,
-                cdnServe($oLog->id, true)
-            ));
+    protected function assertRunning(): void
+    {
+        /** @var Dispatcher $oDispatcher */
+        $oDispatcher = Factory::service('UserImportDispatcher', Constants::MODULE_SLUG);
+
+        if (!$oDispatcher->isRunning()) {
+            $this->oUserFeedback->warning(
+                '<strong>The user import cron job is not running</strong>' .
+                '<br>The cron job has not been executed within the past 5 minutes; imports will not be processed.'
+            );
         }
+    }
 
-        redirect(self::url());
+    // --------------------------------------------------------------------------
+
+    /**
+     * State changes are POST only so they cannot be triggered by a link
+     *
+     * @throws FactoryException
+     */
+    protected function assertPost(): void
+    {
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+
+        if (strtoupper((string) $oInput::server('REQUEST_METHOD')) !== 'POST') {
+            show404();
+        }
     }
 }
