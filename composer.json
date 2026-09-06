@@ -32,8 +32,10 @@
         "php": ">=8.3",
         "nails/common": "dev-develop",
         "nails/module-admin": "dev-develop",
+        "nails/module-api": "dev-develop",
         "nails/module-captcha": "dev-develop",
         "nails/module-console": "dev-develop",
+        "nails/module-cron": "dev-develop",
         "nails/module-email": "dev-develop",
         "nails/module-form-builder": "dev-develop",
         "hybridauth/hybridauth": "~3.0",
@@ -44,7 +46,11 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^12.0",
-        "phpstan/phpstan": "^2.0"
+        "phpstan/phpstan": "^2.0",
+        "nails/module-queue": "dev-develop"
+    },
+    "suggest": {
+        "nails/module-queue": "Processes user imports on a long-running worker, rather than in chunks on the cron."
     },
     "scripts": {
         "test": "./vendor/bin/phpunit",
@@ -53,6 +59,11 @@
     "autoload": {
         "psr-4": {
             "Nails\\Auth\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Auth\\": "tests/"
         }
     },
     "extra": {

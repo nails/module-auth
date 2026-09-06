@@ -6,6 +6,7 @@ import AccountEdit from './components/AccountEdit.js';
 import AccountMerge from './components/AccountMerge.js';
 import Groups from './components/Groups.js';
 import SearchUser from './components/SearchUser.js';
+import UserImport from './components/UserImport.js';
 
 (function() {
     window.NAILS.ADMIN.registerPlugin(
@@ -32,6 +33,11 @@ import SearchUser from './components/SearchUser.js';
         'nails/module-auth',
         'SearchUser',
         new SearchUser(window.NAILS.ADMIN)
+    );
+    window.NAILS.ADMIN.registerPlugin(
+        'nails/module-auth',
+        'UserImport',
+        new UserImport(window.NAILS.ADMIN)
     );
 })();
 

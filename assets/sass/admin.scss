@@ -278,3 +278,147 @@
         }
     }
 }
+
+/**
+ * Contextual badges. module-admin ships a bare `.badge` and deliberately no
+ * variants - it does not import Bootstrap's `_labels.scss`, and `.label` there
+ * is a form-label selector (`float: left; width: 130px`), so it must not be
+ * pressed into service as a pill.
+ *
+ * Even the neutral case needs an explicit colour: admin's own badge background
+ * is `rgba(0, 0, 0, 0.25)`, which over a white cell resolves to #bfbfbf - 1.8:1
+ * against the white text Bootstrap gives it, a flat contrast failure.
+ *
+ * The hexes are admin's `$color-*-text` palette written out longhand, because
+ * this stylesheet is standalone and cannot reach its variables. All five clear
+ * 4.5:1 against white at the 12px bold Bootstrap's base rule sets, which also
+ * supplies the colour, weight and radius. Doubled up on `.badge` so the rules
+ * do not depend on which stylesheet loads last.
+ */
+.badge {
+    &.badge--default {
+        background-color: #555555; //  7.5:1
+    }
+
+    &.badge--info {
+        background-color: #31708f; //  5.5:1
+    }
+
+    &.badge--success {
+        background-color: #3c763d; //  5.5:1
+    }
+
+    &.badge--warning {
+        background-color: #8a6d3b; //  4.9:1
+    }
+
+    &.badge--danger {
+        background-color: #a94442; //  5.9:1
+    }
+}
+
+/**
+ * A spinner of our own. The admin theme has no reusable one - its only spinner
+ * is scoped to `.search .mask` - and Bootstrap's `.spinner-border` is not in the
+ * installed build, so this is self contained.
+ */
+@keyframes user-import-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.user-import-spinner {
+    display: inline-block;
+    width: 0.85em;
+    height: 0.85em;
+    vertical-align: -0.1em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: user-import-spin 0.75s linear infinite;
+}
+
+/**
+ * The details modal's body. Top level, alongside the spinner, because admin's
+ * Modal appends its container to `document.body` - outside `.module-auth` - so
+ * a rule nested in there would never match.
+ */
+.user-import-details {
+    p {
+        margin: 0 0 0.5rem;
+    }
+
+    /**
+     * The modal body already scrolls (`max-height: 80vh` in module-admin's
+     * modal.scss), so each block is capped and owns its own scroll; a scroller
+     * nested inside a scroller makes both awkward to use.
+     *
+     * `pre-wrap` is what keeps a long "already registered" message wrapping
+     * instead of forcing the whole modal sideways.
+     */
+    &__log,
+    &__rows {
+        max-height: 40vh;
+        overflow: auto;
+        margin: 0 0 0.75rem;
+        padding: 0.75rem;
+        font-size: 12px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background-color: #f5f5f5;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+    }
+}
+
+.module-auth {
+    &.import {
+        /**
+         * Four btn-xs now that Details is there alongside Review, Log and
+         * Delete; the 225px this used to carry wrapped them.
+         */
+        th.actions,
+        td.actions {
+            width: 275px;
+            min-width: 275px;
+        }
+    }
+
+    &.import--preview {
+        #user-import-preview {
+            /**
+             * Fade the outgoing rows while the next page is in flight. module-admin
+             * has no busy convention to borrow - the `.search > .mask` spinner's
+             * `search-spin` keyframes are never declared, so it does not animate -
+             * so this is the one rule we own. `aria-busy` doubles as the hook, so
+             * no class has to be invented.
+             */
+            tbody {
+                transition: opacity 150ms ease-in-out;
+            }
+
+            &[aria-busy='true'] {
+                tbody {
+                    opacity: 0.4;
+                }
+
+                //  Anchors have no disabled state, so stop the clicks here too
+                .pagination a {
+                    pointer-events: none;
+                }
+            }
+        }
+
+        /**
+         * The line number is a gutter, not data; without a width it takes an equal
+         * share of the table alongside the CSV's own columns.
+         */
+        th.field--line,
+        td.field--line {
+            width: 60px;
+            text-align: center;
+        }
+    }
+}
