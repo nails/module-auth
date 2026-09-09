@@ -14,12 +14,16 @@ namespace Nails\Admin\Auth;
 
 use Nails\Admin\Controller\DefaultController;
 use Nails\Auth\Constants;
+use Nails\Auth\Interfaces\Admin\User\Group\Tab;
 use Nails\Auth\Model\User\Group;
 use Nails\Auth\Model\User\Password;
 use Nails\Common\Exception\ValidationException;
+use Nails\Common\Factory\Component;
 use Nails\Common\Resource;
+use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\Uri;
+use Nails\Components;
 use Nails\Config;
 use Nails\Factory;
 
@@ -44,6 +48,13 @@ class Groups extends DefaultController
     // --------------------------------------------------------------------------
 
     /**
+     * @var Tab[]
+     */
+    protected array $aGroupTabs = [];
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Load data for the edit/create view
      *
      * @param Resource $oItem The main item object
@@ -53,6 +64,22 @@ class Groups extends DefaultController
     protected function loadEditViewData(?Resource $oItem = null): void
     {
         parent::loadEditViewData($oItem);
+
+        $this->aGroupTabs = [];
+        /** @var Component $oComponent */
+        foreach (Components::available() as $oComponent) {
+            $aClasses = $oComponent
+                ->findClasses('Auth\\Admin\\User\\Group\\Tab')
+                ->whichImplement(Tab::class);
+
+            foreach ($aClasses as $sClass) {
+                if ($sClass::isEnabled($oItem)) {
+                    $this->aGroupTabs[$sClass] = new $sClass();
+                }
+            }
+        }
+
+        $this->data['aGroupTabs'] = $this->aGroupTabs;
 
         //  Get all available permissions
         $this->data['aPermissions'] = [];
@@ -107,6 +134,20 @@ class Groups extends DefaultController
                 'description' => ['required'],
             ]
         );
+
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        $aRules = [];
+        /** @var Tab $oTab */
+        foreach ($this->aGroupTabs as $oTab) {
+            $aRules = array_merge($aRules, $oTab->getValidationRules($this->data['item']));
+        }
+
+        if ($aRules) {
+            /** @var FormValidation $oFormValidation */
+            $oFormValidation = Factory::service('FormValidation');
+            $oFormValidation->buildValidator($aRules, [], $oInput->post())->run();
+        }
     }
 
     // --------------------------------------------------------------------------
@@ -125,7 +166,7 @@ class Groups extends DefaultController
         /** @var Password $oUserPasswordModel */
         $oUserPasswordModel = Factory::model('UserPassword', Constants::MODULE_SLUG);
 
-        return [
+        $aData = [
             'slug'                  => $oInput->post('slug'),
             'label'                 => $oInput->post('label'),
             'description'           => $oInput->post('description'),
@@ -134,6 +175,34 @@ class Groups extends DefaultController
             'acl'                   => $oUserGroupModel->processPermissions($oInput->post('acl') ?: []),
             'password_rules'        => $oUserPasswordModel->processRules($oInput->post('pw') ?: []),
         ];
+
+        /** @var Tab $oTab */
+        foreach ($this->aGroupTabs as $oTab) {
+            $aData = array_merge($aData, $oTab->getPostData($this->data['item'], $oInput->post()));
+        }
+
+        return $aData;
+    }
+
+    // --------------------------------------------------------------------------
+
+    protected function afterCreateAndEdit(
+        $sMode,
+        ?Resource $oNewItem,
+        ?Resource $oOldItem = null
+    ): void {
+        parent::afterCreateAndEdit($sMode, $oNewItem, $oOldItem);
+
+        if (!$oNewItem instanceof \Nails\Auth\Resource\User\Group) {
+            return;
+        }
+
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Tab $oTab */
+        foreach ($this->aGroupTabs as $oTab) {
+            $oTab->afterSave($oNewItem, $oInput->post());
+        }
     }
 
     // --------------------------------------------------------------------------

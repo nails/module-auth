@@ -3,6 +3,18 @@
 use Nails\Factory;
 
 $oInput = Factory::service('Input');
+
+$aRenderedGroupTabs = [];
+/** @var \Nails\Auth\Interfaces\Admin\User\Group\Tab $oTab */
+foreach ($aGroupTabs ?? [] as $oTab) {
+    $aRenderedGroupTabs[] = [
+        'id'      => 'tab-extension-' . count($aRenderedGroupTabs),
+        'order'   => $oTab->getOrder(),
+        'label'   => $oTab->getLabel(),
+        'content' => $oTab->getBody($item ?? null),
+    ];
+}
+arraySortMulti($aRenderedGroupTabs, 'order');
 ?>
 <div class="group-accounts groups edit">
     <div class="alert alert-warning">
@@ -22,9 +34,11 @@ $oInput = Factory::service('Input');
         <li class="tab <?=$oInput->post('activeTab') == 'tab-password' ? 'active' : ''?>">
             <a href="#" data-tab="tab-password">Password</a>
         </li>
-        <li class="tab <?=$oInput->post('activeTab') == 'tab-2fa' ? 'active' : ''?>">
-            <a href="#" data-tab="tab-2fa">2FA</a>
-        </li>
+        <?php foreach ($aRenderedGroupTabs as $aTab) { ?>
+            <li class="tab <?=$oInput->post('activeTab') === $aTab['id'] ? 'active' : ''?>">
+                <a href="#" data-tab="<?=htmlspecialchars($aTab['id'])?>"><?=htmlspecialchars($aTab['label'])?></a>
+            </li>
+        <?php } ?>
         <li class="tab <?=$oInput->post('activeTab') == 'tab-permissions' ? 'active' : ''?>">
             <a href="#" data-tab="tab-permissions">Permissions</a>
         </li>
@@ -166,12 +180,11 @@ $oInput = Factory::service('Input');
                 ?>
             </div>
         </div>
-        <!-- 2FA -->
-        <div class="tab-page tab-2fa <?=$oInput->post('activeTab') == 'tab-2fa' ? 'active' : ''?>">
-            <p class="alert alert-warning">
-                Currently, 2FA settings are done at a code-level and apply to all users.
-            </p>
-        </div>
+        <?php foreach ($aRenderedGroupTabs as $aTab) { ?>
+            <div class="tab-page <?=htmlspecialchars($aTab['id'])?> <?=$oInput->post('activeTab') === $aTab['id'] ? 'active' : ''?>">
+                <?=$aTab['content']?>
+            </div>
+        <?php } ?>
         <!--    PERMISSIONS -->
         <div class="tab-page tab-permissions <?=$oInput->post('activeTab') == 'tab-permissions' ? 'active' : ''?>">
             <p>
@@ -279,6 +292,11 @@ $oInput = Factory::service('Input');
 
     echo \Nails\Admin\Helper::floatingControls($CONFIG['FLOATING_CONFIG']);
     echo form_close();
+
+    /** @var \Nails\Auth\Interfaces\Admin\User\Group\Tab $oTab */
+    foreach ($aGroupTabs ?? [] as $oTab) {
+        echo $oTab->getAdditionalMarkup($item ?? null);
+    }
 
     ?>
 </div>
