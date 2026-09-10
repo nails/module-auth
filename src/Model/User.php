@@ -23,6 +23,7 @@ use Nails\Auth\Model\User\Email;
 use Nails\Auth\Model\User\Group;
 use Nails\Auth\Model\User\Password;
 use Nails\Auth\Resource;
+use Nails\Auth\Service\Authentication;
 use Nails\Common\Exception\EnvironmentException;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
@@ -527,7 +528,9 @@ class User extends Base
         $oSession
             ->unsetUserData('id')
             ->unsetUserData('email')
-            ->unsetUserData('group_id');
+            ->unsetUserData('group_id')
+            //  Covers the MFA fail-closed path; logout() destroys the session outright
+            ->unsetUserData(Authentication::SESSION_KEY_LOGIN_METHOD);
 
         //  Set the flag
         $this->bIsLoggedIn = false;
