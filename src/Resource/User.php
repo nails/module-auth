@@ -55,7 +55,7 @@ class User extends Entity
     /** @var string */
     public $remember_code;
 
-    /** @var DateTime */
+    /** @var DateTime|null Null until the user's second login */
     public $last_login;
 
     /** @var DateTime */

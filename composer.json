@@ -53,7 +53,7 @@
     },
     "scripts": {
         "test": "./vendor/bin/phpunit",
-        "analyse": "./vendor/bin/phpstan analyse -c .phpstan/config.neon --memory-limit=256M"
+        "analyse": "./vendor/bin/phpstan analyse -c .phpstan/config.neon --memory-limit=1G"
     },
     "autoload": {
         "psr-4": {

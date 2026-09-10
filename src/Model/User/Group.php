@@ -161,6 +161,7 @@ class Group extends Base
      */
     public function changeUserGroup(array $aUserIds, $iNewGroupId)
     {
+        /** @var \Nails\Auth\Resource\User\Group|null $oGroup */
         $oGroup = $this->getById($iNewGroupId);
         if (empty($oGroup)) {
             $this->setError('"' . $iNewGroupId . '" is not a valid group ID.');
