@@ -214,11 +214,9 @@ class Settings extends Base
 
                     $bRollback = false;
 
-                    if (!empty($aSettings)) {
-                        if (!$oAppSettingService->set($aSettings, 'auth')) {
-                            $error     = $oAppSettingService->lastError();
-                            $bRollback = true;
-                        }
+                    if (!$oAppSettingService->set($aSettings, 'auth')) {
+                        $error     = $oAppSettingService->lastError();
+                        $bRollback = true;
                     }
 
                     if (!empty($aSettingsEncrypted)) {

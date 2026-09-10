@@ -1117,6 +1117,7 @@ class User extends Base
                 // --------------------------------------------------------------------------
 
                 //  Update the password if it has been supplied
+                $bPasswordUpdated = false;
                 if (!empty($sNewPassword)) {
                     $bIsTemp = (bool) getFromArray('temp_pw', $aData);
                     if (!$oUserPasswordModel->change($iUserId, $sNewPassword, $bIsTemp)) {
@@ -1125,6 +1126,7 @@ class User extends Base
                             $oUserPasswordModel->lastError()
                         );
                     }
+                    $bPasswordUpdated = true;
                 }
 
                 // --------------------------------------------------------------------------
@@ -1273,7 +1275,7 @@ class User extends Base
     public function setCacheUser(int $iUserId, array $aData = []): bool
     {
         $this->unsetCacheUser($iUserId);
-        /** @var Resource\User $oUser */
+        /** @var Resource\User|null $oUser */
         $oUser = $this->getById($iUserId);
 
         if (empty($oUser)) {
@@ -1332,7 +1334,7 @@ class User extends Base
         $iUserId = empty($iUserId) ? $this->activeUser('id') : $iUserId;
         $sEmail  = trim(strtolower($sEmail));
 
-        /** @var Resource\User $oUser */
+        /** @var Resource\User|null $oUser */
         $oUser = $this->getById($iUserId);
 
         if (empty($oUser)) {
@@ -2109,7 +2111,7 @@ class User extends Base
             $aUserData['group_id'] = $aData['group_id'];
         }
 
-        /** @var Resource\User\Group $oGroup */
+        /** @var Resource\User\Group|null $oGroup */
         $oGroup = $oUserGroupModel->getById($aUserData['group_id']);
 
         if (empty($oGroup)) {
@@ -2332,7 +2334,7 @@ class User extends Base
             //  Finally, propagate any expandable fields
             $this->autoSaveExpandableFieldsSave(
                 $iId,
-                $this->autoSaveExpandableFieldsExtract($data)
+                $this->autoSaveExpandableFieldsExtract($aData)
             );
 
             // --------------------------------------------------------------------------
@@ -2704,6 +2706,10 @@ class User extends Base
 
         foreach ($aMap as $sTable => $aColumns) {
 
+            if (empty($aColumns)) {
+                continue;
+            }
+
             foreach ($aColumns as $sColumn) {
                 $oDb->set($sColumn, $iKeepId);
             }
@@ -2713,12 +2719,20 @@ class User extends Base
                 $oDb->set('is_primary', false);
             }
 
-            $oDb->where_in($sColumn, $aMergeIds);
+            /**
+             * @todo (Pablo 2026-09-10) - this filters on the last mapped column only,
+             * which is wrong for a table referencing the user more than once (e.g. both
+             * created_by and modified_by). Previously it relied on the loop variable
+             * leaking; made explicit here without changing the behaviour.
+             */
+            $sFilterColumn = end($aColumns);
+
+            $oDb->where_in($sFilterColumn, $aMergeIds);
 
             if (!$oDb->update($sTable)) {
                 throw new MergeException(sprintf(
                     'Failed to migrate column "%s" in table "%s"',
-                    $sColumn,
+                    $sFilterColumn,
                     $sTable
                 ));
             }
