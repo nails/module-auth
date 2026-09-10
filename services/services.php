@@ -14,6 +14,13 @@ return [
                 return new Service\Authentication();
             }
         },
+        'Passkey'        => function (): Service\Passkey {
+            if (class_exists('\App\Auth\Service\Passkey')) {
+                return new \App\Auth\Service\Passkey();
+            } else {
+                return new Service\Passkey();
+            }
+        },
         'Session'        => function (): Service\Session {
             if (class_exists('\App\Auth\Service\Session')) {
                 return new \App\Auth\Service\Session();
@@ -133,6 +140,13 @@ return [
                 return new \App\Auth\Model\User\Import\Item();
             } else {
                 return new Model\User\Import\Item();
+            }
+        },
+        'UserPasskey'         => function (): Model\User\Passkey {
+            if (class_exists('\App\Auth\Model\User\Passkey')) {
+                return new \App\Auth\Model\User\Passkey();
+            } else {
+                return new Model\User\Passkey();
             }
         },
         'UserPassword'        => function (): Model\User\Password {
@@ -272,6 +286,13 @@ return [
                 return new \App\Auth\Resource\User\Import\Item($resource, $model);
             } else {
                 return new Resource\User\Import\Item($resource, $model);
+            }
+        },
+        'UserPasskey'         => function ($resource, $model): Resource\User\Passkey {
+            if (class_exists('\App\Auth\Resource\User\Passkey')) {
+                return new \App\Auth\Resource\User\Passkey($resource, $model);
+            } else {
+                return new Resource\User\Passkey($resource, $model);
             }
         },
         'UserPasswordHistory' => function ($resource, $model): Resource\User\Password\History {
