@@ -25,7 +25,12 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
         <div class="panel__body">
             <?php
 
-            echo form_open(loginUrl($return_to), 'class="form"');
+            echo form_open(
+                loginUrl($return_to),
+                'class="form" id="login-form"' .
+                ' data-passkey-return-to="' . htmlspecialchars((string) $return_to, ENT_QUOTES) . '"' .
+                ' data-passkey-site-url="' . htmlspecialchars(siteUrl(), ENT_QUOTES) . '"'
+            );
             $oView->load('auth/_components/alerts');
 
             if ($social_signon_enabled) {
@@ -86,8 +91,17 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
                     break;
             }
 
-            $sFieldKey   = 'identifier';
-            $sFieldAttr  = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
+            $sFieldKey  = 'identifier';
+            $sFieldAttr = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
+
+            /**
+             * `webauthn` on the autocomplete token is what lets the browser offer a
+             * saved passkey in the field's own dropdown (conditional mediation).
+             */
+            if (!empty($passkeys_enabled)) {
+                $sFieldAttr .= ' autocomplete="username webauthn" data-passkey-conditional';
+            }
+
             $sFieldValue = set_value($sFieldKey, $oInput->get('identity'), false);
 
             ?>
@@ -138,6 +152,28 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
 
                 ?>
             </div>
+            <?php
+
+            /**
+             * A passkey is a different way in, not a variant of the password, so it sits
+             * below the password controls behind a rule - the same shape the social
+             * sign-on block above uses. The whole block is hidden until the JavaScript
+             * confirms the browser can do WebAuthn, so an unsupported browser is never
+             * left with a rule and nothing beneath it.
+             */
+            if (!empty($passkeys_enabled)) {
+                ?>
+                <div class="passkey-alternative" data-passkey-block hidden>
+                    <hr/>
+                    <button type="button" class="btn btn--block btn--secondary" data-passkey-login hidden>
+                        <?=lang('auth_login_passkey_button')?>
+                    </button>
+                    <p class="form__feedback form__feedback--invalid" data-passkey-error hidden></p>
+                </div>
+                <?php
+            }
+
+            ?>
             <?=form_close()?>
         </div>
         <?php

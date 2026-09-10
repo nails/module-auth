@@ -43,11 +43,26 @@ abstract class Base extends \App\Controller\Base
     protected function loadStyles($sView)
     {
         //  Test if a view has been provided by the app
-        if (!is_file($sView)) {
+        if (!$this->isViewOverridden($sView)) {
             $oAsset = Factory::service('Asset');
             $oAsset->clear();
             $oAsset->load('nails.min.css', \Nails\Common\Constants::MODULE_SLUG);
             $oAsset->load('styles.min.css', Constants::MODULE_SLUG);
         }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Whether the app has supplied its own copy of a view
+     *
+     * An app which has taken a view over owns its markup and its assets, so the
+     * module must not assume its own are wanted.
+     *
+     * @param string $sView Absolute path to the view the app would provide
+     */
+    protected function isViewOverridden(string $sView): bool
+    {
+        return is_file($sView);
     }
 }
