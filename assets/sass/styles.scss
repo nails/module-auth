@@ -12,3 +12,191 @@
         }
     }
 }
+
+/* --------------------------------------------------------------
+   Passkeys
+-------------------------------------------------------------- */
+
+.nails-auth {
+
+    /**
+     * `.form__actions .btn` zeroes the bottom margin that `.btn--block` sets, so
+     * full-width buttons in a form's action area stack flush against each other.
+     * A row gap restores the rhythm without fighting that rule's specificity, and
+     * only applies between wrapped rows, so buttons sitting side by side keep the
+     * horizontal spacing they already have.
+     */
+    .form__actions {
+
+        row-gap: var(--spacing-md, 1rem);
+
+        /**
+         * The framework gives every `.btn` in here a right margin, which is meant for
+         * buttons sitting side by side. A `.btn--block` never does, and the margin
+         * only makes its width depend on how deeply it happens to be nested.
+         */
+        .btn--block {
+            margin-right: 0;
+        }
+    }
+
+    [data-passkey-error] {
+        //  Its own line, rather than squeezing in beside a button
+        flex-basis: 100%;
+        width: 100%;
+    }
+
+    /**
+     * The alternative way in: a rule, then the passkey button.
+     *
+     * The block owns its spacing rather than leaning on `hr`'s own margin, because
+     * the preceding `.form__actions` contributes a bottom margin which collapses to
+     * the larger of the two and would leave the rule sitting off centre.
+     */
+    .passkey-alternative {
+
+        margin-bottom: 0;
+
+        hr {
+            margin-top: 0;
+            margin-bottom: var(--spacing-md, 1rem);
+        }
+
+        .btn {
+            margin-bottom: 0;
+        }
+
+        [data-passkey-error] {
+            margin-top: var(--spacing-xs, 0.5rem);
+        }
+    }
+
+    /**
+     * `form_open()` wraps the dismiss button so it carries a CSRF token, but that
+     * form is a flex item in `.form__actions` and would otherwise shrink to its
+     * content, leaving the `.btn--block` inside it anything but block. The same
+     * goes for the no-JS fallback, which is an inline element by default.
+     */
+    .form__actions {
+
+        //  form_open() wraps a button so it carries a CSRF token
+        > form {
+            display: block;
+            flex-basis: 100%;
+            width: 100%;
+            margin: 0;
+        }
+
+        /**
+         * The no-JS fallback needs the same full-width treatment, but deliberately
+         * without a `display` of its own: the browser hides `noscript` when scripting
+         * is enabled, and overriding that risks showing its contents as raw text.
+         */
+        > noscript {
+            flex-basis: 100%;
+            width: 100%;
+            margin: 0;
+        }
+    }
+
+    &.passkeys {
+        max-width: 900px;
+
+        //  The framework already makes this flex; it only needs spacing of its own
+        .form--inline {
+            gap: 0.5rem;
+            margin: 0;
+        }
+
+        //  Column headings are short labels; wrapping them reads as a mistake
+        thead th {
+            white-space: nowrap;
+        }
+
+        .passkeys__date {
+            white-space: nowrap;
+        }
+
+        /**
+         * A text input carries a browser default width of about twenty characters,
+         * which is what forces this table wider than a phone. Letting flex size it
+         * lets the column shrink with everything else; `min-width` has to go too,
+         * or the input refuses to shrink past that default.
+         */
+        input[name="label"] {
+            //  A small basis so the column can be narrow; it grows into what is spare
+            flex: 1 1 6rem;
+            min-width: 0;
+        }
+
+        /**
+         * `.form--inline` is `row wrap`, which would drop the rename button onto a
+         * line of its own once the input grows to fill the cell.
+         */
+        td:first-child .form--inline {
+            flex-wrap: nowrap;
+            width: 100%;
+        }
+
+        /**
+         * Below this the four columns cannot fit - the rename input alone claims some
+         * twenty characters - and a table which scrolls sideways hides the controls
+         * people came for. Each row becomes a block instead, with every cell carrying
+         * the heading it lost.
+         */
+        /**
+         * A last resort. If a long label or an awkward width still pushes the table
+         * past its container, it scrolls inside this rather than breaking the page.
+         */
+        .passkeys__table {
+            overflow-x: auto;
+        }
+
+        @media (max-width: 767px) {
+
+            table,
+            tbody,
+            tr,
+            td {
+                display: block;
+                width: 100%;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                padding: var(--spacing-md, 1rem) 0;
+                border-bottom: 1px solid var(--color-border, #d1d5db);
+            }
+
+            td {
+                padding: 0.25rem 0;
+                text-align: left;
+                border: 0;
+            }
+
+            td[data-label]::before {
+                content: attr(data-label) ": ";
+                font-weight: var(--font-weight-bold, 600);
+            }
+
+            .passkeys__actions {
+                margin-top: 0.5rem;
+            }
+        }
+    }
+}
+
+/**
+ * `.form__feedback--invalid` sets `display: block`, which beats the `hidden`
+ * attribute's user-agent rule, so an empty placeholder would hold a row open
+ * permanently. Deliberately unscoped: apps rendering the helper's markup in
+ * their own views need it too, and the same guard protects the block wrapper
+ * from any app style which gives it a `display`.
+ */
+[data-passkey-error][hidden],
+[data-passkey-block][hidden] {
+    display: none;
+}
