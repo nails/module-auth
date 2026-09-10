@@ -117,3 +117,17 @@ $lang['accounts_unsuspend_error']   = 'There was a problem unsuspending %s.';
 $lang['accounts_delete_error_selfie'] = 'You can\'t delete yourself.';
 $lang['accounts_delete_success']      = 'User %s was deleted successfully.';
 $lang['accounts_delete_error']        = 'There was a problem deleting %s.';
+
+// --------------------------------------------------------------------------
+
+//  Passkeys
+$lang['accounts_edit_passkeys_none']       = 'This user has not registered any passkeys.';
+$lang['accounts_edit_passkeys_disabled']   = 'Passkeys are not currently enabled for this site; existing passkeys are listed below but cannot be used to sign in.';
+$lang['accounts_edit_passkeys_warning']    = 'Revoking a passkey cannot be undone; the user will have to register the device again.';
+$lang['accounts_edit_passkeys_label']      = 'Name';
+$lang['accounts_edit_passkeys_added']      = 'Added';
+$lang['accounts_edit_passkeys_last_used']  = 'Last used';
+$lang['accounts_edit_passkeys_never_used'] = 'Never';
+$lang['accounts_edit_passkeys_details']    = 'Details';
+$lang['accounts_edit_passkeys_revoke']     = 'Revoke';
+$lang['accounts_edit_passkeys_synced']     = 'Synced';
