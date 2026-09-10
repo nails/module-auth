@@ -41,7 +41,10 @@
         "hybridauth/hybridauth": "~3.0",
         "sonata-project/google-authenticator": "~2.3.0",
         "wikimedia/common-passwords": "^v0.4",
-        "ext-json": "*"
+        "lbuchs/webauthn": "^2.2",
+        "ext-json": "*",
+        "ext-openssl": "*",
+        "ext-mbstring": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^12.0",
@@ -49,7 +52,8 @@
         "nails/module-queue": "dev-feature/pre-new-admin"
     },
     "suggest": {
-        "nails/module-queue": "Processes user imports on a long-running worker, rather than in chunks on the cron."
+        "nails/module-queue": "Processes user imports on a long-running worker, rather than in chunks on the cron.",
+        "ext-sodium": "Allows passkeys which use Ed25519 (EdDSA) keys to be registered and verified."
     },
     "scripts": {
         "test": "./vendor/bin/phpunit",
@@ -78,6 +82,7 @@
                 ],
                 "helpers": [
                     "authUrls",
+                    "passkey",
                     "user"
                 ]
             },
