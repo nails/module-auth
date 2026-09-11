@@ -23,6 +23,7 @@ use Nails\Auth\Exception\Login\RequiresMfaException;
 use Nails\Auth\Exception\Login\RequiresPasswordResetExpiredException;
 use Nails\Auth\Exception\Login\RequiresPasswordResetTempException;
 use Nails\Auth\Exception\Login\RequiresSocialException;
+use Nails\Auth\Exception\Passkey\PasskeyException;
 use Nails\Auth\Model\User\Password;
 use Nails\Auth\Resource;
 use Nails\Common\Exception\Encrypt\DecodeException;
@@ -35,6 +36,7 @@ use Nails\Common\Service\Config;
 use Nails\Common\Service\Database;
 use Nails\Common\Service\Encrypt;
 use Nails\Common\Service\Input;
+use Nails\Common\Service\Session;
 use Nails\Common\Traits\ErrorHandling;
 use Nails\Environment;
 use Nails\Factory;
@@ -78,6 +80,21 @@ class Authentication
      * @var int
      */
     const LOCKOUT_DURATION = 300;
+
+    /**
+     * The session key recording how the current session authenticated
+     *
+     * @var string
+     */
+    const SESSION_KEY_LOGIN_METHOD = 'auth-login-method';
+
+    /**
+     * Login methods reported by the above signal
+     *
+     * @var string
+     */
+    const LOGIN_METHOD_PASSWORD = 'password';
+    const LOGIN_METHOD_PASSKEY  = 'passkey';
 
     // --------------------------------------------------------------------------
 
@@ -238,10 +255,183 @@ class Authentication
             $oUserModel->setRememberCookie($oUser->id, $oUser->password, $oUser->email);
         }
 
+        /**
+         * Must be recorded before setLoginData(), which fires USER_LOG_IN synchronously;
+         * listeners on that event read this signal.
+         */
+        $this->recordLoginMethod(static::LOGIN_METHOD_PASSWORD, (int) $oUser->id);
+
         $oUserModel->setLoginData($oUser->id);
         $oUserModel->updateLastLogin($oUser->id);
 
         return $oUser;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Log a user in using a passkey
+     *
+     * Mirrors loginWithCredentials(), less the password: the temporary and expired
+     * password checks are bypassed because no password took part in this login (J5).
+     *
+     * @param array<string, mixed> $aAssertion The PublicKeyCredential.toJSON() payload
+     * @param string               $sChallenge The challenge the assertion answers
+     * @param bool                 $bRemember  Whether to 'remember' the user or not
+     *
+     * @throws FactoryException
+     * @throws InvalidCredentialsException
+     * @throws IsLockedOutException
+     * @throws IsSuspendedException
+     * @throws ModelException
+     * @throws NailsException
+     * @throws NoUserException
+     * @throws ReflectionException
+     */
+    public function loginWithPasskey(
+        array $aAssertion,
+        string $sChallenge,
+        bool $bRemember = false
+    ): Resource\User {
+
+        //  Delay execution for a moment (reduces brute force efficiently)
+        if (Environment::not(Environment::ENV_DEV)) {
+            usleep(static::BRUTE_FORCE_DELAY);
+        }
+
+        // --------------------------------------------------------------------------
+
+        /** @var \Nails\Auth\Model\User $oUserModel */
+        $oUserModel = Factory::model('User', Constants::MODULE_SLUG);
+        /** @var Passkey $oPasskeyService */
+        $oPasskeyService = Factory::service('Passkey', Constants::MODULE_SLUG);
+
+        $oPasskey = $oPasskeyService->findByAssertion($aAssertion);
+        $oUser    = $oPasskey ? $oPasskey->user() : null;
+
+        /**
+         * An unrecognised credential cannot be attributed to a user, so there is nobody
+         * to rate limit; it gets the delay above and the same message as every other
+         * failure (J6).
+         */
+        if (empty($oUser)) {
+            throw new NoUserException(lang('auth_login_fail_general'));
+
+        } elseif ($this->isLockedOut($oUser)) {
+
+            $oUserModel->incrementFailedLogin($oUser->id, static::LOCKOUT_DURATION);
+            $this->logLoginFailure($oUser, 'brute_force_block_in_affect');
+
+            throw new IsLockedOutException(
+                lang('auth_login_fail_blocked', ceil(static::LOCKOUT_DURATION / 60))
+            );
+
+        } elseif ($this->isSuspended($oUser)) {
+
+            $oUserModel->incrementFailedLogin($oUser->id, static::LOCKOUT_DURATION);
+            $this->logLoginFailure($oUser, 'suspended');
+
+            throw new IsSuspendedException(
+                lang('auth_login_fail_suspended')
+            );
+        }
+
+        try {
+
+            $oPasskeyService->completeAuthentication($aAssertion, $sChallenge, $oUser, true);
+
+        } catch (PasskeyException $e) {
+
+            $oUserModel->incrementFailedLogin($oUser->id, static::LOCKOUT_DURATION);
+            $this->logLoginFailure($oUser, 'passkey_invalid');
+
+            throw new InvalidCredentialsException(lang('auth_login_fail_general'));
+        }
+
+        //  Successful login means we can forget about failures
+        $oUserModel->resetFailedLogin($oUser->id);
+
+        /**
+         * The assertion above required user verification, so this login satisfies an
+         * MFA challenge; see the MFA module's requiresAuthentication().
+         */
+        $this->recordLoginMethod(static::LOGIN_METHOD_PASSKEY, (int) $oUser->id, true);
+
+        //  Note: a no-op for users without a password, as it always has been (J10)
+        if ($bRemember) {
+            $oUserModel->setRememberCookie($oUser->id, $oUser->password, $oUser->email);
+        }
+
+        $oUserModel->setLoginData($oUser->id);
+        $oUserModel->updateLastLogin($oUser->id);
+
+        return $oUser;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Records how the current session authenticated
+     *
+     * Must be called before setLoginData() so that USER_LOG_IN listeners can read it.
+     *
+     * @throws FactoryException
+     */
+    public function recordLoginMethod(string $sMethod, int $iUserId, bool $bUserVerified = false): void
+    {
+        /** @var Session $oSession */
+        $oSession = Factory::service('Session');
+        $oSession->setUserData(static::SESSION_KEY_LOGIN_METHOD, (object) [
+            'method'        => $sMethod,
+            'user_id'       => $iUserId,
+            'user_verified' => $bUserVerified,
+            'at'            => time(),
+        ]);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the signal describing how the current session authenticated, if any
+     *
+     * @throws FactoryException
+     */
+    public function getLoginMethod(): ?stdClass
+    {
+        /** @var Session $oSession */
+        $oSession = Factory::service('Session');
+
+        $mSignal = $oSession->getUserData(static::SESSION_KEY_LOGIN_METHOD);
+
+        return is_object($mSignal) ? (object) $mSignal : null;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Forgets how the current session authenticated
+     *
+     * @throws FactoryException
+     */
+    public function clearLoginMethod(): void
+    {
+        /** @var Session $oSession */
+        $oSession = Factory::service('Session');
+        $oSession->unsetUserData(static::SESSION_KEY_LOGIN_METHOD);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Whether the current session authenticated with a user-verified credential
+     *
+     * @throws FactoryException
+     */
+    public function isLoginUserVerified(): bool
+    {
+        $oSignal = $this->getLoginMethod();
+
+        return !empty($oSignal->user_verified);
     }
 
     // --------------------------------------------------------------------------

@@ -129,7 +129,7 @@ class Password extends Base
 
         // --------------------------------------------------------------------------
 
-        /** @var Resource\User $oUser */
+        /** @var Resource\User|null $oUser */
         $oUser = $oUserModel->getById($iUserId);
         if (empty($oUser)) {
             $this->setError('Invalid user ID.');
@@ -897,7 +897,7 @@ class Password extends Base
         /** @var User\Email $oUserModel */
         $oUserEmailModel = Factory::model('UserEmail', Constants::MODULE_SLUG);
 
-        /** @var Resource\User $oUser */
+        /** @var Resource\User|null $oUser */
         $oUser = $oUserModel
             ->skipCache()
             ->getFirst([

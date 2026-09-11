@@ -48,7 +48,7 @@ class Merge extends BaseAdmin
                 ->addAction('Merge Users');
         }
 
-        return $oNavGroup ?? null;
+        return null;
     }
 
     // --------------------------------------------------------------------------

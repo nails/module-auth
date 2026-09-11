@@ -21,12 +21,14 @@ use Nails\Auth\Model\User\Group;
 use Nails\Auth\Model\User\Password;
 use Nails\Auth\Resource;
 use Nails\Auth\Service\Authentication;
+use Nails\Auth\Service\Passkey;
 use Nails\Auth\Service\SocialSignOn;
 use Nails\Auth\Validator\User\Identifier;
 use Nails\Auth\Validator\User\Identity;
 use Nails\Cdn\Service\Cdn;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
+use Nails\Common\Service\Asset;
 use Nails\Common\Service\Config;
 use Nails\Common\Service\FileCache;
 use Nails\Common\Service\FormValidation;
@@ -178,11 +180,29 @@ class Login extends Base
 
         // --------------------------------------------------------------------------
 
-        $this->loadStyles(\Nails\Config::get('NAILS_APP_PATH') . 'application/modules/auth/views/login/form.php');
+        /** @var Passkey $oPasskeyService */
+        $oPasskeyService                = Factory::service('Passkey', Constants::MODULE_SLUG);
+        $this->data['passkeys_enabled'] = $oPasskeyService->isEnabled();
+
+        // --------------------------------------------------------------------------
+
+        $sAppView = \Nails\Config::get('NAILS_APP_PATH') . 'application/modules/auth/views/login/form.php';
+
+        $this->loadStyles($sAppView);
 
         //  Re-boot captcha as loadStyles clears everything
         if (appSetting('user_login_captcha_enabled', 'auth')) {
             $oCaptchaService->boot();
+        }
+
+        /**
+         * An app which has overridden the view owns its own assets; it can opt in
+         * with loadPasskeyAssets() from the passkey helper.
+         */
+        if ($this->data['passkeys_enabled'] && !$this->isViewOverridden($sAppView)) {
+            /** @var Asset $oAsset */
+            $oAsset = Factory::service('Asset');
+            $oAsset->load('passkey.min.js', Constants::MODULE_SLUG, 'JS', false, true);
         }
 
         Factory::service('View')
@@ -256,8 +276,52 @@ class Login extends Base
 
             // --------------------------------------------------------------------------
 
+            if ($this->shouldNudgeForPasskey($oUser, $sProvider)) {
+
+                /** @var Passkey $oPasskeyService */
+                $oPasskeyService = Factory::service('Passkey', Constants::MODULE_SLUG);
+                $oPasskeyService->markNudged($sRedirectUrl);
+
+                redirect('auth/passkeys/nudge');
+            }
+
+            // --------------------------------------------------------------------------
+
             redirect($sRedirectUrl);
         }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Whether to offer this user a passkey before sending them on their way
+     *
+     * Only a plain native login is nudged: a social login has no password to replace,
+     * and an MFA-challenged login never returns through here (J8).
+     *
+     * @throws FactoryException
+     */
+    protected function shouldNudgeForPasskey(Resource\User $oUser, string $sProvider): bool
+    {
+        if ($sProvider !== 'native') {
+            return false;
+        }
+
+        /** @var Passkey $oPasskeyService */
+        $oPasskeyService = Factory::service('Passkey', Constants::MODULE_SLUG);
+
+        if (!$oPasskeyService->isEnabled() || $oPasskeyService->isNudgeDismissed()) {
+            return false;
+        }
+
+        if ($oPasskeyService->hasBeenNudged()) {
+            return false;
+        }
+
+        /** @var \Nails\Auth\Model\User\Passkey $oPasskeyModel */
+        $oPasskeyModel = Factory::model('UserPasskey', Constants::MODULE_SLUG);
+
+        return $oPasskeyModel->countForUser((int) $oUser->id) === 0;
     }
 
     // --------------------------------------------------------------------------

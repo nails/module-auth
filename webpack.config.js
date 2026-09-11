@@ -4,6 +4,7 @@ const path = require('path');
 module.exports = {
     entry: {
         'admin': './assets/js/admin.js',
+        'passkey': './assets/js/passkey.js',
         'styles': './assets/js/styles.js',
     },
     output: {

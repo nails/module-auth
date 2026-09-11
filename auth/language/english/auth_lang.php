@@ -175,3 +175,43 @@ $lang['auth_forgot_reset_badupdate']              = 'Sorry, there were errors. %
 $lang['auth_forgot_reminder']                     = 'In case you forgot, your temporary password is %s. You won\'t be shown this message again.';
 $lang['auth_forgot_reset_ok']                     = 'Please log in using this temporary password:';
 $lang['auth_forgot_action_proceed']               = 'Proceed to log in';
+
+// --------------------------------------------------------------------------
+
+//  Passkey login
+$lang['auth_login_passkey_button']       = 'Sign in with a passkey';
+$lang['auth_login_passkey_cancelled']    = 'Passkey sign in was cancelled.';
+$lang['auth_login_passkey_unsupported']  = 'This browser does not support passkeys.';
+$lang['auth_login_passkey_fail']         = 'Sorry, we could not sign you in with that passkey. Please try again, or use your password.';
+
+// --------------------------------------------------------------------------
+
+//  Passkey management
+$lang['auth_passkeys_title']            = 'Passkeys';
+$lang['auth_passkeys_intro']            = 'A passkey lets you sign in with your fingerprint, face, screen lock, or a security key, instead of a password.';
+$lang['auth_passkeys_add']              = 'Add a passkey';
+$lang['auth_passkeys_label']            = 'Name';
+$lang['auth_passkeys_label_placeholder'] = 'e.g. My laptop';
+$lang['auth_passkeys_label_help']       = 'Give this passkey a name so you can recognise it later.';
+$lang['auth_passkeys_label_required']   = 'Please give this passkey a name.';
+$lang['auth_passkeys_added']            = 'Added';
+$lang['auth_passkeys_last_used']        = 'Last used';
+$lang['auth_passkeys_never_used']       = 'Never';
+$lang['auth_passkeys_actions']          = 'Actions';
+$lang['auth_passkeys_rename']           = 'Rename';
+$lang['auth_passkeys_renamed']          = 'Your passkey was renamed.';
+$lang['auth_passkeys_remove']           = 'Remove';
+$lang['auth_passkeys_remove_confirm']   = 'Are you sure you want to remove this passkey?';
+$lang['auth_passkeys_removed']          = 'Your passkey was removed.';
+$lang['auth_passkeys_not_found']        = 'That passkey could not be found.';
+$lang['auth_passkeys_unsupported']      = 'This browser does not support passkeys, so one cannot be added here.';
+$lang['auth_passkeys_created']          = 'Your passkey was added.';
+
+// --------------------------------------------------------------------------
+
+//  Passkey nudge
+$lang['auth_passkeys_nudge_title']    = 'Sign in faster next time';
+$lang['auth_passkeys_nudge_body']     = 'Add a passkey and you can sign in with your fingerprint, face, or screen lock instead of typing your password.';
+$lang['auth_passkeys_nudge_add']      = 'Add a passkey';
+$lang['auth_passkeys_nudge_skip']     = 'Not now';
+$lang['auth_passkeys_nudge_continue'] = 'Continue';
