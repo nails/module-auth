@@ -85,4 +85,16 @@ class Events extends Base
      * @param int[] $aMergeIds The IDs of the users who were merged into $iKeepId
      */
     const USER_MERGE_COMPLETE = 'AUTH:USER:MERGE:COMPLETE';
+
+    /**
+     * Fired after a passkey is revoked
+     *
+     * Fires regardless of what deleted it (self-service, admin, or otherwise), so
+     * anything that treats "has a passkey" as meaningful — an MFA driver built on
+     * top of passkeys, for instance — can react without this module knowing it
+     * exists.
+     *
+     * @param int $iUserId The ID of the user the passkey belonged to
+     */
+    const USER_DID_REMOVE_PASSKEY = 'AUTH:USER:PASSKEY:REMOVED';
 }

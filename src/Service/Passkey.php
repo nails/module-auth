@@ -15,6 +15,7 @@ namespace Nails\Auth\Service;
 use lbuchs\WebAuthn\WebAuthn;
 use lbuchs\WebAuthn\WebAuthnException;
 use Nails\Auth\Constants;
+use Nails\Auth\Events;
 use Nails\Auth\Exception\Passkey\ChallengeException;
 use Nails\Auth\Exception\Passkey\CredentialExistsException;
 use Nails\Auth\Exception\Passkey\InvalidResponseException;
@@ -28,6 +29,7 @@ use Nails\Auth\Resource;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Service\Cookie;
+use Nails\Common\Service\Event;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\Session;
 use Nails\Config;
@@ -809,6 +811,7 @@ class Passkey
         $bResult = $this->getModel()->delete((int) $oPasskey->id);
 
         if ($bResult) {
+
             createUserEvent(
                 'did_remove_passkey',
                 array_merge(
@@ -817,6 +820,19 @@ class Passkey
                 ),
                 null,
                 (int) $oPasskey->user_id
+            );
+
+            /**
+             * A live event, not the audit log above: anything that treats "has a
+             * passkey" as meaningful (an MFA driver built on top of passkeys, for
+             * instance) can react to this without this module knowing it exists.
+             */
+            /** @var Event $oEventService */
+            $oEventService = Factory::service('Event');
+            $oEventService->trigger(
+                Events::USER_DID_REMOVE_PASSKEY,
+                Events::getEventNamespace(),
+                [(int) $oPasskey->user_id]
             );
         }
 
