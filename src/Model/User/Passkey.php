@@ -17,9 +17,10 @@ use Nails\Factory;
  */
 class Passkey extends Base
 {
-    const TABLE             = NAILS_DB_PREFIX . 'user_passkey';
-    const RESOURCE_NAME     = 'UserPasskey';
-    const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
+    const TABLE               = NAILS_DB_PREFIX . 'user_passkey';
+    const RESOURCE_NAME       = 'UserPasskey';
+    const RESOURCE_PROVIDER   = Constants::MODULE_SLUG;
+    const DEFAULT_SORT_COLUMN = 'id';
 
     // --------------------------------------------------------------------------
 
