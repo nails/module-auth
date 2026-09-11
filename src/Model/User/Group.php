@@ -188,7 +188,7 @@ class Group extends Base
             throw new RuntimeException('You do not have permission to change a user\'s group');
         }
 
-        /** @var \Nails\Auth\Resource\User\Group $oGroup */
+        /** @var \Nails\Auth\Resource\User\Group|null $oGroup */
         $oGroup = $this->getById($iNewGroupId);
         if (empty($oGroup)) {
             $this->setError('"' . $iNewGroupId . '" is not a valid group ID.');

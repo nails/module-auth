@@ -49,7 +49,7 @@ class Merge extends Base
                 ->addAction('Merge Users');
         }
 
-        return $oNavGroup ?? null;
+        return null;
     }
 
     // --------------------------------------------------------------------------

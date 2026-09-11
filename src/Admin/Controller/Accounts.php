@@ -498,7 +498,7 @@ class Accounts extends DefaultController
 
         // --------------------------------------------------------------------------
 
-        /** @var \Nails\Auth\Resource\User $oUser */
+        /** @var \Nails\Auth\Resource\User|null $oUser */
         $oUser = $oUserModel->getById($oUri->segment(5));
 
         if (empty($oUser)) {
