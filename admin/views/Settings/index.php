@@ -58,7 +58,7 @@ $oInput = Factory::service('Input');
                  */
 
                 ?>
-                <div class="alert alert--info">
+                <div class="alert alert-info">
                     <p>
                         <strong>Relying Party ID:</strong>
                         <code><?=htmlspecialchars($oPasskeyService->getRpId())?></code>
