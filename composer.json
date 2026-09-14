@@ -57,7 +57,8 @@
     },
     "scripts": {
         "test": "./vendor/bin/phpunit",
-        "analyse": "./vendor/bin/phpstan analyse -c .phpstan/config.neon --memory-limit=1G"
+        "analyse": "./vendor/bin/phpstan analyse -c .phpstan/config.neon --memory-limit=1G",
+        "check-migrations": "php vendor/nails/common/scripts/check-migration-numbering.php"
     },
     "autoload": {
         "psr-4": {
@@ -72,6 +73,15 @@
     "extra": {
         "nails": {
             "moduleName": "auth",
+            "migrations": {
+                "grandfathered": {
+                    "17": "differs",
+                    "18": "differs",
+                    "20": "differs",
+                    "21": "absent",
+                    "22": "absent"
+                }
+            },
             "type": "module",
             "namespace": "Nails\\Auth\\",
             "autoload": {
