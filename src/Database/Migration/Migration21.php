@@ -27,6 +27,11 @@ class Migration21 implements Interfaces\Database\Migration
      */
     public function execute()
     {
+        //  Already created by migration 19 on `feature/pre-new-admin`
+        if ($this->tableExists('{{NAILS_DB_PREFIX}}user_passkey')) {
+            return;
+        }
+
         /**
          * `credential_id` is the base64url encoded raw credential ID. WebAuthn permits
          * up to 1023 raw bytes, which is 1364 base64url characters; it is stored as

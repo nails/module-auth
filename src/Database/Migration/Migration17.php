@@ -25,6 +25,11 @@ class Migration17 extends Base
      */
     public function execute()
     {
+        //  Already created by migration 16 on `feature/pre-new-admin`
+        if ($this->tableExists('{{NAILS_DB_PREFIX}}user_password_history')) {
+            return;
+        }
+
         $this->query(<<<EOT
             CREATE TABLE `{{NAILS_DB_PREFIX}}user_password_history` (
                 `id` int unsigned NOT NULL AUTO_INCREMENT,

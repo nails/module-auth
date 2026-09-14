@@ -24,7 +24,9 @@ class Migration20 extends Base
      */
     public function execute()
     {
-        $this->query(<<<EOT
+        //  These tables are already created by migration 18 on `feature/pre-new-admin`
+        if (!$this->tableExists('{{NAILS_DB_PREFIX}}user_import')) {
+            $this->query(<<<EOT
             CREATE TABLE `{{NAILS_DB_PREFIX}}user_import` (
                 `id` int unsigned NOT NULL AUTO_INCREMENT,
                 `object_id` int unsigned NOT NULL,
@@ -61,9 +63,11 @@ class Migration20 extends Base
                 CONSTRAINT `{{NAILS_DB_PREFIX}}user_import_ibfk_4` FOREIGN KEY (`modified_by`) REFERENCES `{{NAILS_DB_PREFIX}}user` (`id`) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
         EOT
-        );
+            );
+        }
 
-        $this->query(<<<EOT
+        if (!$this->tableExists('{{NAILS_DB_PREFIX}}user_import_item')) {
+            $this->query(<<<EOT
             CREATE TABLE `{{NAILS_DB_PREFIX}}user_import_item` (
                 `id` int unsigned NOT NULL AUTO_INCREMENT,
                 `import_id` int unsigned NOT NULL,
@@ -87,6 +91,7 @@ class Migration20 extends Base
                 CONSTRAINT `{{NAILS_DB_PREFIX}}user_import_item_ibfk_4` FOREIGN KEY (`modified_by`) REFERENCES `{{NAILS_DB_PREFIX}}user` (`id`) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
         EOT
-        );
+            );
+        }
     }
 }

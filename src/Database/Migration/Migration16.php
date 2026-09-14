@@ -7,13 +7,23 @@
 
 namespace Nails\Auth\Database\Migration;
 
+use Nails\Admin\Traits\Database\Migration\PermissionMap;
 use Nails\Auth\Admin\Permission;
 use Nails\Common\Traits;
 use Nails\Common\Interfaces;
 
-class Migration16 implements Interfaces\Database\Migration
+/**
+ * Class Migration16
+ *
+ * Repeatable because `feature/pre-new-admin` has no equivalent migration, so an app
+ * arriving from that branch resumes above this number and would never run it.
+ *
+ * @package Nails\Auth\Database\Migration
+ */
+class Migration16 implements Interfaces\Database\Migration\Repeatable
 {
     use Traits\Database\Migration;
+    use PermissionMap;
 
     // --------------------------------------------------------------------------
 
@@ -45,33 +55,4 @@ class Migration16 implements Interfaces\Database\Migration
         'admin:auth:settings:update:password'     => Permission\Settings\Password::class,
         'admin:auth:settings:update:social'       => '',
     ];
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Execute the migration
-     */
-    public function execute(): void
-    {
-        $oResult = $this->query('SELECT id, acl FROM `{{NAILS_DB_PREFIX}}user_group`');
-        while ($row = $oResult->fetchObject()) {
-
-            $acl = json_decode((string) $row->acl) ?? [];
-
-            foreach ($acl as &$old) {
-                $old = self::MAP[$old] ?? $old;
-            }
-
-            $acl = array_filter($acl);
-            $acl = array_unique($acl);
-            $acl = array_values($acl);
-
-            $this
-                ->prepare('UPDATE `{{NAILS_DB_PREFIX}}user_group` SET `acl` = :acl WHERE `id` = :id')
-                ->execute([
-                    ':id'  => $row->id,
-                    ':acl' => json_encode($acl),
-                ]);
-        }
-    }
 }
