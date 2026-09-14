@@ -47,7 +47,6 @@ $sAppPath   = NAILS_APP_PATH . 'application/modules/auth/config/';
 $sNailsPath = NAILS_PATH . 'module-auth/auth/config/';
 
 $aFiles = [
-    'auth.social.php',
     'auth.twofactor.php',
 ];
 

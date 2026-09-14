@@ -13,7 +13,6 @@
 use Nails\Auth\Constants;
 use Nails\Auth\Controller\Base;
 use Nails\Auth\Service\Authentication;
-use Nails\Auth\Service\SocialSignOn;
 use Nails\Factory;
 
 /**
@@ -38,12 +37,9 @@ class Logout extends Base
 
         // --------------------------------------------------------------------------
 
-        /** @var SocialSignOn $oSocial */
-        $oSocial = Factory::service('SocialSignOn', Constants::MODULE_SLUG);
         /** @var Authentication $oAuthService */
         $oAuthService = Factory::service('Authentication', Constants::MODULE_SLUG);
 
-        $oSocial->logout();
         $oAuthService->logout();
 
         // --------------------------------------------------------------------------

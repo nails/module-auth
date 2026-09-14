@@ -108,10 +108,6 @@ $lang['accounts_edit_meta_noeditable'] = 'There is no editable meta information 
 
 $lang['accounts_edit_img_legend'] = 'Profile Image';
 
-$lang['accounts_edit_social_legend']    = 'Social Media';
-$lang['accounts_edit_social_connected'] = 'Connected to %s';
-$lang['accounts_edit_social_none']      = 'This user is not currently connected to any social media network';
-
 $lang['accounts_edit_upload_legend']     = 'User Uploads';
 $lang['accounts_edit_upload_nofile']     = 'No files found';
 $lang['accounts_edit_upload_type_image'] = 'Images';

@@ -22,7 +22,7 @@ use Nails\Auth\Exception\Login\NoUserException;
 use Nails\Auth\Exception\Login\RequiresMfaException;
 use Nails\Auth\Exception\Login\RequiresPasswordResetExpiredException;
 use Nails\Auth\Exception\Login\RequiresPasswordResetTempException;
-use Nails\Auth\Exception\Login\RequiresSocialException;
+use Nails\Auth\Exception\Login\NoPasswordException;
 use Nails\Auth\Exception\Passkey\PasskeyException;
 use Nails\Auth\Model\User\Password;
 use Nails\Auth\Resource;
@@ -145,7 +145,7 @@ class Authentication
      * @throws RequiresMfaException
      * @throws RequiresPasswordResetExpiredException
      * @throws RequiresPasswordResetTempException
-     * @throws RequiresSocialException
+     * @throws NoPasswordException
      */
     public function loginWithCredentials(
         $oUser,
@@ -189,8 +189,8 @@ class Authentication
                     break;
             }
 
-            throw new RequiresSocialException(
-                lang('auth_login_fail_social', siteUrl('auth/password/forgotten?identifier=' . $sIdentifier))
+            throw new NoPasswordException(
+                lang('auth_login_fail_no_password', siteUrl('auth/password/forgotten?identifier=' . $sIdentifier))
             );
 
         } elseif ($this->isLockedOut($oUser)) {

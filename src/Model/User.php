@@ -2801,7 +2801,6 @@ class User extends Base
             $this->getMetaTableName(),
             Factory::model('UserAccessToken', Constants::MODULE_SLUG)->getTableName(),
             Factory::model('UserEvent', Constants::MODULE_SLUG)->getTableName(),
-            Factory::service('SocialSignOn', Constants::MODULE_SLUG)::TABLE,
             Factory::service('Authentication', Constants::MODULE_SLUG)::TABLE_TWO_FACTOR_DEVICE_SECRET,
             Factory::service('Authentication', Constants::MODULE_SLUG)::TABLE_TWO_FACTOR_QUESTION,
             Factory::service('Authentication', Constants::MODULE_SLUG)::TABLE_TWO_FACTOR_TOKEN,
