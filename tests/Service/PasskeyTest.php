@@ -44,6 +44,7 @@ class PasskeyTest extends TestCase
             'BASE_URL',
             'SECURE_BASE_URL',
             'APP_NAME',
+            Passkey::CONFIG_ENABLED,
             Passkey::CONFIG_RP_ID,
             Passkey::CONFIG_ALLOWED_ORIGINS,
             Passkey::CONFIG_AUTHENTICATORS,
@@ -54,6 +55,7 @@ class PasskeyTest extends TestCase
         Config::set('BASE_URL', self::ORIGIN . '/');
         Config::set('SECURE_BASE_URL', self::ORIGIN . '/');
         Config::set('APP_NAME', 'Test App');
+        Config::set(Passkey::CONFIG_ENABLED, null);
         Config::set(Passkey::CONFIG_RP_ID, null);
         Config::set(Passkey::CONFIG_ALLOWED_ORIGINS, null);
         Config::set(Passkey::CONFIG_AUTHENTICATORS, null);
@@ -84,6 +86,22 @@ class PasskeyTest extends TestCase
 
     // --------------------------------------------------------------------------
     //  Configuration
+    // --------------------------------------------------------------------------
+
+    public function test_passkeys_are_disabled_by_default(): void
+    {
+        self::assertFalse($this->oService->isEnabled());
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function test_passkeys_can_be_enabled_by_config(): void
+    {
+        Config::set(Passkey::CONFIG_ENABLED, true);
+
+        self::assertTrue($this->oService->isEnabled());
+    }
+
     // --------------------------------------------------------------------------
 
     public function test_the_rp_id_defaults_to_the_host_of_the_base_url(): void

@@ -44,21 +44,18 @@ $oInput = Factory::service('Input');
                     'default' => (bool) appSetting('user_login_captcha_enabled', 'auth'),
                 ]);
 
-                echo form_field_boolean([
-                    'key'     => \Nails\Auth\Service\Passkey::SETTING_ENABLED,
-                    'label'   => 'Passkeys',
-                    'default' => (bool) appSetting(\Nails\Auth\Service\Passkey::SETTING_ENABLED, 'auth'),
-                    'info'    => 'Allows users to sign in with a passkey, and to register one against their account.',
-                ]);
-
                 /**
-                 * Read only: both are derived from BASE_URL and can only be overridden in
-                 * the app's config, because changing the Relying Party ID invalidates every
+                 * Read only: passkeys are switched from app config, and the RP ID
+                 * is derived from BASE_URL. Changing the RP ID invalidates every
                  * passkey already registered.
                  */
 
                 ?>
                 <div class="alert alert-info">
+                    <p>
+                        <strong>Passkeys:</strong>
+                        <?= $oPasskeyService->isEnabled() ? 'Enabled' : 'Disabled' ?>
+                    </p>
                     <p>
                         <strong>Relying Party ID:</strong>
                         <code><?=htmlspecialchars($oPasskeyService->getRpId())?></code>
@@ -69,7 +66,9 @@ $oInput = Factory::service('Input');
                     </p>
                     <p class="mb-0">
                         <small>
-                            Derived from <code>BASE_URL</code>. Override with
+                            Enable with <code><?=\Nails\Auth\Service\Passkey::CONFIG_ENABLED?></code>.
+                            The Relying Party ID is derived from <code>BASE_URL</code>;
+                            override with
                             <code><?=\Nails\Auth\Service\Passkey::CONFIG_RP_ID?></code> and
                             <code><?=\Nails\Auth\Service\Passkey::CONFIG_ALLOWED_ORIGINS?></code>.
                             Changing the Relying Party ID invalidates existing passkeys.
