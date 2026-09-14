@@ -34,8 +34,6 @@ $lang['auth_login_password_placeholder'] = 'Your password';
 $lang['auth_login_label_remember_me']    = 'Remember me';
 $lang['auth_login_action_login']         = 'Log in';
 $lang['auth_login_forgot']               = 'Forgotten your password?';
-$lang['auth_login_social_message']       = 'Or, sign in using your preferred social network.';
-$lang['auth_login_social_signin']        = 'Sign in with %s';
 
 //  Messages
 $lang['auth_login_ok_welcome']         = 'Welcome, %s! You last logged in %s.';
@@ -63,7 +61,7 @@ $lang['auth_login_fail_general']        = 'Sorry, your log in has not been succe
 $lang['auth_login_fail_general_recent'] = 'Sorry, your log in has not been successful, please try again. You changed your password %s.';
 $lang['auth_login_fail_suspended']      = 'This account has been suspended; if you feel you have received this message in error then please contact us.';
 $lang['auth_login_fail_blocked']        = 'This account has been temporarily blocked due to repeated failed logins. Please wait %s minutes before trying again (each failed login resets the block). ';
-$lang['auth_login_fail_social']         = 'This account was created using a social network. Either login via the appropriate button or <a href="%s">click here to set a password</a> using the Forgotten Password tool.';
+$lang['auth_login_fail_no_password']    = 'This account does not have a password. <a href="%s">Click here to set a password</a> using the Forgotten Password tool.';
 
 //  Two-factor auth strings
 $lang['auth_twofactor_token_could_not_generate'] = 'Unable to generate two factor auth token.';
@@ -87,23 +85,6 @@ $lang['auth_twofactor_answer_incorrect'] = 'Sorry, your answer was incorrect.';
 
 // --------------------------------------------------------------------------
 
-//  Social network connect
-$lang['auth_social_already_linked']              = 'Woah there! You have already linked your %s account.';
-$lang['auth_social_no_access_token']             = 'There was a problem. We could not validate your account with %s, you may be able to try again.';
-$lang['auth_social_account_in_use']              = 'Sorry, the %s account you\'re currently logged into is already linked with another %s account.';
-$lang['auth_social_email_in_use']                = 'You\'ve been here before? We noticed that the email associated with your %1$s account is already registered with %2$s. In order to use %1$s to sign in you\'ll need to link your accounts via your Settings page. Log in below using your email address and we\'ll get you started.';
-$lang['auth_social_email_in_use_no_settings']    = 'You\'ve been here before? We noticed that the email associated with your %1$s account is already registered with %2$s. Please sign in using your email address and password. <a href="%3$s">Forgotten your password</a>?';
-$lang['auth_social_linked_ok']                   = 'Success, your %s account is now linked.';
-$lang['auth_social_linked_fail']                 = 'Sorry,, we failed to link your %s account.';
-$lang['auth_social_register_ok']                 = 'Hi, %s! Your account has been set up and is ready to be used.';
-$lang['auth_social_register_disabled']           = 'Sorry, new registrations are not permitted.';
-$lang['auth_social_disconnect_ok']               = 'Success! Your %s account was successfully disconnected.';
-$lang['auth_social_no_disconnect_fail']          = 'Sorry, there was a problem disconnecting your %s account.';
-$lang['auth_social_no_disconnect_not_linked']    = 'Sorry, your account is not currently linked to a %s account.';
-$lang['auth_social_no_disconnect_not_logged_in'] = 'Sorry, you must be logged in to disconnect your %s account.';
-
-// --------------------------------------------------------------------------
-
 //  Logout lang strings
 $lang['auth_logout_successful'] = 'Goodbye, %s! You have been logged out successfully.';
 
@@ -121,10 +102,6 @@ $lang['auth_register_email_placeholder']      = 'A valid email address';
 $lang['auth_register_username_placeholder']   = 'Your desired username';
 $lang['auth_register_password_placeholder']   = 'Choose a password';
 $lang['auth_register_label_accept_tc']        = 'I accept the <a href="%s">T&amp;C\'s</a>';
-
-$lang['auth_register_social_message']  = 'Or, to save time, register using your preferred social network.';
-$lang['auth_register_social_signin']   = 'Sign in with %s';
-$lang['auth_register_social_register'] = 'Register with %s';
 
 # Captcha
 $lang['auth_register_captcha_fail'] = 'You failed the captcha test.';

@@ -43,7 +43,7 @@ class Migration16 implements Interfaces\Database\Migration
         'admin:auth:settings:update:registration' => Permission\Settings\Registration::class,
         'admin:auth:settings:update:login'        => Permission\Settings\Login::class,
         'admin:auth:settings:update:password'     => Permission\Settings\Password::class,
-        'admin:auth:settings:update:social'       => Permission\Settings\Social::class,
+        'admin:auth:settings:update:social'       => '',
     ];
 
     // --------------------------------------------------------------------------

@@ -14,7 +14,6 @@ use Nails\Auth\Constants;
 use Nails\Auth\Controller\Base;
 use Nails\Auth\Model\User\Group;
 use Nails\Auth\Model\User\Password;
-use Nails\Auth\Service\SocialSignOn;
 use Nails\Auth\Validator\User\Identity;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\Input;
@@ -166,13 +165,9 @@ class Register extends Base
 
         // --------------------------------------------------------------------------
 
-        /** @var SocialSignOn $oSocial */
-        $oSocial = Factory::service('SocialSignOn', Constants::MODULE_SLUG);
         /** @var Password $oUserPasswordModel */
         $oUserPasswordModel = Factory::model('UserPassword', Constants::MODULE_SLUG);
 
-        $this->data['social_signon_enabled']   = $oSocial->isEnabled();
-        $this->data['social_signon_providers'] = $oSocial->getProviders('ENABLED');
         $this->data['passwordRulesAsString']   = $oUserPasswordModel->getRulesAsString($iDefaultGroupId);
 
         // --------------------------------------------------------------------------

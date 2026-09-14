@@ -11,8 +11,6 @@ $oInput = Factory::service('Input');
 /** @var View $oView */
 $oView = Factory::service('View');
 
-$sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
-
 ?>
 <div class="nails-auth login container center-screen">
     <div class="panel">
@@ -31,43 +29,6 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
                 ' data-passkey-site-url="' . htmlspecialchars(siteUrl(), ENT_QUOTES) . '"'
             );
             $oView->load('auth/_components/alerts');
-
-            if ($social_signon_enabled) {
-                ?>
-                <p class="text-center">
-                    Sign in using your preferred social network.
-                </p>
-                <?php
-
-                foreach ($social_signon_providers as $aProvider) {
-                    echo anchor(
-                        loginUrl(null) . '/' . $aProvider['slug'] . $sReturnTo,
-                        $aProvider['label'],
-                        'class="btn btn--block btn--primary"'
-                    );
-                }
-
-                ?>
-                <hr/>
-                <p class="text-center">
-                    <?php
-                    switch (Config::get('APP_NATIVE_LOGIN_USING')) {
-                        case 'EMAIL':
-                            echo 'Or sign in using your email address and password.';
-                            break;
-
-                        case 'USERNAME':
-                            echo 'Or sign in using your username and password.';
-                            break;
-
-                        default:
-                            echo 'Or sign in using your email address or username and password.';
-                            break;
-                    }
-                    ?>
-                </p>
-                <?php
-            }
 
             switch (Config::get('APP_NATIVE_LOGIN_USING')) {
 
@@ -155,10 +116,9 @@ $sReturnTo = $return_to ? '?return_to=' . urlencode($return_to) : '';
 
             /**
              * A passkey is a different way in, not a variant of the password, so it sits
-             * below the password controls behind a rule - the same shape the social
-             * sign-on block above uses. The whole block is hidden until the JavaScript
-             * confirms the browser can do WebAuthn, so an unsupported browser is never
-             * left with a rule and nothing beneath it.
+             * below the password controls behind a rule. The whole block is hidden until
+             * the JavaScript confirms the browser can do WebAuthn, so an unsupported
+             * browser is never left with a rule and nothing beneath it.
              */
             if (!empty($passkeys_enabled)) {
                 ?>

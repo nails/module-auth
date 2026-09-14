@@ -28,13 +28,6 @@ return [
                 return new Service\Session();
             }
         },
-        'SocialSignOn'   => function (): Service\SocialSignOn {
-            if (class_exists('\App\Auth\Service\SocialSignOn')) {
-                return new \App\Auth\Service\SocialSignOn();
-            } else {
-                return new Service\SocialSignOn();
-            }
-        },
         'UserEvent'      => function (): Service\User\Event {
             if (class_exists('\App\Auth\Service\User\Event')) {
                 return new \App\Auth\Service\User\Event();

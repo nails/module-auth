@@ -14,13 +14,8 @@ namespace Nails\Auth\Admin\Controller;
 
 use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
-use Nails\Admin\Helper;
 use Nails\Auth\Admin\Permission;
-use Nails\Auth\Constants;
-use Nails\Auth\Controller\BaseAdmin;
-use Nails\Auth\Service\SocialSignOn;
 use Nails\Common\Service\AppSetting;
-use Nails\Common\Service\Asset;
 use Nails\Common\Service\Database;
 use Nails\Common\Service\Input;
 use Nails\Factory;
@@ -36,7 +31,6 @@ class Settings extends Base
         Permission\Settings\Login::class,
         Permission\Settings\Password::class,
         Permission\Settings\Registration::class,
-        Permission\Settings\Social::class,
     ];
 
     // --------------------------------------------------------------------------
@@ -74,12 +68,8 @@ class Settings extends Base
 
         // --------------------------------------------------------------------------
 
-        /** @var SocialSignOn $oSocial */
-        $oSocial = Factory::service('SocialSignOn', Constants::MODULE_SLUG);
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var Asset $oAsset */
-        $oAsset = Factory::service('Asset');
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
         /** @var AppSetting $oAppSettingService */
@@ -87,15 +77,9 @@ class Settings extends Base
 
         // --------------------------------------------------------------------------
 
-        $aProviders               = $oSocial->getProviders();
-        $this->data['aProviders'] = $aProviders;
-
-        // --------------------------------------------------------------------------
-
         if ($oInput->post()) {
 
-            $aSettings          = [];
-            $aSettingsEncrypted = [];
+            $aSettings = [];
 
             // --------------------------------------------------------------------------
 
@@ -118,125 +102,16 @@ class Settings extends Base
 
             // --------------------------------------------------------------------------
 
-            if (userHasPermission(Permission\Settings\Social::class)) {
-
-                /**
-                 * Disable social signon, if any providers are properly enabled it'll
-                 * turn itself on again.
-                 */
-
-                $aSettings['auth_social_signon_enabled'] = false;
-
-                foreach ($aProviders as $aProvider) {
-
-                    $aSettings['auth_social_signon_' . $aProvider['slug'] . '_enabled'] = (bool) $oInput->post('auth_social_signon_' . $aProvider['slug'] . '_enabled');
-
-                    if ($aSettings['auth_social_signon_' . $aProvider['slug'] . '_enabled']) {
-
-                        //  null out each key
-                        if ($aProvider['fields']) {
-
-                            foreach ($aProvider['fields'] as $key => $label) {
-
-                                if (is_array($label) && !isset($label['label'])) {
-
-                                    foreach ($label as $key1 => $label1) {
-
-                                        $value = $oInput->post('auth_social_signon_' . $aProvider['slug'] . '_' . $key . '_' . $key1);
-
-                                        if (!empty($label1['required']) && empty($value)) {
-                                            $error = 'Provider "' . $aProvider['label'] . '" was enabled, but was missing required field "' . $label1['label'] . '".';
-                                            break 3;
-                                        }
-
-                                        if (empty($label1['encrypted'])) {
-                                            $aSettings['auth_social_signon_' . $aProvider['slug'] . '_' . $key . '_' . $key1] = $value;
-                                        } else {
-                                            $aSettingsEncrypted['auth_social_signon_' . $aProvider['slug'] . '_' . $key . '_' . $key1] = $value;
-                                        }
-                                    }
-
-                                } else {
-
-                                    $value = $oInput->post('auth_social_signon_' . $aProvider['slug'] . '_' . $key);
-
-                                    if (!empty($label['required']) && empty($value)) {
-                                        $error = 'Provider "' . $aProvider['label'] . '" was enabled, but was missing required field "' . $label['label'] . '".';
-                                        break 2;
-                                    }
-
-                                    if (empty($label['encrypted'])) {
-                                        $aSettings['auth_social_signon_' . $aProvider['slug'] . '_' . $key] = $value;
-                                    } else {
-                                        $aSettingsEncrypted['auth_social_signon_' . $aProvider['slug'] . '_' . $key] = $value;
-                                    }
-                                }
-                            }
-                        }
-
-                        //  Turn on social signon
-                        $aSettings['auth_social_signon_enabled'] = true;
-
-                    } else {
-
-                        //  null out each key
-                        if ($aProvider['fields']) {
-
-                            foreach ($aProvider['fields'] as $key => $label) {
-
-                                /**
-                                 * Secondary conditional detects an actual array fo fields rather than
-                                 * just the label/required array. Design could probably be improved...
-                                 **/
-
-                                if (is_array($label) && !isset($label['label'])) {
-
-                                    foreach ($label as $key1 => $label1) {
-                                        $aSettings['auth_social_signon_' . $aProvider['slug'] . '_' . $key . '_' . $key1] = null;
-                                    }
-
-                                } else {
-                                    $aSettings['auth_social_signon_' . $aProvider['slug'] . '_' . $key] = null;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // --------------------------------------------------------------------------
-
             if (!empty($aSettings)) {
 
-                if (empty($error)) {
+                $oDb->transaction()->start();
 
-                    $oDb->transaction()->start();
-
-                    $bRollback = false;
-
-                    if (!$oAppSettingService->set($aSettings, 'auth')) {
-                        $error     = $oAppSettingService->lastError();
-                        $bRollback = true;
-                    }
-
-                    if (!empty($aSettingsEncrypted)) {
-                        if (!$oAppSettingService->set($aSettingsEncrypted, 'auth', null, true)) {
-                            $error     = $oAppSettingService->lastError();
-                            $bRollback = true;
-                        }
-                    }
-
-                    if ($bRollback) {
-                        $oDb->transaction()->rollback();
-                        $this->oUserFeedback->error('There was a problem saving authentication settings.');
-
-                    } else {
-                        $oDb->transaction()->commit();
-                        $this->oUserFeedback->success('Authentication settings were saved.');
-                    }
-
+                if (!$oAppSettingService->set($aSettings, 'auth')) {
+                    $oDb->transaction()->rollback();
+                    $this->oUserFeedback->error('There was a problem saving authentication settings.');
                 } else {
-                    $this->oUserFeedback->success('There was a problem saving authentication settings. ' . $error);
+                    $oDb->transaction()->commit();
+                    $this->oUserFeedback->success('Authentication settings were saved.');
                 }
 
             } else {

@@ -21,45 +21,6 @@ $oView = Factory::service('View');
             echo form_open(registerUrl(null), 'class="form form-horizontal"');
             $oView->load('auth/_components/alerts');
 
-            if ($social_signon_enabled) {
-                ?>
-                <p class="text-center">
-                    Register using your preferred social network.
-                </p>
-                <?php
-
-                foreach ($social_signon_providers as $aProvider) {
-                    echo anchor(
-                        loginUrl(null) . '/' . $aProvider['slug'],
-                        $aProvider['label'],
-                        'class="btn btn--block btn--primary"'
-                    );
-                }
-
-                ?>
-                <hr/>
-                <p class="text-center">
-                    <?php
-                    switch (Config::get('APP_NATIVE_LOGIN_USING')) {
-                        case 'EMAIL':
-                            echo 'Or register using your email address and password.';
-                            break;
-
-                        case 'USERNAME':
-                            echo 'Or register using your username and password.';
-                            break;
-
-                        default:
-                            echo 'Or register using your email address or username and password.';
-                            break;
-                    }
-                    ?>
-                </p>
-                <?php
-            }
-
-            // --------------------------------------------------------------------------
-
             if (Config::get('APP_NATIVE_LOGIN_USING') === 'EMAIL' || Config::get('APP_NATIVE_LOGIN_USING') === 'BOTH') {
 
                 $sFieldKey         = 'email';
