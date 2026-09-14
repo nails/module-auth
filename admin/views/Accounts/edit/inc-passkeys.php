@@ -13,7 +13,9 @@ use Nails\Admin\Helper;
 if ($bIsSelf && $bEnabled && $sManageUrl) {
     ?>
     <div class="alert alert-info">
-        <?=lang('accounts_edit_passkeys_manage_self_intro')?>
+        <p class="mb-2">
+            <?=lang('accounts_edit_passkeys_manage_self_intro')?>
+        </p>
         <a href="<?=htmlspecialchars($sManageUrl, ENT_QUOTES)?>" class="btn btn-sm btn-primary">
             <?=lang('accounts_edit_passkeys_manage_self')?>
         </a>
