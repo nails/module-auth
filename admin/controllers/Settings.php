@@ -16,7 +16,6 @@ use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
 use Nails\Auth\Constants;
 use Nails\Auth\Controller\BaseAdmin;
-use Nails\Auth\Service\Passkey;
 use Nails\Auth\Service\SocialSignOn;
 use Nails\Common\Service\AppSetting;
 use Nails\Common\Service\Asset;
@@ -114,7 +113,6 @@ class Settings extends BaseAdmin
 
             if (userHasPermission('admin:auth:settings:update:login')) {
                 $aSettings['user_login_captcha_enabled'] = (bool) $oInput->post('user_login_captcha_enabled');
-                $aSettings[Passkey::SETTING_ENABLED]     = (bool) $oInput->post(Passkey::SETTING_ENABLED);
             }
 
             // --------------------------------------------------------------------------

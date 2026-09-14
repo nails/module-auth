@@ -49,14 +49,9 @@ use stdClass;
 class Passkey
 {
     /**
-     * The app setting, in the `auth` group, which turns passkeys on
+     * Config flag which turns passkeys on; defaults to off
      */
-    const SETTING_ENABLED = 'passkeys_enabled';
-
-    /**
-     * The group the above setting belongs to
-     */
-    const SETTING_GROUP = 'auth';
+    const CONFIG_ENABLED = 'AUTH_PASSKEYS_ENABLED';
 
     /**
      * Config override for the Relying Party ID; defaults to the host of BASE_URL
@@ -164,12 +159,10 @@ class Passkey
 
     /**
      * Whether passkeys are available to this app
-     *
-     * @throws FactoryException
      */
     public function isEnabled(): bool
     {
-        return (bool) appSetting(static::SETTING_ENABLED, static::SETTING_GROUP)
+        return (bool) Config::get(static::CONFIG_ENABLED, false)
             && extension_loaded('openssl');
     }
 
@@ -178,7 +171,6 @@ class Passkey
     /**
      * Throws if passkeys are not enabled
      *
-     * @throws FactoryException
      * @throws NotEnabledException
      */
     public function assertEnabled(): void
