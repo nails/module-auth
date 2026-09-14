@@ -206,6 +206,7 @@ $lang['auth_passkeys_removed']          = 'Your passkey was removed.';
 $lang['auth_passkeys_not_found']        = 'That passkey could not be found.';
 $lang['auth_passkeys_unsupported']      = 'This browser does not support passkeys, so one cannot be added here.';
 $lang['auth_passkeys_created']          = 'Your passkey was added.';
+$lang['auth_passkeys_back']             = 'Back';
 
 // --------------------------------------------------------------------------
 

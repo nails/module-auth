@@ -131,3 +131,5 @@ $lang['accounts_edit_passkeys_never_used'] = 'Never';
 $lang['accounts_edit_passkeys_details']    = 'Details';
 $lang['accounts_edit_passkeys_revoke']     = 'Revoke';
 $lang['accounts_edit_passkeys_synced']     = 'Synced';
+$lang['accounts_edit_passkeys_manage_self_intro'] = 'Use the self-service page to add, rename, or remove your own passkeys.';
+$lang['accounts_edit_passkeys_manage_self']       = 'Manage my passkeys';

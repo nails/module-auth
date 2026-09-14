@@ -11,6 +11,7 @@ use Nails\Auth\Resource\User;
 use Nails\Auth\Service\Passkey as PasskeyService;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
+use Nails\Common\Service\Input;
 use Nails\Common\Service\View;
 use Nails\Factory;
 
@@ -36,7 +37,7 @@ class Passkeys implements Tab
      */
     public static function isEnabled(User $user): bool
     {
-        return userHasPermission(Permission\Users\Edit::class);
+        return (int) $user->id === (int) activeUser('id') || userHasPermission(Permission\Users\Edit::class);
     }
 
     // --------------------------------------------------------------------------
@@ -65,6 +66,10 @@ class Passkeys implements Tab
         $oModel = Factory::model('UserPasskey', Constants::MODULE_SLUG);
         /** @var PasskeyService $oService */
         $oService = Factory::service('Passkey', Constants::MODULE_SLUG);
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+
+        $bIsSelf = (int) $oUser->id === (int) activeUser('id');
 
         return $oView->load(
             ['Accounts/edit/inc-passkeys'],
@@ -72,6 +77,12 @@ class Passkeys implements Tab
                 'oUser'     => $oUser,
                 'aPasskeys' => $oModel->getByUserId((int) $oUser->id),
                 'bEnabled'  => $oService->isEnabled(),
+                'bIsSelf'   => $bIsSelf,
+                'sManageUrl' => $bIsSelf
+                    ? siteUrl('auth/passkeys')
+                        . '?return='
+                        . rawurlencode((string) $oInput->server('REQUEST_URI'))
+                    : null,
             ],
             true
         );
