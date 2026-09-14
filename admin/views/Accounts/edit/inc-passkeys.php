@@ -4,9 +4,22 @@
  * @var \Nails\Auth\Resource\User           $oUser
  * @var \Nails\Auth\Resource\User\Passkey[] $aPasskeys
  * @var bool                                $bEnabled
+ * @var bool                                $bIsSelf
+ * @var string|null                         $sManageUrl
  */
 
 use Nails\Admin\Helper;
+
+if ($bIsSelf && $bEnabled && $sManageUrl) {
+    ?>
+    <div class="alert alert-info">
+        <?=lang('accounts_edit_passkeys_manage_self_intro')?>
+        <a href="<?=htmlspecialchars($sManageUrl, ENT_QUOTES)?>" class="btn btn-sm btn-primary">
+            <?=lang('accounts_edit_passkeys_manage_self')?>
+        </a>
+    </div>
+    <?php
+}
 
 if (!$bEnabled) {
     ?>

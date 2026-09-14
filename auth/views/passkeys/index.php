@@ -2,6 +2,7 @@
 
 /**
  * @var \Nails\Auth\Resource\User\Passkey[] $aPasskeys
+ * @var string|null                         $sReturnUrl
  */
 
 use Nails\Common\Service\View;
@@ -79,6 +80,9 @@ $oView = Factory::service('View');
                             <?=form_open('auth/passkeys', 'class="form form--inline"')?>
                             <input type="hidden" name="action" value="rename">
                             <input type="hidden" name="id" value="<?=(int) $oPasskey->id?>">
+                            <?php if ($sReturnUrl) { ?>
+                                <input type="hidden" name="return" value="<?=htmlspecialchars($sReturnUrl, ENT_QUOTES)?>">
+                            <?php } ?>
                             <input type="text" name="label" class="form__control" maxlength="100"
                                    value="<?=htmlspecialchars((string) $oPasskey->label, ENT_QUOTES)?>">
                             <button type="submit" class="btn btn--sm btn--link">
@@ -101,6 +105,9 @@ $oView = Factory::service('View');
                             <?=form_open('auth/passkeys', 'class="form form--inline"')?>
                             <input type="hidden" name="action" value="remove">
                             <input type="hidden" name="id" value="<?=(int) $oPasskey->id?>">
+                            <?php if ($sReturnUrl) { ?>
+                                <input type="hidden" name="return" value="<?=htmlspecialchars($sReturnUrl, ENT_QUOTES)?>">
+                            <?php } ?>
                             <button type="submit" class="btn btn--sm btn--danger"
                                     onclick="return confirm('<?=lang('auth_passkeys_remove_confirm')?>');">
                                 <?=lang('auth_passkeys_remove')?>
@@ -114,6 +121,16 @@ $oView = Factory::service('View');
                 ?>
             </tbody>
         </table>
+        </div>
+        <?php
+    }
+
+    if ($sReturnUrl) {
+        ?>
+        <div class="form__actions">
+            <a href="<?=htmlspecialchars($sReturnUrl, ENT_QUOTES)?>" class="btn btn--secondary">
+                <?=lang('auth_passkeys_back')?>
+            </a>
         </div>
         <?php
     }

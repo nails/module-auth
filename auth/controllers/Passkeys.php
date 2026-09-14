@@ -21,6 +21,7 @@ use Nails\Common\Service\Asset;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\UserFeedback;
 use Nails\Common\Service\View;
+use Nails\Config;
 use Nails\Factory;
 
 /**
@@ -67,7 +68,10 @@ class Passkeys extends Base
         /** @var PasskeyModel $oModel */
         $oModel = Factory::model('UserPasskey', Constants::MODULE_SLUG);
 
-        $sAction = (string) $oInput::post('action');
+        $sAction    = (string) $oInput::post('action');
+        $sReturnUrl = $this->sanitiseReturnUrl(
+            (string) ($oInput::post('return') ?: $oInput::get('return'))
+        );
 
         if ($sAction === 'rename' || $sAction === 'remove') {
 
@@ -95,12 +99,13 @@ class Passkeys extends Base
                 $oUserFeedback->error($e->getMessage());
             }
 
-            redirect('auth/passkeys');
+            redirect($this->manageUrl($sReturnUrl));
         }
 
         // --------------------------------------------------------------------------
 
         $this->data['aPasskeys'] = $oModel->getByUserId((int) activeUser('id'));
+        $this->data['sReturnUrl'] = $sReturnUrl;
 
         $this->oMetaData->setTitles([lang('auth_passkeys_title')]);
 
@@ -203,6 +208,54 @@ class Passkeys extends Base
         }
 
         return $oPasskey;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Restricts the optional return URL to this site
+     */
+    protected function sanitiseReturnUrl(string $sUrl): ?string
+    {
+        $sUrl = trim($sUrl);
+
+        if ($sUrl === '' || str_starts_with($sUrl, '//') || preg_match('/[\x00-\x1F\x7F]/', $sUrl)) {
+            return null;
+        }
+
+        $aUrl = parse_url($sUrl);
+        if ($aUrl === false) {
+            return null;
+        }
+
+        if (empty($aUrl['host'])) {
+            return empty($aUrl['scheme'])
+                ? siteUrl(ltrim($sUrl, '/'))
+                : null;
+        }
+
+        $aBaseUrl = parse_url((string) Config::get('BASE_URL'));
+        $sScheme  = strtolower((string) ($aUrl['scheme'] ?? ''));
+
+        if (
+            !in_array($sScheme, ['http', 'https'], true)
+            || strtolower((string) $aUrl['host']) !== strtolower((string) ($aBaseUrl['host'] ?? ''))
+            || ($aUrl['port'] ?? null) !== ($aBaseUrl['port'] ?? null)
+        ) {
+            return null;
+        }
+
+        return $sUrl;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Builds the management URL while preserving its optional return destination
+     */
+    protected function manageUrl(?string $sReturnUrl): string
+    {
+        return 'auth/passkeys' . ($sReturnUrl ? '?return=' . rawurlencode($sReturnUrl) : '');
     }
 
     // --------------------------------------------------------------------------
