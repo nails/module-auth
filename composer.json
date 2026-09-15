@@ -38,6 +38,7 @@
         "nails/module-cron": "dev-develop",
         "nails/module-email": "dev-develop",
         "nails/module-form-builder": "dev-develop",
+        "nails/module-housekeeping": "dev-develop",
         "sonata-project/google-authenticator": "~2.3.0",
         "wikimedia/common-passwords": "^v0.5",
         "lbuchs/webauthn": "^2.2",
