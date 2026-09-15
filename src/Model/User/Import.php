@@ -224,7 +224,7 @@ class Import extends Base
      *
      * Failures are collected rather than thrown: the row is already gone, so a
      * file which outlives it is litter, not an error. Note that
-     * `auth:user:import:clean` walks job rows, so it will never reap these.
+     * `Nails\Auth\Housekeeping\UserImports` walks job rows, so it will never reap these.
      * objectDestroy() signals failure both by returning false - for a missing
      * object, a driver failure, or a rolled back transaction - and by throwing,
      * so both are handled.

@@ -242,7 +242,7 @@ class Import extends Api\Controller\CrudController
          *
          * A failure here is logged rather than raised: the row has gone and the
          * delete has genuinely succeeded, so there is nothing for the caller to
-         * retry. It cannot be left silent though - `auth:user:import:clean`
+         * retry. It cannot be left silent though - `Nails\Auth\Housekeeping\UserImports`
          * reaps by walking job rows, so an object orphaned here is unreachable
          * by anything else, and the log line is the only thread back to what it
          * was for.
