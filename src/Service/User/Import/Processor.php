@@ -1103,7 +1103,7 @@ class Processor
         }
 
         /**
-         * begin() is about to null log_id, and auth:user:import:clean only reaps
+         * begin() is about to null log_id, and UserImports housekeeping only reaps
          * objects it can still reach from a job row, so the previous log is
          * destroyed here or not at all.
          */
