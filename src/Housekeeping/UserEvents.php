@@ -21,11 +21,6 @@ class UserEvents extends Base
     const DESCRIPTION     = 'Deletes user event log rows older than AUTH_USER_EVENT_RETENTION_DAYS';
     const CRON_EXPRESSION = '@daily';
 
-    /**
-     * Default retention in days. 0 disables deletion.
-     */
-    const DEFAULT_RETENTION_DAYS = 730;
-
     protected function model(): ModelBase
     {
         return Factory::model('UserEvent', Constants::MODULE_SLUG);
@@ -81,6 +76,6 @@ class UserEvents extends Base
 
     protected function retentionDays(): int
     {
-        return (int) Config::get('AUTH_USER_EVENT_RETENTION_DAYS', static::DEFAULT_RETENTION_DAYS);
+        return (int) Config::get('AUTH_USER_EVENT_RETENTION_DAYS', 0);
     }
 }
