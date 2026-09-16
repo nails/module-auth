@@ -652,6 +652,19 @@ class Passkey
             (int) $oUser->id
         );
 
+        /**
+         * A live event, not the audit log above: anything that treats "has a
+         * passkey" as meaningful (an MFA driver built on top of passkeys, for
+         * instance) can react to this without this module knowing it exists.
+         */
+        /** @var Event $oEventService */
+        $oEventService = Factory::service('Event');
+            $oEventService->trigger(
+                Events::USER_DID_ADD_PASSKEY,
+                Events::getEventNamespace(),
+                [(int) $oUser->id, $oPasskey]
+            );
+
         return $oPasskey;
     }
 
@@ -824,7 +837,7 @@ class Passkey
             $oEventService->trigger(
                 Events::USER_DID_REMOVE_PASSKEY,
                 Events::getEventNamespace(),
-                [(int) $oPasskey->user_id]
+                [(int) $oPasskey->user_id, $oPasskey]
             );
         }
 
