@@ -87,14 +87,29 @@ class Events extends Base
     const USER_MERGE_COMPLETE = 'AUTH:USER:MERGE:COMPLETE';
 
     /**
+     * Fired after a passkey is registered
+     *
+     * Fires regardless of what created it (self-service, MFA enrolment, or
+     * otherwise), so anything that treats "has a passkey" as meaningful — an MFA
+     * driver built on top of passkeys, for instance — can react without this
+     * module knowing it exists.
+     *
+     * @param int                                 $iUserId  The ID of the user the passkey belongs to
+     * @param \Nails\Auth\Resource\User\Passkey $oPasskey The passkey that was registered
+     */
+    const USER_DID_ADD_PASSKEY = 'AUTH:USER:PASSKEY:ADDED';
+
+    /**
      * Fired after a passkey is revoked
      *
      * Fires regardless of what deleted it (self-service, admin, or otherwise), so
      * anything that treats "has a passkey" as meaningful — an MFA driver built on
      * top of passkeys, for instance — can react without this module knowing it
-     * exists.
+     * exists. The passkey has already been deleted; `$oPasskey` is the in-memory
+     * snapshot from before the delete, so listeners can still see which one it was.
      *
-     * @param int $iUserId The ID of the user the passkey belonged to
+     * @param int                                 $iUserId  The ID of the user the passkey belonged to
+     * @param \Nails\Auth\Resource\User\Passkey $oPasskey The passkey that was revoked
      */
     const USER_DID_REMOVE_PASSKEY = 'AUTH:USER:PASSKEY:REMOVED';
 }
