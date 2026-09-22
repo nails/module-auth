@@ -1154,12 +1154,10 @@ class User extends Base
             unset($aData['password']);
 
             //  Set the data
-            $aDataUser         = [];
-            $aDataMeta         = [];
-            $sDataEmail        = '';
-            $sDataUsername     = '';
-            $bResetMfaQuestion = false;
-            $bResetMfaDevice   = false;
+            $aDataUser     = [];
+            $aDataMeta     = [];
+            $sDataEmail    = '';
+            $sDataUsername = '';
 
             foreach ($aData as $key => $val) {
 
@@ -1193,10 +1191,6 @@ class User extends Base
                     $sDataEmail = strtolower(trim($val));
                 } elseif ($key == 'username') {
                     $sDataUsername = strtolower(trim($val));
-                } elseif ($key == 'reset_mfa_question') {
-                    $bResetMfaQuestion = $val;
-                } elseif ($key == 'reset_mfa_device') {
-                    $bResetMfaDevice = $val;
                 } else {
                     $aDataMeta[$key] = $val;
                 }
@@ -1231,36 +1225,6 @@ class User extends Base
             try {
 
                 $oDb->transaction()->start();
-
-                // --------------------------------------------------------------------------
-
-                //  Resetting 2FA?
-                if ($bResetMfaQuestion || $bResetMfaDevice) {
-
-                    /** @var \Nails\Common\Service\Config $oConfig */
-                    $oConfig = Factory::service('Config');
-                    $oConfig->load('auth/auth');
-                    $sTwoFactorMode = $oConfig->item('authTwoFactorMode');
-
-                    if ($sTwoFactorMode == 'QUESTION' && $bResetMfaQuestion) {
-
-                        $oDb->where('user_id', $iUserId);
-                        if (!$oDb->delete(Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_question')) {
-                            $oDb->transaction()->rollback();
-                            $this->setError('Could not reset user\'s Multi Factor Authentication questions.');
-                            return false;
-                        }
-
-                    } elseif ($sTwoFactorMode == 'DEVICE' && $bResetMfaDevice) {
-
-                        $oDb->where('user_id', $iUserId);
-                        if (!$oDb->delete(Config::get('NAILS_DB_PREFIX') . 'user_auth_two_factor_device_secret')) {
-                            $oDb->transaction()->rollback();
-                            $this->setError('Could not reset user\'s Multi Factor Authentication device.');
-                            return false;
-                        }
-                    }
-                }
 
                 // --------------------------------------------------------------------------
 
