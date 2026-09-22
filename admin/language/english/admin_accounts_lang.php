@@ -41,16 +41,6 @@ $lang['accounts_edit_actions_legend'] = 'Actions';
 
 $lang['accounts_edit_password_legend'] = 'Password';
 
-$lang['accounts_edit_mfa_question_legend']            = 'Multi Factor Authentication: Questions';
-$lang['accounts_edit_mfa_question_field_reset_label'] = 'Set new qustions on next log in';
-$lang['accounts_edit_mfa_question_field_reset_yes']   = '<strong>Yes</strong>, require user to set new security questions on next log in.';
-$lang['accounts_edit_mfa_question_field_reset_no']    = '<strong>No</strong>, do not require user to set new security questions on next log in.';
-
-$lang['accounts_edit_mfa_device_legend']            = 'Multi Factor Authentication: Device';
-$lang['accounts_edit_mfa_device_field_reset_label'] = 'Setup a new device on next log in';
-$lang['accounts_edit_mfa_device_field_reset_yes']   = '<strong>Yes</strong>, require user to setup a new security device on next log in.';
-$lang['accounts_edit_mfa_device_field_reset_no']    = '<strong>No</strong>, do not require user to setup a new security device on next log in.';
-
 $lang['accounts_edit_basic_legend']                        = 'Basic Information';
 $lang['accounts_edit_basic_field_first_placeholder']       = 'The user\'s first name';
 $lang['accounts_edit_basic_field_last_placeholder']        = 'The user\'s surname';
