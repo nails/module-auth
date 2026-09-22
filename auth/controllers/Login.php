@@ -14,7 +14,6 @@ use Nails\Auth\Constants;
 use Nails\Auth\Controller\Base;
 use Nails\Auth\Exception\AuthException;
 use Nails\Auth\Exception\Login\NoUserException;
-use Nails\Auth\Exception\Login\RequiresMfaException;
 use Nails\Auth\Exception\Login\RequiresPasswordResetExpiredException;
 use Nails\Auth\Exception\Login\RequiresPasswordResetTempException;
 use Nails\Auth\Model\User\Password;
@@ -150,9 +149,6 @@ class Login extends Base
             } catch (NoUserException $e) {
                 $this->oUserFeedback->error($e->getMessage());
 
-            } catch (RequiresMfaException $e) {
-                $this->handleMfa($oUser);
-
             } catch (RequiresPasswordResetTempException $e) {
                 $this->handlePasswordReset($oUser, $bRemember, 'TEMP');
 
@@ -216,8 +212,6 @@ class Login extends Base
         $oConfig = Factory::service('Config');
         /** @var Password $oUserPasswordModel */
         $oUserPasswordModel = Factory::model('UserPassword', Constants::MODULE_SLUG);
-        /** @var Authentication $oAuthService */
-        $oAuthService = Factory::service('Authentication', Constants::MODULE_SLUG);
 
         if (!empty($oUser->temp_pw)) {
 
@@ -226,10 +220,6 @@ class Login extends Base
         } elseif ($oUserPasswordModel->isExpired($oUser->id)) {
 
             $this->handlePasswordReset($oUser, $bRemember, 'EXPIRED');
-
-        } elseif ($oConfig->item('authTwoFactorMode')) {
-
-            $this->handleMfa($oUser);
 
         } else {
 
@@ -282,8 +272,6 @@ class Login extends Base
     /**
      * Whether to offer this user a passkey before sending them on their way
      *
-     * An MFA-challenged login never returns through here.
-     *
      * @throws FactoryException
      */
     protected function shouldNudgeForPasskey(Resource\User $oUser): bool
@@ -303,69 +291,6 @@ class Login extends Base
         $oPasskeyModel = Factory::model('UserPasskey', Constants::MODULE_SLUG);
 
         return $oPasskeyModel->countForUser((int) $oUser->id) === 0;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Handle MFA redirect
-     *
-     * @param Resource\User $oUser     The user who requires MFA
-     * @param bool          $bRemember Whether to set the rememberMe cookie or not
-     *
-     * @throws AuthException
-     * @throws FactoryException
-     */
-    protected function handleMfa(Resource\User $oUser, bool $bRemember = false): void
-    {
-        /** @var Authentication $oAuthService */
-        $oAuthService = Factory::service('Authentication', Constants::MODULE_SLUG);
-        /** @var Config $oConfig */
-        $oConfig = Factory::service('Config');
-
-        $aTwoFactorToken = $oAuthService->mfaTokenGenerate($oUser->id);
-
-        if (!$aTwoFactorToken) {
-            throw new AuthException(
-                'A user tried to login and the system failed to generate a two-factor auth token.'
-            );
-        }
-
-        //  Is there any query data?
-        $aQuery = array_filter([
-            'return_to' => $this->data['return_to'] ?: null,
-            'remember'  => $bRemember,
-        ]);
-
-        $sQuery = !empty($aQuery) ? '?' . http_build_query($aQuery) : '';
-
-        //  Where we sending the user?
-        switch ($oConfig->item('authTwoFactorMode')) {
-
-            case 'QUESTION':
-                $sController = 'mfa/question';
-                break;
-
-            case 'DEVICE':
-                $sController = 'mfa/device';
-                break;
-
-            default:
-                throw new AuthException('"' . $oConfig->item('authTwoFactorMode') . '" is not a valid MFA Mode');
-                break;
-        }
-
-        //  Compile the URL
-        $aUrl = [
-            'auth',
-            $sController,
-            $oUser->id,
-            $aTwoFactorToken['salt'],
-            $aTwoFactorToken['token'],
-        ];
-
-        //  Login was successful, redirect to the appropriate MFA page
-        redirect(implode('/', $aUrl) . $sQuery);
     }
 
     // --------------------------------------------------------------------------

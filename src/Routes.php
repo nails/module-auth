@@ -26,8 +26,6 @@ class Routes implements RouteGenerator
             'auth/override/login_as/(.+)/(.+)'          => 'auth/sessionOverride/login_as',
             'auth/password/forgotten(/(.+))?'           => 'auth/PasswordForgotten/$2',
             'auth/password/reset/(\d+)/(.+)'            => 'auth/PasswordReset/$1/$2',
-            'auth/mfa/device/(\d+)/(.+)/(.+)(/(.+))?'   => 'auth/MfaDevice',
-            'auth/mfa/question/(\d+)/(.+)/(.+)(/(.+))?' => 'auth/MfaQuestion',
         ];
     }
 }

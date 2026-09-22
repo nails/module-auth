@@ -39,7 +39,6 @@
         "nails/module-email": "dev-feature/pre-new-admin",
         "nails/module-form-builder": "dev-feature/pre-new-admin",
         "nails/module-housekeeping": "dev-feature/pre-new-admin",
-        "sonata-project/google-authenticator": "~2.3.0",
         "wikimedia/common-passwords": "^v0.4",
         "lbuchs/webauthn": "^2.2",
         "ext-json": "*",
