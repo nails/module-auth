@@ -70,96 +70,7 @@ class PasswordReset extends Base
 
         if ($oUser && isset($oUser->salt) && $sHash == $oUserPasswordModel::resetHash($oUser)) {
 
-            //  Valid combination, is there MFA on the account?
-            if ($oConfig->item('authTwoFactorMode')) {
-
-                /**
-                 * This variable will stop the password resetting until we're confident
-                 * that MFA has been passed
-                 */
-
-                $bMfaValid = false;
-
-                /**
-                 * Check the user's account to see if they have MFA enabled, if so
-                 * require that they pass that before allowing the password to be reset
-                 */
-
-                switch ($oConfig->item('authTwoFactorMode')) {
-
-                    case 'QUESTION':
-                        $this->data['mfaQuestion'] = $oAuthService->mfaQuestionGet($oUser->id);
-
-                        if ($this->data['mfaQuestion']) {
-
-                            if ($oInput->post()) {
-
-                                //  Validate answer
-                                $isValid = $oAuthService->mfaQuestionValidate(
-                                    $this->data['mfaQuestion']->id,
-                                    $oUser->id,
-                                    $oInput->post('mfaAnswer')
-                                );
-
-                                if ($isValid) {
-
-                                    $bMfaValid = true;
-
-                                } else {
-                                    $this->oUserFeedback->error('Sorry, the answer to your security question was incorrect.');
-                                }
-                            }
-
-                        } else {
-
-                            //  No questions set up, allow for now
-                            $bMfaValid = true;
-                        }
-
-                        break;
-
-                    case 'DEVICE':
-                        $this->data['mfaDevice'] = $oAuthService->mfaDeviceSecretGet($oUser->id);
-
-                        if ($this->data['mfaDevice']) {
-
-                            if ($oInput->post()) {
-
-                                //  Validate answer
-                                $isValid = $oAuthService->mfaDeviceCodeValidate(
-                                    $oUser->id,
-                                    $oInput->post('mfaCode')
-                                );
-
-                                if ($isValid) {
-                                    $bMfaValid = true;
-
-                                } else {
-                                    $this->oUserFeedback->error(sprintf(
-                                        'Sorry, that code could not be validated. %s',
-                                        $oAuthService->lastError()
-                                    ));
-                                }
-                            }
-
-                        } else {
-
-                            //  No devices set up, allow for now
-                            $bMfaValid = true;
-                        }
-                        break;
-                }
-
-            } else {
-
-                //  No MFA so just set this to true
-                $bMfaValid = true;
-            }
-
-            // --------------------------------------------------------------------------
-
-            // Only run if MFA has been passed and there's POST data
-            if ($bMfaValid && $oInput->post()) {
+            if ($oInput->post()) {
 
                 try {
 
@@ -199,8 +110,7 @@ class PasswordReset extends Base
                     $oLoginUser = $oAuthService->loginWithCredentials(
                         $oUser,
                         $oInput->post('new_password'),
-                        $bRemember,
-                        false
+                        $bRemember
                     );
 
                     if ($oLoginUser) {
@@ -242,11 +152,6 @@ class PasswordReset extends Base
                                     $oLoginUser->first_name,
                                 ]
                             ));
-                        }
-
-                        //  If MFA is setup then we'll need to set the user's session data
-                        if ($oConfig->item('authTwoFactorMode')) {
-                            $oUserModel->setLoginData($oUser->id);
                         }
 
                         //  Log user in and forward to wherever they need to go

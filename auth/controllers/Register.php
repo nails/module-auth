@@ -143,7 +143,6 @@ class Register extends Base
 
                 //  Redirect to the group homepage
                 //  @todo (Pablo - 2017-07-11) - Setting for forced email activation
-                //  @todo (Pablo - 2017-07-11) - Handle setting MFA questions and/or devices
 
                 $oGroup = $oUserGroupModel->getById($oUser->group_id);
 
