@@ -16,12 +16,7 @@ namespace Nails\Auth\Database\Migration;
 use Nails\Common\Interfaces;
 use Nails\Common\Traits;
 
-/**
- * Repeatable because `feature/pre-new-admin` has no equivalent migration, so an app
- * arriving from that branch resumes above this number and would never run it.
- * DROP TABLE IF EXISTS is safe to evaluate on every migrate.
- */
-class Migration23 implements Interfaces\Database\Migration\Repeatable
+class Migration23 implements Interfaces\Database\Migration
 {
     use Traits\Database\Migration;
 
