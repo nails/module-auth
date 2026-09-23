@@ -120,6 +120,7 @@
       <path value="$PROJECT_DIR$/vendor/nails/module-queue" />
       <path value="$PROJECT_DIR$/vendor/lbuchs/webauthn" />
       <path value="$PROJECT_DIR$/vendor/symfony/polyfill-php82" />
+      <path value="$PROJECT_DIR$/vendor/nails/module-housekeeping" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.3">

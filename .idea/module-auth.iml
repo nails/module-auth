@@ -109,6 +109,7 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/nails/module-queue" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/lbuchs/webauthn" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/symfony/polyfill-php82" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/nails/module-housekeeping" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
