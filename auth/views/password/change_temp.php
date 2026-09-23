@@ -36,52 +36,6 @@ $oView = Factory::service('View');
             echo form_open($resetUrl . $sQuery, 'class="form form-horizontal"');
             $oView->load('auth/_components/alerts');
 
-            if (!empty($mfaQuestion)) {
-
-                $sFieldKey         = 'mfaAnswer';
-                $sFieldLabel       = 'Security Question';
-                $sFieldPlaceholder = 'Type your answer';
-                $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
-
-                ?>
-                <div class="form__group">
-                    <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
-                    <p>
-                        <strong>
-                            <?=$mfaQuestion->question?>
-                        </strong>
-                    </p>
-                    <?=form_password($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                    <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
-                </div>
-                <?php
-            }
-
-            // --------------------------------------------------------------------------
-
-            if (!empty($mfaDevice)) {
-
-                $sFieldKey         = 'mfaCode';
-                $sFieldLabel       = 'Security Code';
-                $sFieldPlaceholder = 'Type your code';
-                $sFieldAttr        = 'id="input-' . $sFieldKey . '" placeholder="' . $sFieldPlaceholder . '" class="form__control"';
-
-                ?>
-                <div class="form__group">
-                    <label class="form__label" for="input-<?=$sFieldKey?>"><?=$sFieldLabel?></label>
-                    <?=form_input($sFieldKey, set_value($sFieldKey), $sFieldAttr)?>
-                    <?=form_error($sFieldKey, '<p class="form__feedback form__feedback--invalid">', '</p>')?>
-                    <p class="form__help">
-                        <small>
-                            Use your device to generate a single use code.
-                        </small>
-                    </p>
-                </div>
-                <?php
-            }
-
-            // --------------------------------------------------------------------------
-
             $sFieldKey         = 'new_password';
             $sFieldLabel       = lang('form_label_password');
             $sFieldPlaceholder = lang('auth_forgot_new_pass_placeholder');
