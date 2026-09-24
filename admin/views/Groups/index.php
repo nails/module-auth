@@ -1,7 +1,7 @@
 <div class="group-accounts groups overview">
     <?=Nails\Admin\Helper::loadSearch($search)?>
     <?=Nails\Admin\Helper::loadPagination($pagination)?>
-    <table class="table table-striped table-hover table-bordered table-responsive">
+    <table class="table table-striped table-hover table-responsive">
         <thead class="table-dark">
             <tr>
                 <th class="label">Name and Description</th>

@@ -9,7 +9,7 @@ use Nails\Auth\Resource\User;
  */
 
 ?>
-<table id="edit-user-emails" class="emails table table-striped table-hover table-bordered table-responsive">
+<table id="edit-user-emails" class="emails table table-striped table-hover table-responsive">
     <thead class="table-dark">
         <tr>
             <th class="email"><?=lang('accounts_edit_emails_th_email')?></th>

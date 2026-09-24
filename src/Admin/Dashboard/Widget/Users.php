@@ -121,7 +121,7 @@ class Users implements Interfaces\Dashboard\Widget
         $sBody = implode(PHP_EOL, $aBody);
 
         return <<<EOT
-            <table class="table table-striped table-hover table-bordered table-responsive">
+            <table class="table table-striped table-hover table-responsive">
                 <thead class="table-dark">
                     <tr>
                         <th style="vertical-align: middle;">

@@ -11,7 +11,7 @@
         ?>
         <fieldset>
             <legend>Users to Update</legend>
-            <table class="table table-striped table-hover table-bordered table-responsive mb-0">
+            <table class="table table-striped table-hover table-responsive mb-0">
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
