@@ -35,6 +35,7 @@ class PackageTest extends TestCase
                 NAILS_DB_PREFIX . 'user_event',
                 NAILS_DB_PREFIX . 'user_import',
                 NAILS_DB_PREFIX . 'user_import_item',
+                NAILS_DB_PREFIX . 'user_email_blocker',
             ],
             (new Package())->hidden()
         );
@@ -53,7 +54,6 @@ class PackageTest extends TestCase
                 NAILS_DB_PREFIX . 'user.datetime_format_date',
                 NAILS_DB_PREFIX . 'user.datetime_format_time',
                 NAILS_DB_PREFIX . 'user_email.email',
-                NAILS_DB_PREFIX . 'user_email_blocker.type',
                 NAILS_DB_PREFIX . 'user_group.default_homepage',
                 NAILS_DB_PREFIX . 'user_group.registration_redirect',
             ],
