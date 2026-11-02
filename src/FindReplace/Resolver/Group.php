@@ -2,7 +2,6 @@
 
 namespace Nails\Auth\FindReplace\Resolver;
 
-use Nails\Auth\Admin\Controller\Groups;
 use Nails\Common\Service\Database;
 use Nails\Factory;
 use Nails\FindReplace\Factory\Action;
@@ -76,6 +75,6 @@ class Group implements Resolver
 
     protected function editUrl(): string
     {
-        return Groups::url('edit');
+        return siteUrl('admin/auth/groups/edit');
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Nails\Auth\FindReplace\Resolver;
 
-use Nails\Auth\Admin\Controller\Accounts;
 use Nails\Common\Service\Database;
 use Nails\Factory;
 use Nails\FindReplace\Factory\Action;
@@ -112,6 +111,6 @@ class User implements Resolver
 
     protected function editUrl(): string
     {
-        return Accounts::url('edit');
+        return siteUrl('admin/auth/accounts/edit');
     }
 }
