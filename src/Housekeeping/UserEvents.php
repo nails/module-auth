@@ -17,8 +17,13 @@ class UserEvents extends Base
         execute as deleteModelRows;
     }
 
+    /**
+     * How long, in days, a user event is kept before it is deleted
+     */
+    const RETENTION_DAYS = 90;
+
     const LABEL           = 'User events';
-    const DESCRIPTION     = 'Deletes user event log rows older than AUTH_USER_EVENT_RETENTION_DAYS';
+    const DESCRIPTION     = 'Deletes user event log rows older than AUTH_USER_EVENT_RETENTION_DAYS (default 90 days)';
     const CRON_EXPRESSION = '@daily';
 
     protected function model(): ModelBase
@@ -64,7 +69,7 @@ class UserEvents extends Base
         if ($iDays < 1) {
             $oContext
                 ->writeln('User event cleanup disabled')
-                ->log('DISABLED AUTH_USER_EVENT_RETENTION_DAYS=0');
+                ->log('DISABLED AUTH_USER_EVENT_RETENTION_DAYS=' . $iDays);
 
             return Result::ok(0, 'User event cleanup disabled');
         }
@@ -76,6 +81,6 @@ class UserEvents extends Base
 
     protected function retentionDays(): int
     {
-        return (int) Config::get('AUTH_USER_EVENT_RETENTION_DAYS', 0);
+        return (int) Config::get('AUTH_USER_EVENT_RETENTION_DAYS', static::RETENTION_DAYS);
     }
 }
