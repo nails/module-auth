@@ -12,6 +12,7 @@
 
 use Nails\Auth\Constants;
 use Nails\Auth\Controller\Base;
+use Nails\Auth\Settings\PasswordReset;
 use Nails\Auth\Factory\Email\ForgottenPassword;
 use Nails\Auth\Model\User;
 use Nails\Auth\Model\User\Password;
@@ -82,7 +83,7 @@ class PasswordForgotten extends Base
 
                 (new Identifier())->run($oInput->post());
 
-                if (appSetting('user_password_reset_captcha_enabled', 'auth')) {
+                if (appSetting(PasswordReset::KEY_USER_PASSWORD_RESET_CAPTCHA_ENABLED, Constants::MODULE_SLUG)) {
                     if (!$oCaptchaService->verify()) {
                         throw new \Nails\Common\Exception\ValidationException(
                             'You failed the captcha test.'
@@ -171,7 +172,7 @@ class PasswordForgotten extends Base
         $this->loadStyles(\Nails\Config::get('NAILS_APP_PATH') . 'application/modules/auth/views/password/forgotten.php');
 
         //  Re-boot captcha as loadStyles clears everything
-        if (appSetting('user_password_reset_captcha_enabled', 'auth')) {
+        if (appSetting(PasswordReset::KEY_USER_PASSWORD_RESET_CAPTCHA_ENABLED, Constants::MODULE_SLUG)) {
             $oCaptchaService->boot();
         }
 

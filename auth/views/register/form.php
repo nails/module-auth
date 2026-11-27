@@ -1,5 +1,7 @@
 <?php
 
+use Nails\Auth\Constants;
+use Nails\Auth\Settings\Registration;
 use Nails\Common\Service\View;
 use Nails\Config;
 use Nails\Factory;
@@ -115,7 +117,7 @@ $oView = Factory::service('View');
             </div>
             <?php
 
-            if (appSetting('user_registration_captcha_enabled', 'auth')) {
+            if (appSetting(Registration::KEY_USER_REGISTRATION_CAPTCHA_ENABLED, Constants::MODULE_SLUG)) {
                 ?>
                 <div class="form__group">
                     <?php

@@ -13,6 +13,6 @@ class Login implements Permission
 
     public function group(): string
     {
-        return 'Module Settings';
+        return 'Settings';
     }
 }
