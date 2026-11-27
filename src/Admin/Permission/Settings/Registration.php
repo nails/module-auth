@@ -13,6 +13,6 @@ class Registration implements Permission
 
     public function group(): string
     {
-        return 'Module Settings';
+        return 'Settings';
     }
 }

@@ -12,6 +12,7 @@
 
 use Nails\Auth\Constants;
 use Nails\Auth\Controller\Base;
+use Nails\Auth\Settings\Login as LoginSettings;
 use Nails\Auth\Exception\AuthException;
 use Nails\Auth\Exception\Login\NoUserException;
 use Nails\Auth\Exception\Login\RequiresPasswordResetExpiredException;
@@ -124,7 +125,7 @@ class Login extends Base
                     ->addRules(['password' => [FormValidation::RULE_REQUIRED]])
                     ->run($oInput->post());
 
-                if (appSetting('user_login_captcha_enabled', 'auth')) {
+                if (appSetting(LoginSettings::KEY_USER_LOGIN_CAPTCHA_ENABLED, Constants::MODULE_SLUG)) {
                     if (!$oCaptchaService->verify()) {
                         throw new ValidationException(
                             lang('auth_login_captcha_fail')
@@ -174,7 +175,7 @@ class Login extends Base
         $this->loadStyles($sAppView);
 
         //  Re-boot captcha as loadStyles clears everything
-        if (appSetting('user_login_captcha_enabled', 'auth')) {
+        if (appSetting(LoginSettings::KEY_USER_LOGIN_CAPTCHA_ENABLED, Constants::MODULE_SLUG)) {
             $oCaptchaService->boot();
         }
 

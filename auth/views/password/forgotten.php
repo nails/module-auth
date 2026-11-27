@@ -1,5 +1,7 @@
 <?php
 
+use Nails\Auth\Constants;
+use Nails\Auth\Settings\PasswordReset;
 use Nails\Captcha;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\View;
@@ -66,7 +68,7 @@ $oView = Factory::service('View');
             </div>
             <?php
 
-            if (appSetting('user_password_reset_captcha_enabled', 'auth')) {
+            if (appSetting(PasswordReset::KEY_USER_PASSWORD_RESET_CAPTCHA_ENABLED, Constants::MODULE_SLUG)) {
                 ?>
                 <div class="form__group">
                     <?php

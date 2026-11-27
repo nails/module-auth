@@ -12,6 +12,7 @@
 
 use Nails\Auth\Constants;
 use Nails\Auth\Controller\Base;
+use Nails\Auth\Settings\Registration;
 use Nails\Auth\Model\User\Group;
 use Nails\Auth\Model\User\Password;
 use Nails\Auth\Validator\User\Identity;
@@ -36,7 +37,7 @@ class Register extends Base
         // --------------------------------------------------------------------------
 
         //  Is registration enabled
-        if (!appSetting('user_registration_enabled', 'auth')) {
+        if (!appSetting(Registration::KEY_USER_REGISTRATION_ENABLED, Constants::MODULE_SLUG)) {
             show404();
         }
 
@@ -94,7 +95,7 @@ class Register extends Base
                     ])
                     ->run($oInput->post());
 
-                if (appSetting('user_registration_captcha_enabled', 'auth')) {
+                if (appSetting(Registration::KEY_USER_REGISTRATION_CAPTCHA_ENABLED, Constants::MODULE_SLUG)) {
                     if (!$oCaptchaService->verify()) {
                         throw new \Nails\Common\Exception\ValidationException(
                             lang('auth_register_captcha_fail')
@@ -174,7 +175,7 @@ class Register extends Base
         $this->loadStyles(Config::get('NAILS_APP_PATH') . 'application/modules/auth/views/register/form.php');
 
         //  Re-boot captcha as loadStyles clears everything
-        if (appSetting('user_registration_captcha_enabled', 'auth')) {
+        if (appSetting(Registration::KEY_USER_REGISTRATION_CAPTCHA_ENABLED, Constants::MODULE_SLUG)) {
             $oCaptchaService->boot();
         }
 
